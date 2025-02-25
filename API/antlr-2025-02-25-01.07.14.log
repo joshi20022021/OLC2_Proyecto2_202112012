@@ -1,0 +1,33 @@
+2025-02-25 01:07:14:192 grammar LogManager.java:25 before: (COMBINED_GRAMMAR Language (RULES (RULE expr (BLOCK (ALT expr (BLOCK (ALT '*') (ALT '/')) expr) (ALT expr (BLOCK (ALT '+') (ALT '-')) expr) (ALT INT) (ALT '(' expr ')'))) (RULE INT (BLOCK (ALT (+ (BLOCK (ALT [0-9])))))) (RULE WS (BLOCK (LEXER_ALT_ACTION (ALT (+ (BLOCK (ALT [ \t\r\n])))) skip)))))
+2025-02-25 01:07:14:203 grammar LogManager.java:25 after: (COMBINED_GRAMMAR Language (RULES (RULE expr (BLOCK (ALT expr (SET '*' '/') expr) (ALT expr (SET '+' '-') expr) (ALT INT) (ALT '(' expr ')'))) (RULE INT (BLOCK (ALT (+ (BLOCK (ALT [0-9])))))) (RULE WS (BLOCK (LEXER_ALT_ACTION (ALT (+ (BLOCK (ALT [ \t\r\n])))) skip)))))
+2025-02-25 01:07:14:226 grammar LogManager.java:25 after extract implicit lexer =(COMBINED_GRAMMAR Language (RULES (RULE expr (BLOCK (ALT expr (SET '*' '/') expr) (ALT expr (SET '+' '-') expr) (ALT INT) (ALT '(' expr ')')))))
+2025-02-25 01:07:14:226 grammar LogManager.java:25 lexer =(LEXER_GRAMMAR LanguageLexer (RULES (RULE T__0 (BLOCK (ALT '*'))) (RULE T__1 (BLOCK (ALT '/'))) (RULE T__2 (BLOCK (ALT '+'))) (RULE T__3 (BLOCK (ALT '-'))) (RULE T__4 (BLOCK (ALT '('))) (RULE T__5 (BLOCK (ALT ')'))) (RULE INT (BLOCK (ALT (+ (BLOCK (ALT [0-9])))))) (RULE WS (BLOCK (LEXER_ALT_ACTION (ALT (+ (BLOCK (ALT [ \t\r\n])))) skip)))))
+2025-02-25 01:07:14:466 left-recursion LogManager.java:25 expr
+    :   ( {} INT<tokenIndex=44>					 
+        | '('<tokenIndex=52> expr<tokenIndex=54> ')'<tokenIndex=56>			 
+        )
+        (
+          {Precpred(Context, 4)}?<p=4> ('*'<tokenIndex=11> | '/'<tokenIndex=15>) expr<tokenIndex=18,p=5>
+                  | {Precpred(Context, 3)}?<p=3> ('+'<tokenIndex=29> | '-'<tokenIndex=33>) expr<tokenIndex=36,p=4>
+        )*
+    ;
+2025-02-25 01:07:14:484 grammar LogManager.java:25 added: (RULE expr (BLOCK (ALT (BLOCK (ALT {} (INT (ELEMENT_OPTIONS (= tokenIndex 44)))) (ALT ('(' (ELEMENT_OPTIONS (= tokenIndex 52))) (expr (ELEMENT_OPTIONS (= tokenIndex 54))) (')' (ELEMENT_OPTIONS (= tokenIndex 56))))) (* (BLOCK (ALT ({Precpred(Context, 4)}? (ELEMENT_OPTIONS (= p 4))) (SET ('*' (ELEMENT_OPTIONS (= tokenIndex 11))) ('/' (ELEMENT_OPTIONS (= tokenIndex 15)))) (expr (ELEMENT_OPTIONS (= tokenIndex 18) (= p 5)))) (ALT ({Precpred(Context, 3)}? (ELEMENT_OPTIONS (= p 3))) (SET ('+' (ELEMENT_OPTIONS (= tokenIndex 29))) ('-' (ELEMENT_OPTIONS (= tokenIndex 33)))) (expr (ELEMENT_OPTIONS (= tokenIndex 36) (= p 4)))))))))
+2025-02-25 01:07:14:485 semantics LogManager.java:25 tokens={EOF=-1, T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, INT=7, WS=8}
+2025-02-25 01:07:14:485 semantics LogManager.java:25 strings={'*'=1, '/'=2, '+'=3, '-'=4, '('=5, ')'=6}
+2025-02-25 01:07:14:490 LL1 LogManager.java:25 
+DECISION 0 in rule expr
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 look=[7, 5]
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 LL(1)? true
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 
+DECISION 1 in rule expr
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 look=[null, null]
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 LL(1)? false
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 
+DECISION 2 in rule expr
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 look=[null, null]
+2025-02-25 01:07:14:494 LL1 LogManager.java:25 LL(1)? false
+2025-02-25 01:07:14:512 action-translator LogManager.java:25 translate 
+2025-02-25 01:07:14:516 action-translator LogManager.java:25 translate Precpred(Context, 4)
+2025-02-25 01:07:14:517 action-translator LogManager.java:25 translate Precpred(Context, 3)
+2025-02-25 01:07:14:519 action-translator LogManager.java:25 translate Precpred(Context, 4)
+2025-02-25 01:07:14:519 action-translator LogManager.java:25 translate Precpred(Context, 3)

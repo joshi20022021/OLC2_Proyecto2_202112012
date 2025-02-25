@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Intérprete";
+}
+
+<h2>Intérprete de Código</h2>
+
+<form method="post" action="/Home/Translate">
+    <label for="inputCode">Código a interpretar:</label><br>
+    <textarea id="inputCode" name="inputCode" rows="5" cols="50"></textarea><br><br>
+
+    <button type="submit">Traducir</button>
+</form>
+
+@if (ViewData["Output"] != null)
+{
+    <h3>Salida:</h3>
+    <textarea rows="5" cols="50" readonly>@ViewData["Output"]</textarea>
+}
