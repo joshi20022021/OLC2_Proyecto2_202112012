@@ -2,17 +2,28 @@
     ViewData["Title"] = "Intérprete";
 }
 
-<h2>Intérprete de Código</h2>
+<h2 class="text-center mt-4">Intérprete de Código</h2>
 
-<form method="post" action="/Home/Translate">
-    <label for="inputCode">Código a interpretar:</label><br>
-    <textarea id="inputCode" name="inputCode" rows="5" cols="50"></textarea><br><br>
+<div class="container mt-4">
+    <div class="card shadow p-4">
+        <form method="post" action="/Home/Translate">
+            <div class="mb-3">
+                <label for="inputCode" class="form-label fw-bold">Código a interpretar:</label>
+                <textarea id="inputCode" name="inputCode" class="form-control" rows="5"></textarea>
+            </div>
 
-    <button type="submit">Traducir</button>
-</form>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Traducir</button>
+            </div>
+        </form>
+    </div>
 
-@if (ViewData["Output"] != null)
-{
-    <h3>Salida:</h3>
-    <textarea rows="5" cols="50" readonly>@ViewData["Output"]</textarea>
-}
+    @if (ViewData["Output"] != null)
+    {
+        <div class="mt-4">
+            <h3 class="text-center">Salida:</h3>
+            <textarea class="form-control" rows="5" readonly>@ViewData["Output"]</textarea>
+        </div>
+    }
+</div>
+
