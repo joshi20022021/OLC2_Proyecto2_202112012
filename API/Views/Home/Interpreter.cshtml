@@ -2,18 +2,47 @@
     ViewData["Title"] = "Intérprete";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github-dark.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .custom-container {
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .custom-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .output-box {
+            background-color: #0080ff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+}
+
 <h2 class="text-center mt-4">Intérprete de Código</h2>
 
-<div class="container mt-4">
-    <div class="card shadow p-4">
+<div class="container custom-container mt-4">
+    <div class="card shadow-lg p-4 custom-card">
         <form method="post" action="/Home/Translate">
             <div class="mb-3">
                 <label for="inputCode" class="form-label fw-bold">Código a interpretar:</label>
-                <textarea id="inputCode" name="inputCode" class="form-control" rows="5"></textarea>
+                <textarea id="inputCode" name="inputCode" class="form-control" rows="6"></textarea>
             </div>
 
             <div class="text-center">
-                <button type="submit" class="btn btn-primary">Traducir</button>
+                <button type="submit" class="btn btn-primary btn-lg">Traducir</button>
             </div>
         </form>
     </div>
@@ -22,8 +51,14 @@
     {
         <div class="mt-4">
             <h3 class="text-center">Salida:</h3>
-            <textarea class="form-control" rows="5" readonly>@ViewData["Output"]</textarea>
+            <pre class="output-box">@ViewData["Output"]</pre>
         </div>
     }
 </div>
 
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>
+        hljs.highlightAll();
+    </script>
+}

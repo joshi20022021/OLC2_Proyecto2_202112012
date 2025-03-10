@@ -1,15 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
-using analyzer;
 using Antlr4.Runtime;
+using API.compiler;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace api.Controllers
+namespace API.Controllers
 {
     [Route("[controller]")]
     public class Compile : Controller
@@ -21,24 +18,12 @@ namespace api.Controllers
             _logger = logger;
         }
 
-        public IActionResult Index()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View("Error!");
-        }
-
         public class CompileRequest
         {
             [Required]
             public required string Code { get; set; }
         }
 
-        // POST /compile
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CompileRequest request)
         {
@@ -53,12 +38,41 @@ namespace api.Controllers
             var lexer = new LanguageLexer(inputStream);
             var tokenStream = new CommonTokenStream(lexer);
             var parser = new LanguageParser(tokenStream);
-            var tree = parser.expr();
+
+            // Capturar errores
+            var errors = new List<string>();
+            parser.RemoveErrorListeners();
+            parser.AddErrorListener(new CustomErrorListener(errors));
+
+            // Analizar el código
+            var tree = parser.program();
 
             var visitor = new CompilerVisitor();
-            var result = visitor.Visit(tree);
+            object result = visitor.Visit(tree);
 
-            return Ok(result);
+            // Verificar si hay errores y registrar en consola
+            if (errors.Count > 0)
+            {
+                _logger.LogWarning("Se encontraron errores durante la compilación:");
+                foreach (var error in errors)
+                {
+                    _logger.LogWarning(error);
+                }
+            }
+
+            // Obtener la tabla de símbolos del visitor
+            var symbolTable = visitor.GetSymbolTable();
+
+            // Opcional: Si tienes una forma de generar el AST real, reemplázalo aquí
+            var ast = new { type = "Program", children = new List<object>() };
+
+            return Ok(new
+            {
+                output = errors.Count > 0 ? "Errores encontrados en el código." : result?.ToString() ?? "Ejecución completada.",
+                errors = errors,
+                symbolTable = symbolTable,
+                ast = ast
+            });
         }
     }
 }
