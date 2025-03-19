@@ -47,42 +47,26 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
-const handleExecute = async () => {
-  const codeToSend = files[activeFileIndex].content.trim();
+  const handleExecute = async () => {
+    const codeToSend = files[activeFileIndex].content.trim();
 
-  // 📌 Verificar el código antes de enviarlo
-  console.log("Código enviado al backend:\n", codeToSend);
-
-  if (!codeToSend) {
-    setConsoleOutput("El código no puede estar vacío.");
-    return;
-  }
-
-  try {
-    const response = await axios.post(API_URL, { Code: codeToSend });
-
-    // 📌 Imprime la respuesta del backend completa
-    console.log("Respuesta del backend:", response.data);
-
-    setConsoleOutput(response.data.output || "Ejecución completada.");
-    setReportErrors(response.data.errors || []);
-    setSymbolTable(response.data.symbolTable || []);
-    setAst(response.data.ast || null);
-  } catch (error) {
-    console.error("Error en la ejecución:", error);
-
-    // 📌 Verificar si hay detalles en la respuesta del backend
-    if (error.response) {
-      console.log("Respuesta del backend en error:", error.response.data);
-      setConsoleOutput(`Error en la ejecución: ${error.response.data.output || error.message}`);
-      setReportErrors(error.response.data.errors || []);
-    } else {
-      setConsoleOutput(`Error en la ejecución: ${error.message}`);
-      setReportErrors([error.message]);
+    if (!codeToSend) {
+      setConsoleOutput("El código no puede estar vacío.");
+      return;
     }
-  }
-};
 
+    try {
+      const response = await axios.post(API_URL, { Code: codeToSend });
+      setConsoleOutput(response.data.output || "Ejecución completada.");
+      setReportErrors(response.data.errors || []);
+      setSymbolTable(response.data.symbolTable || []);
+      setAst(response.data.ast || null);
+    } catch (error) {
+      const errorMessage = error.response?.data?.output || error.message;
+      setConsoleOutput(`Error: ${errorMessage}`);
+      setReportErrors(error.response?.data?.errors || [errorMessage]);
+    }
+  };
 
   const renderReportContent = () => {
     switch (visibleReport) {
@@ -98,18 +82,17 @@ const handleExecute = async () => {
                 </tr>
               </thead>
               <tbody>
-            {reportErrors.map((error, idx) => (
-              <tr key={idx}>
-                <td>{error.line}</td>
-                <td>{error.Message}</td>{/* <-- OJO: "description" no existe en tu backend */}
-                <td>{error.type}</td>
-              </tr>
-            ))}
-          </tbody>
+                {reportErrors.map((error, idx) => (
+                  <tr key={idx}>
+                    <td>{error.line}</td>
+                    <td>{error.Message}</td>
+                    <td>{error.type}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         );
-      
       case 'symbols':
         return (
           <div className="table-responsive">
@@ -135,44 +118,54 @@ const handleExecute = async () => {
             </table>
           </div>
         );
-      
       case 'ast':
         return (
           <pre className="p-2 bg-dark text-light rounded border">
             {ast ? JSON.stringify(ast, null, 2) : 'AST no generado'}
           </pre>
         );
-      
       default:
         return <div className="text-muted p-3">Selecciona un reporte para visualizarlo</div>;
     }
   };
 
+  const ToolbarButton = ({ children, icon, onClick, isFileInput = false, variant = "primary" }) => (
+    <div className="toolbar-button-wrapper">
+      {isFileInput ? (
+        <label className={`btn btn-${variant} glow-hover`}>
+          <i className={`bi bi-${icon}`}></i> {children}
+          <input type="file" hidden accept=".glt" onChange={openFile} />
+        </label>
+      ) : (
+        <button className={`btn btn-${variant} glow-hover`} onClick={onClick}>
+          <i className={`bi bi-${icon}`}></i> {children}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="container-fluid vh-100 d-flex flex-column bg-dark text-light">
-      {/* Barra de herramientas */}
-      <div className="d-flex align-items-center p-2 bg-dark border-bottom border-secondary">
+      <div className="d-flex align-items-center p-2 bg-black-50 border-bottom border-primary">
         <div className="d-flex gap-2">
-          <button className="btn btn-sm btn-outline-primary" onClick={createNewFile}>
-            <i className="bi bi-file-earmark-plus"></i> Nuevo
-          </button>
-          <label className="btn btn-sm btn-outline-success">
-            <i className="bi bi-folder2-open"></i> Abrir
-            <input type="file" hidden accept=".glt" onChange={openFile} />
-          </label>
-          <button className="btn btn-sm btn-outline-warning" onClick={saveFile}>
-            <i className="bi bi-save"></i> Guardar
-          </button>
-          <button className="btn btn-sm btn-outline-danger" onClick={handleExecute}>
-            <i className="bi bi-play-circle"></i> Ejecutar
-          </button>
+          <ToolbarButton icon="file-earmark-plus" onClick={createNewFile}>
+            Nuevo
+          </ToolbarButton>
+          <ToolbarButton icon="folder2-open" isFileInput>
+            Abrir
+          </ToolbarButton>
+          <ToolbarButton icon="save" onClick={saveFile}>
+            Guardar
+          </ToolbarButton>
+          <ToolbarButton icon="play-circle" onClick={handleExecute} variant="success">
+            Ejecutar
+          </ToolbarButton>
         </div>
       </div>
 
-      {/* Pestañas de archivos */}
       <div className="d-flex border-bottom border-secondary">
         {files.map((file, index) => (
-          <div key={index} 
+          <div key={index}
             className={`d-flex align-items-center px-3 py-2 border-end border-secondary cursor-pointer ${index === activeFileIndex ? 'bg-primary text-white' : 'bg-secondary'}`}
             onClick={() => setActiveFileIndex(index)}
           >
@@ -186,9 +179,7 @@ const handleExecute = async () => {
         ))}
       </div>
 
-      {/* Contenido principal */}
       <div className="row flex-grow-1 m-0">
-        {/* Editor y Consola */}
         <div className="col-md-8 d-flex flex-column p-0">
           <div className="flex-grow-1 border-end border-secondary">
             <div className="h-100 position-relative">
@@ -218,23 +209,22 @@ const handleExecute = async () => {
           </div>
         </div>
 
-        {/* Reportes */}
         <div className="col-md-4 p-0 bg-dark">
           <div className="h-100 d-flex flex-column">
             <div className="d-flex justify-content-around p-2 border-bottom border-secondary">
-              <button 
+              <button
                 className={`btn btn-sm ${visibleReport === 'errors' ? 'btn-primary' : 'btn-outline-primary'}`}
                 onClick={() => setVisibleReport(visibleReport === 'errors' ? null : 'errors')}
               >
                 Errores
               </button>
-              <button 
+              <button
                 className={`btn btn-sm ${visibleReport === 'symbols' ? 'btn-primary' : 'btn-outline-primary'}`}
                 onClick={() => setVisibleReport(visibleReport === 'symbols' ? null : 'symbols')}
               >
                 Símbolos
               </button>
-              <button 
+              <button
                 className={`btn btn-sm ${visibleReport === 'ast' ? 'btn-primary' : 'btn-outline-primary'}`}
                 onClick={() => setVisibleReport(visibleReport === 'ast' ? null : 'ast')}
               >
@@ -248,7 +238,6 @@ const handleExecute = async () => {
         </div>
       </div>
 
-      {/* Estado del archivo */}
       <div className="position-fixed bottom-0 end-0 m-3">
         <span className="badge bg-secondary">
           {files[activeFileIndex]?.saved ? 'Guardado' : 'No guardado'}
@@ -260,24 +249,67 @@ const handleExecute = async () => {
 
 export default App;
 
-// Estilos adicionales (igual que antes)
 const styles = `
+  .toolbar-button-wrapper .btn {
+    transition: all 0.3s ease;
+    border-width: 2px;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .glow-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 118, 255, 0.3);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    border-color: #1e7e34;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border-color: #0056b3;
+  }
+
+  .btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #d39e00 100%);
+    border-color: #d39e00;
+  }
+
   .line-numbers {
-    width: 40px;
-    user-select: none;
-    color: #666;
-    font-family: monospace;
-    font-size: 14px;
+    width: 45px;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    color: #6c757d;
+    background: #1a1a1a;
+    padding-top: 4px;
   }
-  
+
   textarea {
-    font-size: 14px;
-    line-height: 1.5;
-    padding-left: 45px !important;
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    padding-left: 50px !important;
+    caret-color: #00ff88;
   }
-  
-  .cursor-pointer {
-    cursor: pointer;
+
+  pre {
+    font-family: 'Fira Code', monospace;
+    font-size: 13px;
+    border-radius: 8px;
+    padding: 15px !important;
+  }
+
+  .table-dark {
+    --bs-table-bg: #1a1a1a;
+    --bs-table-striped-bg: #202020;
+    --bs-table-hover-bg: #2a2a2a;
   }
 `;
 
