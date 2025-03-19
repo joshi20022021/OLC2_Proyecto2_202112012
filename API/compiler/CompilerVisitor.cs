@@ -7,6 +7,7 @@ namespace API.compiler
 {
     public class CompilerVisitor : LanguageBaseVisitor<object>
     {
+        // Clase para representar una entrada en la tabla de símbolos
         public class EntradaSimbolo
         {
             public string Nombre { get; set; } = string.Empty;
@@ -15,6 +16,7 @@ namespace API.compiler
             public string Contexto { get; set; } = "Global";
         }
 
+        // Clase para representar un nodo en el AST
         public class NodoAST
         {
             public string Tipo { get; set; } = "Desconocido";
@@ -30,6 +32,7 @@ namespace API.compiler
         public List<NodoAST> ObtenerAST() => nodosAST;
         public List<string> ObtenerSalida() => mensajesSalida;
 
+        // Método para obtener el tipo de un valor
         private string ObtenerNombreTipo(object valor)
         {
             return valor switch
@@ -43,6 +46,7 @@ namespace API.compiler
             };
         }
 
+        // Método para convertir un valor a double
         private double? ConvertirADouble(object valor)
         {
             if (valor is int valorEntero)
@@ -57,6 +61,7 @@ namespace API.compiler
             return null;
         }
 
+        // visitor para la regla principal del programa
         public override object VisitReglaPrograma(LanguageParser.ReglaProgramaContext context)
         {
             mensajesSalida.Clear();
@@ -67,6 +72,7 @@ namespace API.compiler
             return string.Join("\n", mensajesSalida);
         }
 
+        // visitor para una asignación de variable
         public override object VisitAsignar(LanguageParser.AsignarContext context)
         {
             var valor = Visit(context.expresion());
@@ -80,6 +86,7 @@ namespace API.compiler
             return valor;
         }
 
+        // Visitor para un print
         public override object VisitImprime(LanguageParser.ImprimeContext context)
         {
             List<string> valores = new List<string>();
@@ -98,6 +105,7 @@ namespace API.compiler
             return salida;
         }
 
+        // Visitor para una operación de suma
         public override object VisitSuma(LanguageParser.SumaContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -109,6 +117,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en suma.";
         }
 
+        // Visitor para una operación de resta
         public override object VisitResta(LanguageParser.RestaContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -120,6 +129,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en resta.";
         }
 
+        // Visitor para una operación de multiplicación
         public override object VisitMultiplicacion(LanguageParser.MultiplicacionContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -131,6 +141,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en multiplicación.";
         }
 
+        // Visitor para una operación de división
         public override object VisitDivision(LanguageParser.DivisionContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -144,6 +155,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en división.";
         }
 
+        // Visitor para una operación de módulo
         public override object VisitModulo(LanguageParser.ModuloContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -157,6 +169,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en módulo.";
         }
 
+        // Visitor para una comparación de mayor que
         public override object VisitMayorQue(LanguageParser.MayorQueContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -168,6 +181,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en comparación.";
         }
 
+        // Visita una comparación de menor que
         public override object VisitMenorQue(LanguageParser.MenorQueContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -179,6 +193,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en comparación.";
         }
 
+        // Visitor para una comparación de mayor o igual que
         public override object VisitMayorOIgual(LanguageParser.MayorOIgualContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -190,6 +205,7 @@ namespace API.compiler
             return "Error: Tipos incompatibles en comparación.";
         }
 
+        // Visitor para una comparación de menor o igual que
         public override object VisitMenorOIgual(LanguageParser.MenorOIgualContext context)
         {
             var izq = Visit(context.expresion(0));
@@ -201,12 +217,12 @@ namespace API.compiler
             return "Error: Tipos incompatibles en comparación.";
         }
 
+        // visitor para una comparación de igualdad
         public override object VisitComparacionIgual(LanguageParser.ComparacionIgualContext context)
         {
-            var izq = Visitar(contexto.expresion(0));
-            var der = Visitar(contexto.expresion(1));
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
 
-            // 🔹 Convertir números a double si es posible
             double? numIzq = ConvertirADouble(izq);
             double? numDer = ConvertirADouble(der);
 
@@ -215,19 +231,16 @@ namespace API.compiler
                 return numIzq.Value == numDer.Value;
             }
 
-            // 🔹 Comparar cadenas
             if (izq is string strIzq && der is string strDer)
             {
                 return strIzq == strDer;
             }
 
-            // 🔹 Comparar booleanos
             if (izq is bool boolIzq && der is bool boolDer)
             {
                 return boolIzq == boolDer;
             }
 
-            // 🔹 Comparar caracteres (runas)
             if (izq is char charIzq && der is char charDer)
             {
                 return charIzq == charDer;
@@ -236,12 +249,12 @@ namespace API.compiler
             return "Error: Tipos incompatibles en comparación de igualdad.";
         }
 
+        // Visitor una comparación de desigualdad
         public override object VisitComparacionDiferente(LanguageParser.ComparacionDiferenteContext context)
         {
-            var izq = Visitar(contexto.expresion(0));
-            var der = Visitar(contexto.expresion(1));
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
 
-            // 🔹 Convertir números a double si es posible
             double? numIzq = ConvertirADouble(izq);
             double? numDer = ConvertirADouble(der);
 
@@ -250,19 +263,16 @@ namespace API.compiler
                 return numIzq.Value != numDer.Value;
             }
 
-            // 🔹 Comparar cadenas
             if (izq is string strIzq && der is string strDer)
             {
                 return strIzq != strDer;
             }
 
-            // 🔹 Comparar booleanos
             if (izq is bool boolIzq && der is bool boolDer)
             {
                 return boolIzq != boolDer;
             }
 
-            // 🔹 Comparar caracteres (runas)
             if (izq is char charIzq && der is char charDer)
             {
                 return charIzq != charDer;
@@ -270,18 +280,20 @@ namespace API.compiler
 
             return "Error: Tipos incompatibles en comparación de desigualdad.";
         }
-        
 
+        // Visitor para un literal entero
         public override object VisitLiteralEntero(LanguageParser.LiteralEnteroContext context)
         {
             return double.Parse(context.GetText());
         }
 
+        // Visitor para un literal flotante
         public override object VisitLiteralFlotante(LanguageParser.LiteralFlotanteContext context)
         {
             return double.Parse(context.GetText());
         }
 
+        // Visitor para un identificador
         public override object VisitIdentificador(LanguageParser.IdentificadorContext context)
         {
             var id = context.IDENTIFICADOR().GetText();
@@ -289,6 +301,7 @@ namespace API.compiler
             return simbolo?.Valor ?? "nulo";
         }
 
+        // Visitor para una expresión entre paréntesis
         public override object VisitParentesis(LanguageParser.ParentesisContext context)
         {
             return Visit(context.expresion());
