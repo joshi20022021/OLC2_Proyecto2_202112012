@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using Antlr4.Runtime.Misc;
 using API.compiler;
@@ -50,16 +51,14 @@ namespace API.compiler
         // Método para convertir un valor a double
         private double? ConvertirADouble(object valor)
         {
-            if (valor is int valorEntero)
-                return (double)valorEntero;
-            if (valor is double valorDecimal)
-                return valorDecimal;
-            if (valor is NodoAST nodo && double.TryParse(nodo.Valor, out double resultado))
+            if (valor is int entero)
+                return (double)entero;
+            if (valor is double flotante)
+                return flotante;
+            if (valor is string str && double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double resultado))
                 return resultado;
-            if (valor is string texto && double.TryParse(texto, out double resultadoTexto))
-                return resultadoTexto;
 
-            return null;
+            return null; 
         }
 
         // Método para obtener el valor numérico de un objeto si es int, float64 o rune
@@ -114,18 +113,20 @@ namespace API.compiler
                 foreach (var expr in context.expresion())
                 {
                     var resultado = Visit(expr);
-                    Console.WriteLine($"DEBUG - Print recibe: {resultado}");
-
-                    valores.Add(resultado?.ToString() ?? "nulo");
+                    if (resultado is double d) // 🔹 Si es double, formateamos correctamente
+                    {
+                        valores.Add(d.ToString("0.0", CultureInfo.InvariantCulture));
+                    }
+                    else
+                    {
+                        valores.Add(resultado?.ToString() ?? "nulo");
+                    }
                 }
             }
-            string salida = string.Join(", ", valores).Trim();
 
-            if (!string.IsNullOrEmpty(salida)) 
-            {
-                Console.WriteLine($"Salida final: {salida}"); 
-                mensajesSalida.Add(salida);
-            }
+            string salida = string.Join(", ", valores);
+            Console.WriteLine($"DEBUG - Print recibe: {salida}"); // 🔹 Debugging para verificar
+            mensajesSalida.Add(salida);
 
             return null; 
         }
@@ -138,11 +139,18 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is double valIzq && der is double valDer)
-                return valIzq + valDer;
+            double? valIzq = ConvertirADouble(izq);
+            double? valDer = ConvertirADouble(der);
+
+            if (valIzq.HasValue && valDer.HasValue)
+            {
+                // 🔹 Si alguno es float, devolvemos un float
+                return valIzq.Value + valDer.Value;
+            }
 
             return "Error: Tipos incompatibles en suma.";
         }
+
 
         // Visitor para una operación de resta
         public override object VisitResta(LanguageParser.RestaContext context)
@@ -150,8 +158,11 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is double valIzq && der is double valDer)
-                return valIzq - valDer;
+            double? valIzq = ConvertirADouble(izq);
+            double? valDer = ConvertirADouble(der);
+
+            if (valIzq.HasValue && valDer.HasValue)
+                return valIzq.Value - valDer.Value;
 
             return "Error: Tipos incompatibles en resta.";
         }
@@ -162,8 +173,11 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is double valIzq && der is double valDer)
-                return valIzq * valDer;
+            double? valIzq = ConvertirADouble(izq);
+            double? valDer = ConvertirADouble(der);
+
+            if (valIzq.HasValue && valDer.HasValue)
+                return valIzq.Value * valDer.Value;
 
             return "Error: Tipos incompatibles en multiplicación.";
         }
@@ -174,14 +188,17 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is double valIzq && der is double valDer)
+            double? valIzq = ConvertirADouble(izq);
+            double? valDer = ConvertirADouble(der);
+
+            if (valIzq.HasValue && valDer.HasValue)
             {
-                if (valDer == 0) return "Error: División por 0.";
-                return valIzq / valDer;
+                if (valDer.Value == 0) return "Error: División por 0.";
+                return valIzq.Value / valDer.Value;
             }
+
             return "Error: Tipos incompatibles en división.";
         }
-
         // Visitor para una operación de módulo
         public override object VisitModulo(LanguageParser.ModuloContext context)
         {
@@ -361,6 +378,34 @@ namespace API.compiler
         }
 
 
+        //sentencia if y else
+
+        public override object VisitIfElse(LanguageParser.IfElseContext context)
+        {
+            var condicion = Visit(context.expresion());
+
+            if (condicion is bool condicionBooleana)
+            {
+                if (condicionBooleana)
+                {
+                    return Visit(context.bloque(0)); 
+                }
+                else if (context.ifStmt() != null) 
+                {
+                    return Visit(context.ifStmt());
+                }
+                else if (context.bloque(1) != null) 
+                {
+                    return Visit(context.bloque(1));
+                }
+            }
+            else
+            {
+                return "Error: La condición del if debe ser de tipo booleano.";
+            }
+
+            return null;
+        }
 
         // Visitor para un literal entero
         public override object VisitLiteralEntero(LanguageParser.LiteralEnteroContext context)
@@ -371,7 +416,7 @@ namespace API.compiler
         // Visitor para un literal flotante
         public override object VisitLiteralFlotante(LanguageParser.LiteralFlotanteContext context)
         {
-            return double.Parse(context.GetText());
+            return double.Parse(context.GetText(), CultureInfo.InvariantCulture);
         }
 
         // Visitor para un identificador

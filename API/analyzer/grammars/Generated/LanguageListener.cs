@@ -97,6 +97,30 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSentenciaExpresion([NotNull] LanguageParser.SentenciaExpresionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>SentenciaIf</c>
+	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSentenciaIf([NotNull] LanguageParser.SentenciaIfContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>SentenciaIf</c>
+	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSentenciaIf([NotNull] LanguageParser.SentenciaIfContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>IfElse</c>
+	/// labeled alternative in <see cref="LanguageParser.ifStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterIfElse([NotNull] LanguageParser.IfElseContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>IfElse</c>
+	/// labeled alternative in <see cref="LanguageParser.ifStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitIfElse([NotNull] LanguageParser.IfElseContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Asignar</c>
 	/// labeled alternative in <see cref="LanguageParser.asignacion"/>.
 	/// </summary>

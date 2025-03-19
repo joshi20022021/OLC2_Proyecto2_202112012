@@ -56,6 +56,12 @@ sentencia
     : asignacion PUNTOYCOMA               # SentenciaAsignacion
     | imprimir PUNTOYCOMA                 # SentenciaImprimir
     | expresion PUNTOYCOMA                # SentenciaExpresion
+    | ifStmt                               # SentenciaIf  
+    ;
+
+//sentencia if y else
+ifStmt
+    : 'if' expresion bloque ( 'else' ifStmt | 'else' bloque )? # IfElse
     ;
 
 //asignacion de variables

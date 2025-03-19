@@ -114,6 +114,34 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSentenciaExpresion([NotNull] LanguageParser.SentenciaExpresionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>SentenciaIf</c>
+	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSentenciaIf([NotNull] LanguageParser.SentenciaIfContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>SentenciaIf</c>
+	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSentenciaIf([NotNull] LanguageParser.SentenciaIfContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>IfElse</c>
+	/// labeled alternative in <see cref="LanguageParser.ifStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIfElse([NotNull] LanguageParser.IfElseContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>IfElse</c>
+	/// labeled alternative in <see cref="LanguageParser.ifStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIfElse([NotNull] LanguageParser.IfElseContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Asignar</c>
 	/// labeled alternative in <see cref="LanguageParser.asignacion"/>.
 	/// <para>The default implementation does nothing.</para>

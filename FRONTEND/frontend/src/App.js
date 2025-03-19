@@ -182,21 +182,41 @@ function App() {
       <div className="row flex-grow-1 m-0">
         <div className="col-md-8 d-flex flex-column p-0">
           <div className="flex-grow-1 border-end border-secondary">
-            <div className="h-100 position-relative">
-              <div className="position-absolute line-numbers bg-secondary text-white pe-2">
+            <div className="h-100 position-relative overflow-hidden">
+              <div className="position-absolute line-numbers bg-secondary text-white pe-2" 
+                   style={{ 
+                     zIndex: 1,
+                     left: 0,
+                     top: 0,
+                     bottom: 0,
+                     width: '45px',
+                     overflow: 'hidden'
+                   }}>
                 {files[activeFileIndex].content.split('\n').map((_, i) => (
-                  <div key={i}>{i + 1}</div>
+                  <div key={i} style={{ paddingLeft: '8px' }}>{i + 1}</div>
                 ))}
               </div>
               <textarea
-                className="w-100 h-100 ps-5 border-0 bg-dark text-light"
-                style={{ fontFamily: 'monospace', outline: 'none', resize: 'none' }}
+                className="w-100 h-100 border-0 bg-dark text-light"
+                style={{ 
+                  fontFamily: "'Fira Code', monospace",
+                  outline: 'none',
+                  resize: 'none',
+                  padding: '10px 15px 10px 55px !important',
+                  tabSize: 4,
+                  lineHeight: '1.5',
+                  whiteSpace: 'pre-wrap'
+                }}
                 value={files[activeFileIndex].content}
                 onChange={(e) => {
                   const newFiles = [...files];
                   newFiles[activeFileIndex].content = e.target.value;
                   newFiles[activeFileIndex].saved = false;
                   setFiles(newFiles);
+                }}
+                onScroll={(e) => {
+                  const lineNumbers = e.target.previousSibling;
+                  lineNumbers.scrollTop = e.target.scrollTop;
                 }}
               />
             </div>
@@ -283,33 +303,34 @@ const styles = `
   }
 
   .line-numbers {
-    width: 45px;
     font-family: 'Fira Code', monospace;
     font-size: 13px;
     color: #6c757d;
     background: #1a1a1a;
-    padding-top: 4px;
+    pointer-events: none;
+    user-select: none;
   }
 
   textarea {
     font-family: 'Fira Code', monospace;
     font-size: 13px;
-    line-height: 1.6;
-    padding-left: 50px !important;
+    line-height: 1.5;
     caret-color: #00ff88;
+    scrollbar-width: thin;
+    scrollbar-color: #333 #1a1a1a;
   }
 
-  pre {
-    font-family: 'Fira Code', monospace;
-    font-size: 13px;
-    border-radius: 8px;
-    padding: 15px !important;
+  textarea::-webkit-scrollbar {
+    width: 8px;
   }
 
-  .table-dark {
-    --bs-table-bg: #1a1a1a;
-    --bs-table-striped-bg: #202020;
-    --bs-table-hover-bg: #2a2a2a;
+  textarea::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+
+  textarea::-webkit-scrollbar-thumb {
+    background-color: #333;
+    border-radius: 4px;
   }
 `;
 

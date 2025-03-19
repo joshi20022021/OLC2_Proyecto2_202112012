@@ -71,6 +71,20 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSentenciaExpresion([NotNull] LanguageParser.SentenciaExpresionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>SentenciaIf</c>
+	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSentenciaIf([NotNull] LanguageParser.SentenciaIfContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>IfElse</c>
+	/// labeled alternative in <see cref="LanguageParser.ifStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitIfElse([NotNull] LanguageParser.IfElseContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Asignar</c>
 	/// labeled alternative in <see cref="LanguageParser.asignacion"/>.
 	/// </summary>
