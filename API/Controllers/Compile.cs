@@ -1,78 +1,64 @@
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
+using System.IO;
+using Microsoft.AspNetCore.Mvc;
 using Antlr4.Runtime;
 using API.compiler;
-using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using System.Linq; // Agregar para usar Select()
 
-namespace API.Controllers
+[ApiController]
+[Route("[controller]")]
+public class Compile : ControllerBase
 {
-    [Route("[controller]")]
-    public class Compile : Controller
+    private readonly ILogger<Compile> _logger;
+
+    public Compile(ILogger<Compile> logger)
     {
-        private readonly ILogger<Compile> _logger;
+        _logger = logger;
+    }
 
-        public Compile(ILogger<Compile> logger)
+    public class CompileRequest
+    {
+        public string Code { get; set; }
+    }
+
+    [HttpPost]
+    public IActionResult Post([FromBody] CompileRequest request)
+    {
+        var errores = new List<CustomError>();
+
+        var inputStream = new AntlrInputStream(request.Code);
+        var lexer = new LanguageLexer(inputStream);
+        var tokenStream = new CommonTokenStream(lexer);
+        var parser = new LanguageParser(tokenStream);
+
+        parser.RemoveErrorListeners();
+        parser.AddErrorListener(new CustomErrorListener(errores));
+
+        var tree = parser.programa(); // 🔹 CAMBIO AQUÍ: `programa()` en lugar de `program()`
+
+        // 📌 Depuración extra: Imprimir el árbol de sintaxis
+        Console.WriteLine("\n===== ÁRBOL DE SINTAXIS GENERADO =====");
+        Console.WriteLine(tree.ToStringTree(parser));
+        Console.WriteLine("======================================\n");
+
+        if (tree == null)
         {
-            _logger = logger;
+            return BadRequest(new { output = "Error al generar el árbol de sintaxis.", errores });
         }
 
-        public class CompileRequest
+        var visitor = new CompilerVisitor();
+        object result = visitor.Visit(tree);
+
+        // 📌 Capturar la salida generada por print()
+        string salida = string.Join("\n", visitor.ObtenerSalida()); // 🔹 CAMBIO AQUÍ: `ObtenerSalida()`
+
+        return Ok(new
         {
-            [Required]
-            public required string Code { get; set; }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CompileRequest request)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            _logger.LogInformation("Compiling code: {0}", request.Code);
-
-            var inputStream = new AntlrInputStream(request.Code);
-            var lexer = new LanguageLexer(inputStream);
-            var tokenStream = new CommonTokenStream(lexer);
-            var parser = new LanguageParser(tokenStream);
-
-            // Capturar errores
-            var errors = new List<string>();
-            parser.RemoveErrorListeners();
-            parser.AddErrorListener(new CustomErrorListener(errors));
-
-            // Analizar el código
-            var tree = parser.program();
-
-            var visitor = new CompilerVisitor();
-            object result = visitor.Visit(tree);
-
-            // Verificar si hay errores y registrar en consola
-            if (errors.Count > 0)
-            {
-                _logger.LogWarning("Se encontraron errores durante la compilación:");
-                foreach (var error in errors)
-                {
-                    _logger.LogWarning(error);
-                }
-            }
-
-            // Obtener la tabla de símbolos del visitor
-            var symbolTable = visitor.GetSymbolTable();
-
-            // Opcional: Si tienes una forma de generar el AST real, reemplázalo aquí
-            var ast = new { type = "Program", children = new List<object>() };
-
-            return Ok(new
-            {
-                output = errors.Count > 0 ? "Errores encontrados en el código." : result?.ToString() ?? "Ejecución completada.",
-                errors = errors,
-                symbolTable = symbolTable,
-                ast = ast
-            });
-        }
+            output = salida,  
+            errors = errores.Select(e => new { e.Line, e.Column, e.Message, e.Type }),
+            symbolTable = visitor.ObtenerTablaSimbolos(), // 🔹 CAMBIO AQUÍ: `ObtenerTablaSimbolos()`
+            ast = tree.ToStringTree(parser)
+        });
     }
 }

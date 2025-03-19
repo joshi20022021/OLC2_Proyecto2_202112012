@@ -3,66 +3,81 @@ grammar Language;
 // ***********************
 // ** Reglas Léxicas **
 // ***********************
-PLUS      : '+';
-MINUS     : '-';
-MULT      : '*';
-DIV       : '/';
-MOD       : '%';
-ASSIGN    : '=';
-LPAREN    : '(';
-RPAREN    : ')';
-SEMI      : ';';
+MAS     : '+';
+MENOS   : '-';
+MULT    : '*';
+DIV     : '/';
+MOD     : '%';
+IGUAL   : '=';
+PARENTESIS_IZQ : '(';
+PARENTESIS_DER : ')';
+PUNTOYCOMA : ';';
 
-PRINT     : 'print';
+IMPRIMIR : 'fmt.Println';
 
-// Nuevos tokens para tipos primitivos
-TRUE      : 'true';
-FALSE     : 'false';
-NIL       : 'nil';
-STRING_LIT : '"' (~["])* '"';   // String entre comillas dobles
-RUNE_LIT   : '\'' ~['\n\r] '\''; // Rune entre comillas simples
-FLOAT_LIT : [0-9]+ '.' [0-9]+;
-INT_LIT   : [0-9]+;
-ID        : [a-zA-Z_][a-zA-Z0-9_]*;
+// Operadores Relacionales
+MAYOR    : '>';
+MENOR    : '<';
+MAYOR_IGUAL : '>=';
+MENOR_IGUAL : '<=';
+IGUALDAD : '==';
+DIFERENTE : '!=';
 
-WS : [ \t\r\n]+ -> skip;
-COMMENT : '//' ~[\r\n]* -> skip;
-MULTILINE_COMMENT : '/*' .*? '*/' -> skip;
+// Tipos primitivos
+VERDADERO : 'true';
+FALSO     : 'false';
+NULO      : 'nil';
+
+LIT_STRING : '"' (~["])* '"';  
+LIT_RUNE   : '\'' ~['\n\r] '\''; 
+LIT_FLOAT  : [0-9]+ '.' [0-9]+;
+LIT_ENTERO : [0-9]+;
+IDENTIFICADOR : [a-zA-Z_][a-zA-Z0-9_]*;
+
+ESPACIOS : [ \t\r\n]+ -> skip;
+COMENTARIO : '//' ~[\r\n]* -> skip;
+COMENTARIO_MULTILINEA : '/*' .*? '*/' -> skip;
 
 // ***********************
 // ** Reglas Sintácticas **
 // ***********************
-program
-    : statement*                          # ProgramRule
+programa
+    : sentencia*                          # ReglaPrograma
     ;
 
-statement
-    : assignmentStmt SEMI                 # AssignmentStatement
-    | printStmt SEMI                      # PrintStatement
-    | expr SEMI                           # ExpressionStatement
+sentencia
+    : asignacion PUNTOYCOMA               # SentenciaAsignacion
+    | imprimir PUNTOYCOMA                 # SentenciaImprimir
+    | expresion PUNTOYCOMA                # SentenciaExpresion
     ;
 
-assignmentStmt
-    : ID ASSIGN expr                      # Assignment
+asignacion
+    : IDENTIFICADOR IGUAL expresion       # Asignar
     ;
 
-printStmt
-    : PRINT LPAREN expr RPAREN            # Print
+imprimir
+    : IMPRIMIR PARENTESIS_IZQ (expresion (',' expresion)*)? PARENTESIS_DER # Imprime
     ;
 
-expr
-    : expr PLUS expr                      # Add
-    | expr MINUS expr                     # Subtract
-    | expr MULT expr                      # Multiply
-    | expr DIV expr                       # Divide
-    | expr MOD expr                       # Modulus
-    | LPAREN expr RPAREN                  # Parentheses
-    | INT_LIT                             # IntegerLiteral
-    | FLOAT_LIT                           # FloatLiteral
-    | RUNE_LIT                            # RuneLiteral
-    | STRING_LIT                          # StringLiteral  
-    | TRUE                                # BooleanTrue
-    | FALSE                               # BooleanFalse
-    | NIL                                 # NilLiteral
-    | ID                                  # Identifier
+expresion
+    : expresion MAS expresion              # Suma
+    | expresion MENOS expresion            # Resta
+    | expresion MULT expresion             # Multiplicacion
+    | expresion DIV expresion              # Division
+    | expresion MOD expresion              # Modulo
+    | expresion IGUALDAD expresion         # ComparacionIgual
+    | expresion DIFERENTE expresion        # ComparacionDiferente
+    | expresion MAYOR expresion            # MayorQue
+    | expresion MENOR expresion            # MenorQue
+    | expresion MAYOR_IGUAL expresion      # MayorOIgual
+    | expresion MENOR_IGUAL expresion      # MenorOIgual
+    | PARENTESIS_IZQ expresion PARENTESIS_DER # Parentesis
+    | LIT_ENTERO                           # LiteralEntero
+    | LIT_FLOAT                            # LiteralFlotante
+    | LIT_RUNE                             # LiteralRune
+    | LIT_STRING                           # LiteralCadena  
+    | VERDADERO                            # LiteralVerdadero
+    | FALSO                                # LiteralFalso
+    | NULO                                 # LiteralNulo
+    | IDENTIFICADOR                        # Identificador
     ;

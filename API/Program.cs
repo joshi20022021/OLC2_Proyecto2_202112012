@@ -2,13 +2,14 @@ using API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Habilitar CORS
+// Habilitar CORS correctamente
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
-        policy => policy.WithOrigins("http://localhost:5089", "http://localhost:3000") // Cambia si React está en otro dominio
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+        policy => policy
+            .AllowAnyOrigin()  // Permitir cualquier origen (útil para desarrollo)
+            .AllowAnyHeader()
+            .AllowAnyMethod());
 });
 
 // Agregar servicios
@@ -19,21 +20,30 @@ builder.Services.AddSingleton<InterpreterService>();
 
 var app = builder.Build();
 
-// Usar CORS antes de cualquier middleware
-app.UseCors("AllowAll");
-
-app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthorization();
-
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseDeveloperExceptionPage();
 }
 
+// Habilitar archivos estáticos
+app.UseStaticFiles();
+
+// 📌 **IMPORTANTE**: Usa `UseRouting()` antes de `UseCors()`
+app.UseRouting();
+
+// 📌 **IMPORTANTE**: Habilitar CORS después de `UseRouting()`
+app.UseCors("AllowAll");
+
+// Seguridad y autenticación
+app.UseAuthorization();
+
+// Usar redirección HTTPS (opcional)
 app.UseHttpsRedirection();
+
+// Mapear controladores
 app.MapControllers();
 
+// Agregar rutas
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

@@ -1,167 +1,297 @@
 using System;
 using System.Collections.Generic;
 using Antlr4.Runtime.Misc;
-using API.compiler;  
+using API.compiler;
+
 namespace API.compiler
 {
     public class CompilerVisitor : LanguageBaseVisitor<object>
     {
-        private readonly Dictionary<string, object> symbolTable = new Dictionary<string, object>();
-        //operacion suma    
-        public override object VisitAdd(LanguageParser.AddContext context)
+        public class EntradaSimbolo
         {
-            object left = Visit(context.expr(0));
-            object right = Visit(context.expr(1));
+            public string Nombre { get; set; } = string.Empty;
+            public string Tipo { get; set; } = "indefinido";
+            public object Valor { get; set; } = "nulo";
+            public string Contexto { get; set; } = "Global";
+        }
 
-            // 🔥 Si alguno de los operandos es una cadena, concatenar en lugar de sumar
-            if (left is string || right is string)
+        public class NodoAST
+        {
+            public string Tipo { get; set; } = "Desconocido";
+            public string? Valor { get; set; }
+            public List<NodoAST> Hijos { get; set; } = new List<NodoAST>();
+        }
+
+        private readonly List<EntradaSimbolo> tablaSimbolos = new List<EntradaSimbolo>();
+        private readonly List<string> mensajesSalida = new List<string>();
+        private readonly List<NodoAST> nodosAST = new List<NodoAST>();
+
+        public List<EntradaSimbolo> ObtenerTablaSimbolos() => tablaSimbolos;
+        public List<NodoAST> ObtenerAST() => nodosAST;
+        public List<string> ObtenerSalida() => mensajesSalida;
+
+        private string ObtenerNombreTipo(object valor)
+        {
+            return valor switch
             {
-                return left.ToString() + right.ToString();
+                null => "nulo",
+                int _ => "entero",
+                double _ => "decimal",
+                bool _ => "booleano",
+                string _ => "cadena",
+                _ => valor.GetType().Name
+            };
+        }
+
+        private double? ConvertirADouble(object valor)
+        {
+            if (valor is int valorEntero)
+                return (double)valorEntero;
+            if (valor is double valorDecimal)
+                return valorDecimal;
+            if (valor is NodoAST nodo && double.TryParse(nodo.Valor, out double resultado))
+                return resultado;
+            if (valor is string texto && double.TryParse(texto, out double resultadoTexto))
+                return resultadoTexto;
+
+            return null;
+        }
+
+        public override object VisitReglaPrograma(LanguageParser.ReglaProgramaContext context)
+        {
+            mensajesSalida.Clear();
+            foreach (var sentencia in context.sentencia())
+            {
+                Visit(sentencia);
+            }
+            return string.Join("\n", mensajesSalida);
+        }
+
+        public override object VisitAsignar(LanguageParser.AsignarContext context)
+        {
+            var valor = Visit(context.expresion());
+            var simbolo = new EntradaSimbolo
+            {
+                Nombre = context.IDENTIFICADOR().GetText(),
+                Valor = valor ?? "nulo",
+                Tipo = ObtenerNombreTipo(valor)
+            };
+            tablaSimbolos.Add(simbolo);
+            return valor;
+        }
+
+        public override object VisitImprime(LanguageParser.ImprimeContext context)
+        {
+            List<string> valores = new List<string>();
+
+            if (context.expresion() != null)
+            {
+                foreach (var expr in context.expresion())
+                {
+                    var resultado = Visit(expr);
+                    valores.Add(resultado?.ToString() ?? "nulo");
+                }
             }
 
-            // ✅ Si ambos son números, hacer suma normal
-            if (left is double leftNum && right is double rightNum)
+            string salida = string.Join(" ", valores);
+            mensajesSalida.Add(salida);
+            return salida;
+        }
+
+        public override object VisitSuma(LanguageParser.SumaContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq + valDer;
+
+            return "Error: Tipos incompatibles en suma.";
+        }
+
+        public override object VisitResta(LanguageParser.RestaContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq - valDer;
+
+            return "Error: Tipos incompatibles en resta.";
+        }
+
+        public override object VisitMultiplicacion(LanguageParser.MultiplicacionContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq * valDer;
+
+            return "Error: Tipos incompatibles en multiplicación.";
+        }
+
+        public override object VisitDivision(LanguageParser.DivisionContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
             {
-                return leftNum + rightNum;
+                if (valDer == 0) return "Error: División por 0.";
+                return valIzq / valDer;
+            }
+            return "Error: Tipos incompatibles en división.";
+        }
+
+        public override object VisitModulo(LanguageParser.ModuloContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+            {
+                if (valDer == 0) return "Error: Módulo por 0.";
+                return valIzq % valDer;
+            }
+            return "Error: Tipos incompatibles en módulo.";
+        }
+
+        public override object VisitMayorQue(LanguageParser.MayorQueContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq > valDer;
+
+            return "Error: Tipos incompatibles en comparación.";
+        }
+
+        public override object VisitMenorQue(LanguageParser.MenorQueContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq < valDer;
+
+            return "Error: Tipos incompatibles en comparación.";
+        }
+
+        public override object VisitMayorOIgual(LanguageParser.MayorOIgualContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq >= valDer;
+
+            return "Error: Tipos incompatibles en comparación.";
+        }
+
+        public override object VisitMenorOIgual(LanguageParser.MenorOIgualContext context)
+        {
+            var izq = Visit(context.expresion(0));
+            var der = Visit(context.expresion(1));
+
+            if (izq is double valIzq && der is double valDer)
+                return valIzq <= valDer;
+
+            return "Error: Tipos incompatibles en comparación.";
+        }
+
+        public override object VisitComparacionIgual(LanguageParser.ComparacionIgualContext context)
+        {
+            var izq = Visitar(contexto.expresion(0));
+            var der = Visitar(contexto.expresion(1));
+
+            // 🔹 Convertir números a double si es posible
+            double? numIzq = ConvertirADouble(izq);
+            double? numDer = ConvertirADouble(der);
+
+            if (numIzq.HasValue && numDer.HasValue)
+            {
+                return numIzq.Value == numDer.Value;
             }
 
-            throw new Exception($"Error: No se puede sumar {left} y {right}");
-        }
-
-        //operacion resta   
-        public override object VisitSubtract(LanguageParser.SubtractContext context)
-        {
-            object left = Visit(context.expr(0));
-            object right = Visit(context.expr(1));
-
-            if (left is double leftNum && right is double rightNum)
+            // 🔹 Comparar cadenas
+            if (izq is string strIzq && der is string strDer)
             {
-                return leftNum - rightNum;
+                return strIzq == strDer;
             }
-            throw new Exception($"Error: No se puede restar {left} y {right}");
-        }
-        //operacion multiplicacion
-        public override object VisitMultiply(LanguageParser.MultiplyContext context)
-        {
-            object left = Visit(context.expr(0));
-            object right = Visit(context.expr(1));
-            if (left is double leftNum && right is double rightNum)
+
+            // 🔹 Comparar booleanos
+            if (izq is bool boolIzq && der is bool boolDer)
             {
-                return leftNum * rightNum;
+                return boolIzq == boolDer;
             }
-            throw new Exception($"Error: No se puede multiplicar {left} y {right}");
-        }
-        //operacion division
-        public override object VisitDivide(LanguageParser.DivideContext context)
-        {
-            object left = Visit(context.expr(0));
-            object right = Visit(context.expr(1));
-            if (left is double leftNum && right is double rightNum)
+
+            // 🔹 Comparar caracteres (runas)
+            if (izq is char charIzq && der is char charDer)
             {
-                return leftNum / rightNum;
+                return charIzq == charDer;
             }
-            throw new Exception($"Error: No se puede dividir {left} y {right}");
+
+            return "Error: Tipos incompatibles en comparación de igualdad.";
         }
-        //operacion modulo
-        public override object VisitModulus(LanguageParser.ModulusContext context)
+
+        public override object VisitComparacionDiferente(LanguageParser.ComparacionDiferenteContext context)
         {
-            object left = Visit(context.expr(0));
-            object right = Visit(context.expr(1));
-            if (left is double leftNum && right is double rightNum)
+            var izq = Visitar(contexto.expresion(0));
+            var der = Visitar(contexto.expresion(1));
+
+            // 🔹 Convertir números a double si es posible
+            double? numIzq = ConvertirADouble(izq);
+            double? numDer = ConvertirADouble(der);
+
+            if (numIzq.HasValue && numDer.HasValue)
             {
-                return leftNum % rightNum;
+                return numIzq.Value != numDer.Value;
             }
-            throw new Exception($"Error: No se puede hacer modulo de {left} y {right}");
-        }
-        //parentesis
-        public override object VisitParentheses(LanguageParser.ParenthesesContext context)
-        {
-            return Visit(context.expr());
-        }
-        //entero
-        public override object VisitIntegerLiteral(LanguageParser.IntegerLiteralContext context)
-        {
-            return double.Parse(context.INT_LIT().GetText());
-        }
-        //flotante
-        public override object VisitFloatLiteral(LanguageParser.FloatLiteralContext context)
-        {
-            return double.Parse(context.FLOAT_LIT().GetText());
-        }
-        //variable
-        public override object VisitIdentifier(LanguageParser.IdentifierContext context)
-        {
-            string id = context.ID().GetText();
-            return symbolTable.ContainsKey(id) ? symbolTable[id] : "nil"; // 🔥 Evita errores
-        }
 
+            // 🔹 Comparar cadenas
+            if (izq is string strIzq && der is string strDer)
+            {
+                return strIzq != strDer;
+            }
 
-        //asignacion
-        public override object VisitAssignmentStatement(LanguageParser.AssignmentStatementContext context)
+            // 🔹 Comparar booleanos
+            if (izq is bool boolIzq && der is bool boolDer)
+            {
+                return boolIzq != boolDer;
+            }
+
+            // 🔹 Comparar caracteres (runas)
+            if (izq is char charIzq && der is char charDer)
+            {
+                return charIzq != charDer;
+            }
+
+            return "Error: Tipos incompatibles en comparación de desigualdad.";
+        }
+        
+
+        public override object VisitLiteralEntero(LanguageParser.LiteralEnteroContext context)
         {
-            var assignCtx = context.assignmentStmt() as LanguageParser.AssignmentContext;
-            if (assignCtx == null)
-                throw new Exception("Error: assignmentStmt() no se pudo convertir a AssignmentContext.");
-
-            string id = assignCtx.ID().GetText();
-            object value = Visit(assignCtx.expr()) ?? "nil"; // 🔥 Si es nulo, guarda "nil"
-
-            symbolTable[id] = value; // ✅ Ahora `symbolTable` acepta cualquier tipo de dato
-
-            return value;
+            return double.Parse(context.GetText());
         }
 
-
-        //imprimir
-        public override object VisitPrintStatement(LanguageParser.PrintStatementContext context)
+        public override object VisitLiteralFlotante(LanguageParser.LiteralFlotanteContext context)
         {
-            var printCtx = context.printStmt() as LanguageParser.PrintContext;
-            if (printCtx == null)
-                throw new Exception("Error: printStmt() no se pudo convertir a PrintContext.");
-
-            object value = Visit(printCtx.expr()) ?? "nil"; // 🔥 Si es null, asigna "nil"
-
-            Console.WriteLine("Output: " + value); // ✅ Asegura una única impresión
-            return null; // 🔥 No lo devuelve a `VisitProgramRule`, solo lo imprime
+            return double.Parse(context.GetText());
         }
 
-        //expresion
-        public override object VisitExpressionStatement(LanguageParser.ExpressionStatementContext context)
+        public override object VisitIdentificador(LanguageParser.IdentificadorContext context)
         {
-            return Visit(context.expr());
+            var id = context.IDENTIFICADOR().GetText();
+            var simbolo = tablaSimbolos.Find(s => s.Nombre == id);
+            return simbolo?.Valor ?? "nulo";
         }
-        //cadena
-        public override object VisitStringLiteral(LanguageParser.StringLiteralContext context)
-        {
-            return context.STRING_LIT().GetText().Trim('"'); // 🔥 Remueve solo comillas dobles
-        }
-        //programa
-public override object VisitProgramRule(LanguageParser.ProgramRuleContext context)
-{
-    HashSet<object> uniqueResults = new HashSet<object>(); // 🔥 Usamos un HashSet para evitar duplicados
 
-    foreach (var stmt in context.statement())
-    {
-        var result = Visit(stmt);
-        if (result != null && uniqueResults.Add(result))  // 🔥 Solo agregamos si no está en el conjunto
+        public override object VisitParentesis(LanguageParser.ParentesisContext context)
         {
-            Console.WriteLine("DEBUG Output: " + result); // 👀 Verifica qué valores se están procesando
+            return Visit(context.expresion());
         }
     }
-
-    return string.Join("\n", uniqueResults); // ✅ Devuelve valores sin duplicados
-}
-
-public List<object> GetSymbolTable()
-{
-    var symbols = new List<object>();
-    foreach (var entry in symbolTable)
-    {
-        // Aquí definimos 'name' y 'type'. Ajusta 'type' según tus necesidades.
-        symbols.Add(new { name = entry.Key, type = entry.Value?.GetType().Name ?? "undefined", value = entry.Value });
-    }
-    return symbols;
-
-    }
-}
 }
