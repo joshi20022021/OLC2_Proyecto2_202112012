@@ -170,6 +170,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitComparacionIgual([NotNull] LanguageParser.ComparacionIgualContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Or</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterOr([NotNull] LanguageParser.OrContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Or</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitOr([NotNull] LanguageParser.OrContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralCadena</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -296,6 +310,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSuma([NotNull] LanguageParser.SumaContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Not</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterNot([NotNull] LanguageParser.NotContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Not</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitNot([NotNull] LanguageParser.NotContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>MenorOIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -309,6 +337,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMenorOIgual([NotNull] LanguageParser.MenorOIgualContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>And</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAnd([NotNull] LanguageParser.AndContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>And</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAnd([NotNull] LanguageParser.AndContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralNulo</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

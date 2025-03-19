@@ -145,6 +145,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitComparacionIgual([NotNull] LanguageParser.ComparacionIgualContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Or</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterOr([NotNull] LanguageParser.OrContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Or</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitOr([NotNull] LanguageParser.OrContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralCadena</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// </summary>
@@ -253,6 +265,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSuma([NotNull] LanguageParser.SumaContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>Not</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNot([NotNull] LanguageParser.NotContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Not</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNot([NotNull] LanguageParser.NotContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>MenorOIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// </summary>
@@ -264,6 +288,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitMenorOIgual([NotNull] LanguageParser.MenorOIgualContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>And</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAnd([NotNull] LanguageParser.AndContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>And</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAnd([NotNull] LanguageParser.AndContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralNulo</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

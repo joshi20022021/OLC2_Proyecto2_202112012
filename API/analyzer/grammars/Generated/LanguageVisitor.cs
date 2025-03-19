@@ -99,6 +99,13 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitComparacionIgual([NotNull] LanguageParser.ComparacionIgualContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Or</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitOr([NotNull] LanguageParser.OrContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>LiteralCadena</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// </summary>
@@ -162,12 +169,26 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSuma([NotNull] LanguageParser.SumaContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>Not</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNot([NotNull] LanguageParser.NotContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>MenorOIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitMenorOIgual([NotNull] LanguageParser.MenorOIgualContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>And</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAnd([NotNull] LanguageParser.AndContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LiteralNulo</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

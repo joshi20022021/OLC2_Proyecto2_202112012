@@ -1,8 +1,7 @@
 grammar Language;
 
-// ***********************
 // ** Reglas Léxicas **
-// ***********************
+
 MAS     : '+';
 MENOS   : '-';
 MULT    : '*';
@@ -13,6 +12,7 @@ PARENTESIS_IZQ : '(';
 PARENTESIS_DER : ')';
 PUNTOYCOMA : ';';
 
+//imprimir
 IMPRIMIR : 'fmt.Println';
 
 // Operadores Relacionales
@@ -40,9 +40,7 @@ ESPACIOS : [ \t\r\n]+ -> skip;
 COMENTARIO : '//' ~[\r\n]* -> skip;
 COMENTARIO_MULTILINEA : '/*' .*? '*/' -> skip;
 
-// ***********************
 // ** Reglas Sintácticas **
-// ***********************
 
 //inicio de mi programa
 programa : funcionMain ;
@@ -83,6 +81,9 @@ expresion
     | expresion MENOR expresion            # MenorQue
     | expresion MAYOR_IGUAL expresion      # MayorOIgual
     | expresion MENOR_IGUAL expresion      # MenorOIgual
+    | expresion '&&' expresion             # And
+    | expresion '||' expresion             # Or
+    | '!' expresion                        # Not
     | PARENTESIS_IZQ expresion PARENTESIS_DER # Parentesis
     | LIT_ENTERO                           # LiteralEntero
     | LIT_FLOAT                            # LiteralFlotante
