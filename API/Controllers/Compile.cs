@@ -4,7 +4,7 @@ using Antlr4.Runtime;
 using API.compiler;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using System.Linq; // Agregar para usar Select()
+using System.Linq; 
 
 [ApiController]
 [Route("[controller]")]
@@ -35,9 +35,7 @@ public class Compile : ControllerBase
         parser.RemoveErrorListeners();
         parser.AddErrorListener(new CustomErrorListener(errores));
 
-        var tree = parser.programa(); // 🔹 CAMBIO AQUÍ: `programa()` en lugar de `program()`
-
-        // 📌 Depuración extra: Imprimir el árbol de sintaxis
+        var tree = parser.programa(); 
         Console.WriteLine("\n===== ÁRBOL DE SINTAXIS GENERADO =====");
         Console.WriteLine(tree.ToStringTree(parser));
         Console.WriteLine("======================================\n");
@@ -48,16 +46,16 @@ public class Compile : ControllerBase
         }
 
         var visitor = new CompilerVisitor();
-        object result = visitor.Visit(tree);
+        visitor.Visit(tree); 
+        List<string> outputLines = visitor.ObtenerSalida();
+        string salida = outputLines.Count > 0 ? string.Join("\n", outputLines) : "";
 
-        // 📌 Capturar la salida generada por print()
-        string salida = string.Join("\n", visitor.ObtenerSalida()); // 🔹 CAMBIO AQUÍ: `ObtenerSalida()`
 
         return Ok(new
         {
             output = salida,  
             errors = errores.Select(e => new { e.Line, e.Column, e.Message, e.Type }),
-            symbolTable = visitor.ObtenerTablaSimbolos(), // 🔹 CAMBIO AQUÍ: `ObtenerTablaSimbolos()`
+            symbolTable = visitor.ObtenerTablaSimbolos(), 
             ast = tree.ToStringTree(parser)
         });
     }

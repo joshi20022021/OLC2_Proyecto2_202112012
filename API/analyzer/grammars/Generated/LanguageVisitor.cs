@@ -32,12 +32,23 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ReglaPrograma</c>
-	/// labeled alternative in <see cref="LanguageParser.programa"/>.
+	/// Visit a parse tree produced by <see cref="LanguageParser.programa"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitReglaPrograma([NotNull] LanguageParser.ReglaProgramaContext context);
+	Result VisitPrograma([NotNull] LanguageParser.ProgramaContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.funcionMain"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFuncionMain([NotNull] LanguageParser.FuncionMainContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.bloque"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBloque([NotNull] LanguageParser.BloqueContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>SentenciaAsignacion</c>
 	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.

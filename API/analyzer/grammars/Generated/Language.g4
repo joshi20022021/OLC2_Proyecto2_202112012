@@ -28,12 +28,14 @@ VERDADERO : 'true';
 FALSO     : 'false';
 NULO      : 'nil';
 
+//sintaxis y tipos de datos
 LIT_STRING : '"' (~["])* '"';  
 LIT_RUNE   : '\'' ~['\n\r] '\''; 
 LIT_FLOAT  : [0-9]+ '.' [0-9]+;
 LIT_ENTERO : [0-9]+;
 IDENTIFICADOR : [a-zA-Z_][a-zA-Z0-9_]*;
 
+//comentarios
 ESPACIOS : [ \t\r\n]+ -> skip;
 COMENTARIO : '//' ~[\r\n]* -> skip;
 COMENTARIO_MULTILINEA : '/*' .*? '*/' -> skip;
@@ -41,24 +43,34 @@ COMENTARIO_MULTILINEA : '/*' .*? '*/' -> skip;
 // ***********************
 // ** Reglas Sintácticas **
 // ***********************
-programa
-    : sentencia*                          # ReglaPrograma
-    ;
 
+//inicio de mi programa
+programa : funcionMain ;
+
+//funcion main para ejecutar el archivo
+funcionMain : 'func' 'main' '(' ')' bloque ;
+
+//condiciones
+bloque : '{' sentencia* '}' ;
+
+//sentencias
 sentencia
     : asignacion PUNTOYCOMA               # SentenciaAsignacion
     | imprimir PUNTOYCOMA                 # SentenciaImprimir
     | expresion PUNTOYCOMA                # SentenciaExpresion
     ;
 
+//asignacion de variables
 asignacion
     : IDENTIFICADOR IGUAL expresion       # Asignar
     ;
 
+//imprimir argumentos
 imprimir
     : IMPRIMIR PARENTESIS_IZQ (expresion (',' expresion)*)? PARENTESIS_DER # Imprime
     ;
 
+//expresion aritmeticas,logicas, relacionales, tipos de datos
 expresion
     : expresion MAS expresion              # Suma
     | expresion MENOS expresion            # Resta

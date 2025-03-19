@@ -61,16 +61,32 @@ namespace API.compiler
             return null;
         }
 
-        // visitor para la regla principal del programa
-        public override object VisitReglaPrograma(LanguageParser.ReglaProgramaContext context)
+        // Método para obtener el valor numérico de un objeto si es int, float64 o rune
+        private double? ConvertirANumero(object valor)
         {
-            mensajesSalida.Clear();
-            foreach (var sentencia in context.sentencia())
-            {
-                Visit(sentencia);
-            }
-            return string.Join("\n", mensajesSalida);
+            if (valor is int entero)
+                return (double)entero;
+            if (valor is double decimalNum)
+                return decimalNum;
+            if (valor is char rune)
+                return (double)rune; 
+            return null;
         }
+
+        // visitor para la regla principal del programa
+        public override object VisitPrograma(LanguageParser.ProgramaContext context)
+        {
+            var funcionMain = context.funcionMain();
+            if (funcionMain == null)
+            {
+                Console.WriteLine("Error: No se encontró la función main().");
+                return null;
+            }
+
+            Visit(funcionMain);
+            return null;
+        }
+
 
         // visitor para una asignación de variable
         public override object VisitAsignar(LanguageParser.AsignarContext context)
@@ -86,7 +102,7 @@ namespace API.compiler
             return valor;
         }
 
-        // Visitor para un print
+                        // Visitor para un print
         public override object VisitImprime(LanguageParser.ImprimeContext context)
         {
             List<string> valores = new List<string>();
@@ -96,14 +112,23 @@ namespace API.compiler
                 foreach (var expr in context.expresion())
                 {
                     var resultado = Visit(expr);
+                    Console.WriteLine($"DEBUG - Print recibe: {resultado}");
+
                     valores.Add(resultado?.ToString() ?? "nulo");
                 }
             }
+            string salida = string.Join(", ", valores).Trim();
 
-            string salida = string.Join(" ", valores);
-            mensajesSalida.Add(salida);
-            return salida;
+            if (!string.IsNullOrEmpty(salida)) 
+            {
+                Console.WriteLine($"Salida final: {salida}"); ¡
+                mensajesSalida.Add(salida);
+            }
+
+            return null; ¡
         }
+
+
 
         // Visitor para una operación de suma
         public override object VisitSuma(LanguageParser.SumaContext context)
@@ -176,6 +201,7 @@ namespace API.compiler
             var der = Visit(context.expresion(1));
 
             if (izq is double valIzq && der is double valDer)
+
                 return valIzq > valDer;
 
             return "Error: Tipos incompatibles en comparación.";
@@ -301,10 +327,24 @@ namespace API.compiler
             return simbolo?.Valor ?? "nulo";
         }
 
+        public override object VisitLiteralCadena(LanguageParser.LiteralCadenaContext context)
+        {
+            
+            string texto = context.GetText().Trim('"');
+            return texto;
+        }
+
+
         // Visitor para una expresión entre paréntesis
         public override object VisitParentesis(LanguageParser.ParentesisContext context)
         {
             return Visit(context.expresion());
         }
+        //visitor para la funcion main
+        public override object VisitFuncionMain(LanguageParser.FuncionMainContext context)
+        {
+            return Visit(context.bloque());
+        }
+
     }
 }

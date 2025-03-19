@@ -1,13 +1,12 @@
 using System.Collections.Generic;
-using System.IO; // ✅ Importar TextWriter
+using System.IO; 
 using Antlr4.Runtime;
 
-// En CustomErrorListener.cs modifica
 public class CustomError
 {
     public int Line { get; set; }
     public int Column { get; set; }
-    public required string Message { get; set; } // Usar "required" en .NET 7+
+    public required string Message { get; set; } 
     public required string Type { get; set; }
 }   
 public class CustomErrorListener : IAntlrErrorListener<IToken>

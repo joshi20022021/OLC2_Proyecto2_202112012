@@ -1,5 +1,5 @@
 using Antlr4.Runtime;
-using API.compiler;                   // <-- Importa el visitor
+using API.compiler;                   
 
 namespace API.Services
 
@@ -15,8 +15,7 @@ namespace API.Services
         var tokenStream = new CommonTokenStream(lexer);
         var parser = new LanguageParser(tokenStream);
 
-        var tree = parser.programa(); // Asegurar que se usa la regla "program"
-
+        var tree = parser.programa(); 
         var visitor = new CompilerVisitor();
         object result = visitor.Visit(tree);
 

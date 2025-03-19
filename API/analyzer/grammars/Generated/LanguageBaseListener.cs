@@ -36,19 +36,41 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CLSCompliant(false)]
 public partial class LanguageBaseListener : ILanguageListener {
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ReglaPrograma</c>
-	/// labeled alternative in <see cref="LanguageParser.programa"/>.
+	/// Enter a parse tree produced by <see cref="LanguageParser.programa"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterReglaPrograma([NotNull] LanguageParser.ReglaProgramaContext context) { }
+	public virtual void EnterPrograma([NotNull] LanguageParser.ProgramaContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ReglaPrograma</c>
-	/// labeled alternative in <see cref="LanguageParser.programa"/>.
+	/// Exit a parse tree produced by <see cref="LanguageParser.programa"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitReglaPrograma([NotNull] LanguageParser.ReglaProgramaContext context) { }
+	public virtual void ExitPrograma([NotNull] LanguageParser.ProgramaContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.funcionMain"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncionMain([NotNull] LanguageParser.FuncionMainContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.funcionMain"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncionMain([NotNull] LanguageParser.FuncionMainContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.bloque"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBloque([NotNull] LanguageParser.BloqueContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.bloque"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBloque([NotNull] LanguageParser.BloqueContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>SentenciaAsignacion</c>
 	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.

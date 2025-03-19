@@ -31,17 +31,35 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface ILanguageListener : IParseTreeListener {
 	/// <summary>
-	/// Enter a parse tree produced by the <c>ReglaPrograma</c>
-	/// labeled alternative in <see cref="LanguageParser.programa"/>.
+	/// Enter a parse tree produced by <see cref="LanguageParser.programa"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterReglaPrograma([NotNull] LanguageParser.ReglaProgramaContext context);
+	void EnterPrograma([NotNull] LanguageParser.ProgramaContext context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>ReglaPrograma</c>
-	/// labeled alternative in <see cref="LanguageParser.programa"/>.
+	/// Exit a parse tree produced by <see cref="LanguageParser.programa"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitReglaPrograma([NotNull] LanguageParser.ReglaProgramaContext context);
+	void ExitPrograma([NotNull] LanguageParser.ProgramaContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.funcionMain"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncionMain([NotNull] LanguageParser.FuncionMainContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.funcionMain"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncionMain([NotNull] LanguageParser.FuncionMainContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.bloque"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBloque([NotNull] LanguageParser.BloqueContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.bloque"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBloque([NotNull] LanguageParser.BloqueContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>SentenciaAsignacion</c>
 	/// labeled alternative in <see cref="LanguageParser.sentencia"/>.
