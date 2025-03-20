@@ -52,6 +52,11 @@ funcionMain : 'func' 'main' '(' ')' bloque ;
 //imprimir
 IMPRIMIR : 'fmt.Println';
 
+//sentencias de transferencia
+breakStmt : 'break' ;      
+continueStmt : 'continue' ;
+returnStmt : 'return' expresion? ; 
+
 //condiciones
 bloque : '{' sentencia* '}' ;
 
@@ -64,6 +69,9 @@ sentencia
       | ifStmt
       | switchStmt
       | forStmt
+      | breakStmt     
+      | continueStmt 
+      | returnStmt  
       ) PUNTOYCOMA?
     ;
 
@@ -91,23 +99,23 @@ tipo
 
 // switch
 switchStmt
-    : 'switch' expresion '{' caseBlock* defaultBlock? '}' # SwitchCase
+    : 'switch' expresion '{' caseBlock* defaultBlock? '}' # Switch
     ;
 
 //case
 caseBlock
-    : 'case' expresion ':' (sentencia)+ 
+    : 'case' expresion ':' (sentencia)* breakStmt?
     ;
 
 //break
 defaultBlock
-    : 'default' ':' (sentencia)+
+    : 'default' ':' (sentencia)* breakStmt?
     ;
 
 //ciclo for
 forStmt
-    : 'for' expresion bloque                           # ForCondicion
-    | 'for' (declaracion | asignacion) ';' expresion ';' (asignacion | contador) bloque  # ForClasico
+    : 'for' expresion bloque  # ForCondicion
+    | 'for' (declaracion | asignacion)? ';' expresion? ';' (asignacion | contador)? bloque  # ForClasico
     ;
 
 contador

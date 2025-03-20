@@ -44,6 +44,24 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncionMain([NotNull] LanguageParser.FuncionMainContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.breakStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBreakStmt([NotNull] LanguageParser.BreakStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.continueStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitContinueStmt([NotNull] LanguageParser.ContinueStmtContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.returnStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitReturnStmt([NotNull] LanguageParser.ReturnStmtContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="LanguageParser.bloque"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -82,12 +100,12 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitTipo([NotNull] LanguageParser.TipoContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SwitchCase</c>
+	/// Visit a parse tree produced by the <c>Switch</c>
 	/// labeled alternative in <see cref="LanguageParser.switchStmt"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitSwitchCase([NotNull] LanguageParser.SwitchCaseContext context);
+	Result VisitSwitch([NotNull] LanguageParser.SwitchContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="LanguageParser.caseBlock"/>.
 	/// </summary>

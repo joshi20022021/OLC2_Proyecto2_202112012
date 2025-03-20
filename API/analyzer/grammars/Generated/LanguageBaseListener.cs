@@ -60,6 +60,42 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncionMain([NotNull] LanguageParser.FuncionMainContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.breakStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterBreakStmt([NotNull] LanguageParser.BreakStmtContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.breakStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitBreakStmt([NotNull] LanguageParser.BreakStmtContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.continueStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterContinueStmt([NotNull] LanguageParser.ContinueStmtContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.continueStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitContinueStmt([NotNull] LanguageParser.ContinueStmtContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.returnStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterReturnStmt([NotNull] LanguageParser.ReturnStmtContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.returnStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitReturnStmt([NotNull] LanguageParser.ReturnStmtContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="LanguageParser.bloque"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -136,19 +172,19 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitTipo([NotNull] LanguageParser.TipoContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by the <c>SwitchCase</c>
+	/// Enter a parse tree produced by the <c>Switch</c>
 	/// labeled alternative in <see cref="LanguageParser.switchStmt"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterSwitchCase([NotNull] LanguageParser.SwitchCaseContext context) { }
+	public virtual void EnterSwitch([NotNull] LanguageParser.SwitchContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by the <c>SwitchCase</c>
+	/// Exit a parse tree produced by the <c>Switch</c>
 	/// labeled alternative in <see cref="LanguageParser.switchStmt"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitSwitchCase([NotNull] LanguageParser.SwitchCaseContext context) { }
+	public virtual void ExitSwitch([NotNull] LanguageParser.SwitchContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="LanguageParser.caseBlock"/>.
 	/// <para>The default implementation does nothing.</para>

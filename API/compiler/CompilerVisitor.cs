@@ -27,6 +27,10 @@ namespace API.compiler
             public List<NodoAST> Hijos { get; set; } = new List<NodoAST>();
         }
 
+        private bool EnCiclo = false;
+        private bool EnSwitch = false;
+        private bool EnFuncion = false;
+
         private readonly List<EntradaSimbolo> tablaSimbolos = new List<EntradaSimbolo>();
         private readonly List<string> mensajesSalida = new List<string>();
         private readonly List<NodoAST> nodosAST = new List<NodoAST>();
@@ -504,9 +508,10 @@ namespace API.compiler
 
             return null;
         }
-        //switch case
-        public override object VisitSwitchCase(LanguageParser.SwitchCaseContext context)
+        //switch case        
+        public override object VisitSwitch(LanguageParser.SwitchContext context)
         {
+            EnSwitch = true;
             var switchValue = Visit(context.expresion());
 
             if (switchValue == null)
@@ -515,79 +520,142 @@ namespace API.compiler
                 return null;
             }
 
-            Console.WriteLine($"DEBUG - Evaluando switch con valor: {switchValue}");
-
             foreach (var caseBlock in context.caseBlock())
             {
                 var caseValue = Visit(caseBlock.expresion());
-                Console.WriteLine($"DEBUG - Comparando con case: {caseValue}");
 
-                if (switchValue != null && caseValue != null && switchValue.Equals(caseValue))
+                if (switchValue.Equals(caseValue))
                 {
-                    Console.WriteLine($"DEBUG - Coincidencia encontrada en case {caseValue}, ejecutando...");
-                    Visit(caseBlock); 
-                    return null; 
+                    object resultado = Visit(caseBlock);
+                    if (resultado is string comando && comando == "BREAK")
+                    {
+                        EnSwitch = false;
+                        return null;
+                    }
                 }
             }
 
             if (context.defaultBlock() != null)
             {
-                Console.WriteLine("DEBUG - No hubo coincidencias, ejecutando default.");
                 Visit(context.defaultBlock());
             }
 
+            EnSwitch = false;
             return null;
         }
         //for con condicion
         public override object VisitForCondicion(LanguageParser.ForCondicionContext context)
-        {
-            object cond = Visit(context.expresion());
+                {
+                    EnCiclo = true;
+                    object cond = Visit(context.expresion());
 
-            if (cond is not bool)
+                    if (cond is not bool)
+                    {
+                        AgregarError("Error: La condición del for debe ser booleana.");
+                        return null;
+                    }
+
+                    while ((bool)cond)
+                    {
+                        object resultado = Visit(context.bloque());
+
+                        if (resultado is string comando)
+                        {
+                            if (comando == "BREAK") break;
+                            if (comando == "CONTINUE") continue;
+                        }
+
+                        cond = Visit(context.expresion());
+                    }
+
+                    EnCiclo = false;
+                    return null;
+                }
+
+        //for clasico con contador
+        public override object VisitForClasico(LanguageParser.ForClasicoContext context)
+                {
+                    EnCiclo = true;
+
+                    if (context.declaracion() != null)
+                    {
+                        Visit(context.declaracion());
+                    }
+                    else if (context.asignacion().Length > 0)
+                    {
+                        Visit(context.asignacion(0));  
+                    }
+
+                    while (true)
+                    {
+                        var cond = Visit(context.expresion());
+                        if (cond is not bool || !(bool)cond) break;
+
+                        object resultado = Visit(context.bloque());
+
+                        if (resultado is string comando)
+                        {
+                            if (comando == "BREAK") break;
+                            if (comando == "CONTINUE") continue;
+                        }
+
+                        if (context.contador() != null)
+                        {
+                            Visit(context.contador());
+                        }
+                        else if (context.asignacion().Length > 1)
+                        {
+                            Visit(context.asignacion(1));  
+                        }
+                    }
+
+                    EnCiclo = false;
+                    return null;
+                }
+
+
+
+        //implementacion break
+        public override object VisitBreakStmt(LanguageParser.BreakStmtContext context)
+        {
+            if (!EnCiclo && !EnSwitch)
             {
-                AgregarError("Error: La condición del for debe ser booleana.");
+                AgregarError("Error: 'break' solo puede usarse dentro de un bucle o switch.");
+                return null;
+            }
+            return "BREAK";  
+        }
+
+        //implementacion continue
+        public override object VisitContinueStmt(LanguageParser.ContinueStmtContext context)
+        {
+            if (!EnCiclo)
+            {
+                AgregarError("Error: 'continue' solo puede usarse dentro de un bucle.");
+                return null;
+            }
+            return "CONTINUE";  
+        }
+
+        //implementacion return
+        public override object VisitReturnStmt(LanguageParser.ReturnStmtContext context)
+        {
+            if (!EnFuncion)
+            {
+                AgregarError("Error: 'return' solo puede usarse dentro de una función.");
                 return null;
             }
 
-            while ((bool)cond) 
+            object valorRetorno = null;
+            if (context.expresion() != null)
             {
-                Visit(context.bloque());  
-                cond = Visit(context.expresion());  
+                valorRetorno = Visit(context.expresion());
             }
 
-            return null;
+            return new Tuple<string, object>("RETURN", valorRetorno);
         }
-        //for clasico con contador        
-        public override object VisitForClasico(LanguageParser.ForClasicoContext context)
-        {
-            if (context.declaracion() != null)
-            {
-                Visit(context.declaracion());
-            }
-            else if (context.asignacion().Length > 0)
-            {
-                Visit(context.asignacion(0));  ¡
-            }
 
-            while (true)
-            {
-                var cond = Visit(context.expresion());
-                if (cond is not bool || !(bool)cond) break;
 
-                Visit(context.bloque());
-
-                if (context.contador() != null)
-                {
-                    Visit(context.contador());
-                }
-                else if (context.asignacion().Length > 1)
-                {
-                    Visit(context.asignacion(1));  
-                }
-            }
-
-            return null;
-        }
 
         // implementacion de slice basico
         public override object VisitSliceLiteral(LanguageParser.SliceLiteralContext context)
