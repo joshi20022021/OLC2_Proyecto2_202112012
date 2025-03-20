@@ -238,6 +238,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitForClasico([NotNull] LanguageParser.ForClasicoContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ForRange</c>
+	/// labeled alternative in <see cref="LanguageParser.forStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterForRange([NotNull] LanguageParser.ForRangeContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ForRange</c>
+	/// labeled alternative in <see cref="LanguageParser.forStmt"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitForRange([NotNull] LanguageParser.ForRangeContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Incremento</c>
 	/// labeled alternative in <see cref="LanguageParser.contador"/>.
 	/// <para>The default implementation does nothing.</para>

@@ -201,6 +201,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitForClasico([NotNull] LanguageParser.ForClasicoContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ForRange</c>
+	/// labeled alternative in <see cref="LanguageParser.forStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterForRange([NotNull] LanguageParser.ForRangeContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ForRange</c>
+	/// labeled alternative in <see cref="LanguageParser.forStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitForRange([NotNull] LanguageParser.ForRangeContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Incremento</c>
 	/// labeled alternative in <see cref="LanguageParser.contador"/>.
 	/// </summary>

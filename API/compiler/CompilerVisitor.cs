@@ -9,6 +9,9 @@ namespace API.compiler
 {
     public class CompilerVisitor : LanguageBaseVisitor<object>
     {
+        private Stack<Dictionary<string, EntradaSimbolo>> pilaEntornos = new Stack<Dictionary<string, EntradaSimbolo>>();
+
+        
         // Clase para representar una entrada en la tabla de símbolos
         public class EntradaSimbolo
         {
@@ -39,13 +42,14 @@ namespace API.compiler
         public List<NodoAST> ObtenerAST() => nodosAST;
         public List<string> ObtenerSalida() => mensajesSalida;
 
+        
         // Método para obtener el tipo de un valor
         private string ObtenerNombreTipo(object valor)
         {
             return valor switch
             {
                 null => "nulo",
-                int _ => "int",
+                long _ => "int",
                 double _ => "float64",
                 bool _ => "bool",
                 string _ => "string",
@@ -69,11 +73,13 @@ namespace API.compiler
         }
 
 
-        // Método para obtener el valor numérico de un objeto si es int, float64 o rune
+        // Método para obtener el valor numérico de un objeto
         private double? ConvertirANumero(object valor)
         {
             if (valor is int entero)
                 return (double)entero;
+            if (valor is long enteroLargo) 
+                return (double)enteroLargo;
             if (valor is double decimalNum)
                 return decimalNum;
             if (valor is char rune)
@@ -91,74 +97,77 @@ namespace API.compiler
             var funcionMain = context.funcionMain();
             if (funcionMain == null)
             {
-                Console.WriteLine("Error: No se encontró la función main().");
+                AgregarError("No se encontró la función main().");
                 return null;
             }
 
             Visit(funcionMain);
+
+            if (mensajesSalida.Count > 0)
+            {
+                Console.WriteLine("\n===== ERRORES DETECTADOS =====");
+                foreach (var error in mensajesSalida)
+                {
+                    Console.WriteLine(error);
+                }
+            }
+
             return null;
-        }
+                }
 
-    public override object VisitDeclaracion(LanguageParser.DeclaracionContext context)
-    {
-        string varName = context.IDENTIFICADOR().GetText();
-        string varType = null;
-        object value = null;
-
-        if (context.GetChild(0).GetText() == "var")
+        public override object VisitDeclaracion(LanguageParser.DeclaracionContext context)
         {
-            if (context.tipo() != null)
+            string varName = context.IDENTIFICADOR().GetText();
+            string varType = context.tipo()?.GetText();
+            object value = context.expresion() != null ? Visit(context.expresion()) : null;
+
+            // 1. Manejar inicialización por defecto si no hay valor
+            if (value == null)
             {
-                varType = context.tipo().GetText();
+                switch (varType?.ToLower())
+                {
+                    case "int": value = 0L; break;       
+                    case "float64": value = 0.0; break;  
+                    case "string": value = ""; break;    
+                    case "bool": value = false; break;  
+                    default: 
+                        // Si no hay tipo, error
+                        if (varType == null)
+                        {
+                            AgregarError($"Error: Tipo no especificado para '{varName}'.");
+                            return null;
+                        }
+                        value = null; 
+                        break;
+                }
             }
 
-            if (context.expresion() != null)
+            if (string.IsNullOrEmpty(varType))
             {
-                value = Visit(context.expresion());
+                varType = ObtenerNombreTipo(value);
             }
-        }
-        else
-        {
-            value = Visit(context.expresion());
-        }
 
-        if (value == null)
-        {
-            switch (varType)
+            Dictionary<string, EntradaSimbolo> entornoActual = null;
+            if (pilaEntornos.Count > 0)
             {
-                case "int": value = 0; break;
-                case "float64": value = 0.0; break;
-                case "string": value = ""; break;
-                case "bool": value = false; break;
-                default: value = "nulo"; break;
+                entornoActual = pilaEntornos.Peek();
             }
-        }
+            else
+            {
+                // Si no hay entorno, usar el global
+                entornoActual = new Dictionary<string, EntradaSimbolo>();
+                pilaEntornos.Push(entornoActual);
+            }
 
-        if (varType == null)
-        {
-            varType = ObtenerNombreTipo(value);
-        }
+            entornoActual[varName] = new EntradaSimbolo
+            {
+                Nombre = varName,
+                Tipo = varType,
+                Valor = value
+            };
 
-        // Guardamos en la tabla de símbolos correctamente
-        var simbolo = new EntradaSimbolo { Nombre = varName, Tipo = varType, Valor = value };
-        tablaSimbolos.Add(simbolo);
-
-        Console.WriteLine($"DEBUG - Variable '{varName}' almacenada con valor: {value}");
-
-        return value;
-    }
-
-
-
-        public override object VisitLiteralVerdadero(LanguageParser.LiteralVerdaderoContext context)
-        {
-            return true;
-        }
-
-        public override object VisitLiteralFalso(LanguageParser.LiteralFalsoContext context)
-        {
-            return false;
-        }
+            return value;
+        }     
 
         // visitor para una asignación de variable
         public override object VisitAsignar(LanguageParser.AsignarContext context)
@@ -166,37 +175,31 @@ namespace API.compiler
             var varName = context.IDENTIFICADOR().GetText();
             var value = Visit(context.expresion());
 
-            // Verificamos si la variable ya existe en la tabla de símbolos
-            var simboloExistente = tablaSimbolos.Find(s => s.Nombre == varName);
-
-            if (simboloExistente != null)
+            // Buscar en todos los entornos (pila y global)
+            foreach (var entorno in pilaEntornos)
             {
-                // 🔹 Validamos que el tipo sea el mismo antes de actualizar
-                if (ObtenerNombreTipo(value) == simboloExistente.Tipo)
+                if (entorno.ContainsKey(varName))
                 {
-                    simboloExistente.Valor = value;
-                }
-                else
-                {
-                    AgregarError($"Error: No se puede asignar un valor de tipo {ObtenerNombreTipo(value)} a '{varName}' de tipo {simboloExistente.Tipo}.");
+                    entorno[varName].Valor = value;
+                    Console.WriteLine($"DEBUG: Asignando {varName} = {value}");
+                    return value;
                 }
             }
-            else
+
+            // Buscar en la tabla global
+            var simboloGlobal = tablaSimbolos.Find(s => s.Nombre == varName);
+            if (simboloGlobal != null)
             {
-                // Si la variable no existe, la creamos
-                var simbolo = new EntradaSimbolo
-                {
-                    Nombre = varName,
-                    Valor = value ?? "nulo",
-                    Tipo = ObtenerNombreTipo(value)
-                };
-                tablaSimbolos.Add(simbolo);
+                simboloGlobal.Valor = value;
+                Console.WriteLine($"DEBUG: Asignando {varName} = {value} (global)");
+                return value;
             }
 
-            return value;
+            AgregarError($"Error: La variable '{varName}' no está definida.");
+            return "nulo";
         }
 
-         // Visitor para un print
+         // Visitor para el fmt.println
         public override object VisitImprime(LanguageParser.ImprimeContext context)
         {
             List<string> valores = new List<string>();
@@ -219,6 +222,10 @@ namespace API.compiler
                     {
                         valores.Add(str.Replace("\\n", "\n")); 
                     }
+                    else if (resultado is bool b)
+                    {
+                        valores.Add(b ? "true" : "false");
+                    }
                     else
                     {
                         valores.Add(resultado?.ToString() ?? "nulo");
@@ -240,15 +247,14 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is int i && der is int j)
-                return i + j;
+            double? valIzq = ConvertirANumero(izq);
+            double? valDer = ConvertirANumero(der);
 
-            double? valIzq = ConvertirADouble(izq);
-            double? valDer = ConvertirADouble(der);
             if (valIzq.HasValue && valDer.HasValue)
             {
                 return valIzq.Value + valDer.Value;
             }
+
             return "Error: Tipos incompatibles en suma.";
         }
 
@@ -259,15 +265,14 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is int i && der is int j)
-                return i - j;
+            double? valIzq = ConvertirANumero(izq);
+            double? valDer = ConvertirANumero(der);
 
-            double? valIzq = ConvertirADouble(izq);
-            double? valDer = ConvertirADouble(der);
             if (valIzq.HasValue && valDer.HasValue)
             {
                 return valIzq.Value - valDer.Value;
             }
+
             return "Error: Tipos incompatibles en resta.";
         }
 
@@ -278,7 +283,7 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is int i && der is int j)
+            if (izq is long i && der is long j)
                 return i * j;
 
             double? valIzq = ConvertirADouble(izq);
@@ -297,10 +302,10 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (der is int d && d == 0)
+            if (der is long d && d == 0)
                 return "Error: División por 0.";
 
-            if (izq is int i && der is int j)
+            if (izq is long i && der is long j)
                 return (double)i / j; 
 
             double? valIzq = ConvertirADouble(izq);
@@ -319,7 +324,7 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is int i && der is int j)
+            if (izq is long i && der is long j)
             {
                 if (j == 0) return "Error: Módulo por 0.";
                 return i % j;
@@ -337,14 +342,10 @@ namespace API.compiler
             double? numIzq = ConvertirANumero(izq);
             double? numDer = ConvertirANumero(der);
 
-            if (numIzq.HasValue && numDer.HasValue)
-                return numIzq.Value > numDer.Value;  
-
-            return "Error: Tipos incompatibles en comparación '>'."; 
+            return numIzq.HasValue && numDer.HasValue 
+                ? numIzq.Value > numDer.Value 
+                : false;
         }
-
-
-
         // Visita una comparación de menor que
         public override object VisitMenorQue(LanguageParser.MenorQueContext context)
         {
@@ -367,13 +368,16 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
+            if (izq is long lValIzq && der is long lValDer)
+                return lValIzq >= lValDer;
+
             double? numIzq = ConvertirANumero(izq);
             double? numDer = ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
                 return numIzq.Value >= numDer.Value;
 
-            return "Error: Tipos incompatibles en comparación '>='.";
+            return $"Error: Tipos incompatibles en '>=' (Recibidos: {ObtenerNombreTipo(izq)} y {ObtenerNombreTipo(der)}).";
         }
 
         // Visitor para una comparación de menor o igual que
@@ -402,43 +406,29 @@ namespace API.compiler
             double? numDer = ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
+            {
                 return numIzq.Value == numDer.Value;
+            }
 
-            if (izq is string strIzq && der is string strDer)
-                return strIzq == strDer;
-
-            if (izq is bool boolIzq && der is bool boolDer)
-                return boolIzq == boolDer;
-
-            if (izq is char charIzq && der is char charDer)
-                return charIzq == charDer;
-
-            return $"Error: Tipos incompatibles en comparación de igualdad. (Recibidos: {ObtenerNombreTipo(izq)} y {ObtenerNombreTipo(der)})";
+            // Comparar otros tipos 
+            return izq.Equals(der);
         }
 
-
-        // Visitor una comparación de desigualdad
         public override object VisitComparacionDiferente(LanguageParser.ComparacionDiferenteContext context)
         {
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
+            // Convertir a números 
             double? numIzq = ConvertirANumero(izq);
             double? numDer = ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
+            {
                 return numIzq.Value != numDer.Value;
+            }
 
-            if (izq is string strIzq && der is string strDer)
-                return strIzq != strDer;
-
-            if (izq is bool boolIzq && der is bool boolDer)
-                return boolIzq != boolDer;
-
-            if (izq is char charIzq && der is char charDer)
-                return charIzq != charDer;
-
-            return $"Error: Tipos incompatibles en comparación de desigualdad. (Recibidos: {ObtenerNombreTipo(izq)} y {ObtenerNombreTipo(der)})";
+            return !izq.Equals(der);
         }
 
         //visitor para la expresion AND
@@ -467,175 +457,275 @@ namespace API.compiler
         }
 
 
-
         //visitor para la expresion NOT
         public override object VisitNot(LanguageParser.NotContext context)
         {
             var valor = Visit(context.expresion());
-
             if (valor is bool boolValor)
                 return !boolValor;
-
-            return $"Error: Operador '!' solo se aplica a booleanos, pero recibió '{ObtenerNombreTipo(valor)}'.";
+            AgregarError($"Error: Operador '!' requiere un booleano, recibió {ObtenerNombreTipo(valor)}.");
+            return "nulo";
         }
-
 
         //sentencia if y else
 
-        public override object VisitIfElse(LanguageParser.IfElseContext context)
+        public override object VisitIfElse(LanguageParser.IfElseContext ctx)
         {
-            var condicion = Visit(context.expresion());
-
-            if (condicion is bool condicionBooleana)
+            object cond = Visit(ctx.expresion());
+            
+            if (cond is bool boolCond)
             {
-                if (condicionBooleana)
+                if (boolCond)
                 {
-                    return Visit(context.bloque(0)); 
+                    pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
+                    Visit(ctx.bloque(0));
+                    pilaEntornos.Pop();
                 }
-                else if (context.ifStmt() != null) 
+                else if (ctx.bloque().Length > 1)
                 {
-                    return Visit(context.ifStmt());
-                }
-                else if (context.bloque(1) != null) 
-                {
-                    return Visit(context.bloque(1));
+                    pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
+                    Visit(ctx.bloque(1));
+                    pilaEntornos.Pop();
                 }
             }
             else
             {
-                return "Error: La condición del if debe ser de tipo booleano.";
+                AgregarError("Error: La condición del if debe ser booleana.");
             }
-
+            
             return null;
         }
+
         //switch case        
         public override object VisitSwitch(LanguageParser.SwitchContext context)
         {
             EnSwitch = true;
             var switchValue = Visit(context.expresion());
-
             if (switchValue == null)
             {
                 AgregarError("Error: La expresión del switch no puede ser nula.");
+                EnSwitch = false;
                 return null;
             }
 
+            // Recorre los case
             foreach (var caseBlock in context.caseBlock())
             {
                 var caseValue = Visit(caseBlock.expresion());
-
                 if (switchValue.Equals(caseValue))
                 {
+                    // Ejecuta el bloque del case
                     object resultado = Visit(caseBlock);
-                    if (resultado is string comando && comando == "BREAK")
+
+                    // rompemos el switch
+                    if (resultado is string comando && comando == "BREAK_SWITCH")
                     {
                         EnSwitch = false;
-                        return null;
+                        return null;  // Rompe el switch 
                     }
                 }
             }
 
+            // Default
             if (context.defaultBlock() != null)
             {
-                Visit(context.defaultBlock());
+                object resultado = Visit(context.defaultBlock());
+                if (resultado is string comando && comando == "BREAK_SWITCH")
+                {
+                    EnSwitch = false;
+                    return null;
+                }
             }
 
             EnSwitch = false;
             return null;
         }
+
         //for con condicion
-        public override object VisitForCondicion(LanguageParser.ForCondicionContext context)
+        public override object VisitForCondicion(LanguageParser.ForCondicionContext ctx)
+        {
+            EnCiclo = true;
+            object cond = Visit(ctx.expresion());
+            
+            while (cond is bool bCond && bCond)
+            {
+                object resultado = Visit(ctx.bloque());
+                
+                if (resultado is string comando && comando == "BREAK_LOOP")
                 {
-                    EnCiclo = true;
-                    object cond = Visit(context.expresion());
-
-                    if (cond is not bool)
-                    {
-                        AgregarError("Error: La condición del for debe ser booleana.");
-                        return null;
-                    }
-
-                    while ((bool)cond)
-                    {
-                        object resultado = Visit(context.bloque());
-
-                        if (resultado is string comando)
-                        {
-                            if (comando == "BREAK") break;
-                            if (comando == "CONTINUE") continue;
-                        }
-
-                        cond = Visit(context.expresion());
-                    }
-
-                    EnCiclo = false;
-                    return null;
+                    break; // Rompe el while 
                 }
-
+                
+                cond = Visit(ctx.expresion()); //evalua de nuevo la condicion
+            }
+            
+            EnCiclo = false;
+            return null;
+        }
         //for clasico con contador
-        public override object VisitForClasico(LanguageParser.ForClasicoContext context)
+        public override object VisitForClasico(LanguageParser.ForClasicoContext ctx)
+        {
+            EnCiclo = true;
+            pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
+            
+            //Inicialización 
+            if (ctx.declaracion() != null)
+                Visit(ctx.declaracion());
+            else if (ctx.asignacion().Length > 0)
+                Visit(ctx.asignacion(0));
+
+            //Bucle
+            while (true)
+            {
+                // Evaluar condición
+                object cond = Visit(ctx.expresion());
+                if (!(cond is bool bCond) || !bCond)
+                    break;
+
+                // Ejecutar bloque
+                object resultado = Visit(ctx.bloque());
+                if (resultado is string comando)
                 {
-                    EnCiclo = true;
-
-                    if (context.declaracion() != null)
+                    if (comando == "BREAK_LOOP") break;
+                    if (comando == "CONTINUE") 
                     {
-                        Visit(context.declaracion());
                     }
-                    else if (context.asignacion().Length > 0)
-                    {
-                        Visit(context.asignacion(0));  
-                    }
-
-                    while (true)
-                    {
-                        var cond = Visit(context.expresion());
-                        if (cond is not bool || !(bool)cond) break;
-
-                        object resultado = Visit(context.bloque());
-
-                        if (resultado is string comando)
-                        {
-                            if (comando == "BREAK") break;
-                            if (comando == "CONTINUE") continue;
-                        }
-
-                        if (context.contador() != null)
-                        {
-                            Visit(context.contador());
-                        }
-                        else if (context.asignacion().Length > 1)
-                        {
-                            Visit(context.asignacion(1));  
-                        }
-                    }
-
-                    EnCiclo = false;
-                    return null;
                 }
+                // Incremento
+                if (ctx.contador() != null)
+                    Visit(ctx.contador());
+                else if (ctx.asignacion().Length > 1)
+                    Visit(ctx.asignacion(1));
+            }
+            pilaEntornos.Pop();
+            EnCiclo = false;
+            
+            return null;
+        }
 
 
+        //manejo de for range
+        public override object VisitForRange(LanguageParser.ForRangeContext context)
+        {
+            EnCiclo = true;
+            pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
+
+            var iterador = context.IDENTIFICADOR(0).GetText();
+            var variable = context.IDENTIFICADOR(1).GetText();
+            var coleccion = Visit(context.expresion());
+
+            if (coleccion is List<object> lista)
+            {
+                for (int i = 0; i < lista.Count; i++)
+                {
+                    pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, Tipo = "int", Valor = i };
+                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, Tipo = ObtenerNombreTipo(lista[i]), Valor = lista[i] };
+
+                    Visit(context.bloque());
+                }
+            }
+            else
+            {
+                AgregarError("Error: for range requiere una lista.");
+            }
+
+            pilaEntornos.Pop();
+            EnCiclo = false;
+            return null;
+        }
+
+        // Método común para actualizar el contador
+        private object ActualizarContador(string varName, int delta)
+        {
+            // Buscar la variable
+            object valorActual = null;
+            foreach (var env in pilaEntornos)
+            {
+                if (env.ContainsKey(varName))
+                {
+                    valorActual = env[varName].Valor;
+                    break;
+                }
+            }
+            
+            if (valorActual == null)
+            {
+                var simboloGlobal = tablaSimbolos.Find(s => s.Nombre == varName);
+                if (simboloGlobal != null) valorActual = simboloGlobal.Valor;
+            }
+
+            if (valorActual is long longVal)
+            {
+                long nuevoValor = longVal + delta;
+                // Actualizar en el entorno
+                foreach (var env in pilaEntornos)
+                {
+                    if (env.ContainsKey(varName))
+                    {
+                        env[varName].Valor = nuevoValor;
+                        return nuevoValor;
+                    }
+                }
+                // Actualizar global si no está en la pila
+                var simbolo = tablaSimbolos.Find(s => s.Nombre == varName);
+                if (simbolo != null) simbolo.Valor = nuevoValor;
+                return nuevoValor;
+            }
+            else
+            {
+                AgregarError($"Error: '{varName}' no es un entero.");
+                return valorActual;
+            }
+        }
+
+        // Visitor para el incremento
+        public override object VisitIncremento(LanguageParser.IncrementoContext context)
+        {
+            string varName = context.IDENTIFICADOR().GetText();
+            return ActualizarContador(varName, 1);
+        }
+
+        // Visitor para el decremento
+        public override object VisitDecremento(LanguageParser.DecrementoContext context)
+        {
+            string varName = context.IDENTIFICADOR().GetText();
+            return ActualizarContador(varName, -1);
+        }
 
         //implementacion break
         public override object VisitBreakStmt(LanguageParser.BreakStmtContext context)
         {
+            Console.WriteLine("DEBUG: Se encontró un 'break'");
+            // Validar si estamos en un for o un switch
             if (!EnCiclo && !EnSwitch)
             {
                 AgregarError("Error: 'break' solo puede usarse dentro de un bucle o switch.");
                 return null;
             }
-            return "BREAK";  
+            if (EnSwitch)
+            {
+                return "BREAK_SWITCH";
+            }
+            else 
+            {
+                return "BREAK_LOOP";
+            }
         }
+
 
         //implementacion continue
         public override object VisitContinueStmt(LanguageParser.ContinueStmtContext context)
         {
+            Console.WriteLine("DEBUG: Se encontró un 'continue'");
             if (!EnCiclo)
             {
                 AgregarError("Error: 'continue' solo puede usarse dentro de un bucle.");
                 return null;
             }
-            return "CONTINUE";  
+            return "CONTINUE";
         }
+
+
 
         //implementacion return
         public override object VisitReturnStmt(LanguageParser.ReturnStmtContext context)
@@ -677,9 +767,8 @@ namespace API.compiler
         // Visitor para un literal entero
         public override object VisitLiteralEntero(LanguageParser.LiteralEnteroContext context)
         {
-            return int.Parse(context.GetText());
+            return long.Parse(context.GetText()); 
         }
-
 
         // Visitor para un literal flotante
         public override object VisitLiteralFlotante(LanguageParser.LiteralFlotanteContext context)
@@ -687,22 +776,37 @@ namespace API.compiler
             return double.Parse(context.GetText(), CultureInfo.InvariantCulture);
         }
 
+        // Visitor para 'true'
+        public override object VisitLiteralVerdadero(LanguageParser.LiteralVerdaderoContext context)
+        {
+            return true;
+        }
+
+        // Visitor para 'false'
+        public override object VisitLiteralFalso(LanguageParser.LiteralFalsoContext context)
+        {
+            return false;
+        }
 
         // Visitor para un identificador
         public override object VisitIdentificador(LanguageParser.IdentificadorContext context)
         {
             var id = context.IDENTIFICADOR().GetText();
-            var simbolo = tablaSimbolos.Find(s => s.Nombre == id);
-            
-            if (simbolo != null)
+            // Buscar en la pila de entornos 
+            foreach (var env in pilaEntornos)
             {
-                return simbolo.Valor;
+                if (env.ContainsKey(id))
+                    return env[id].Valor;
             }
-            
+            // Si no se encuentra en la pila, buscar en la tabla global
+            var simbolo = tablaSimbolos.Find(s => s.Nombre == id);
+            if (simbolo != null)
+                return simbolo.Valor;
             AgregarError($"Error: La variable '{id}' no está definida.");
             return "nulo";
         }
-  
+
+        
         //visitor para una cadena o string
         public override object VisitLiteralCadena(LanguageParser.LiteralCadenaContext context)
         {
@@ -719,13 +823,18 @@ namespace API.compiler
         //visitor para la funcion main
         public override object VisitFuncionMain(LanguageParser.FuncionMainContext context)
         {
-            return Visit(context.bloque());
+            pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>()); // Iniciar entorno global
+            var resultado = Visit(context.bloque());
+            pilaEntornos.Pop(); // Eliminar el entorno al salir
+            return resultado;
         }
-        // Método para agregar errores a la lista de salida
+
+
+        // Método errores
         private void AgregarError(string mensaje)
         {
-            Console.WriteLine($"ERROR: {mensaje}"); 
-            mensajesSalida.Add($"ERROR: {mensaje}"); 
+            Console.WriteLine($"ERROR DETECTADO: {mensaje}"); 
+            mensajesSalida.Add($"ERROR DETECTADO: {mensaje}"); 
         }
 
 

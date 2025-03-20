@@ -14,8 +14,6 @@ L_CORCHETE : '[';
 R_CORCHETE : ']';
 PUNTOYCOMA : ';';
 
-
-
 // Operadores Relacionales
 MAYOR    : '>';
 MENOR    : '<';
@@ -116,11 +114,12 @@ defaultBlock
 forStmt
     : 'for' expresion bloque  # ForCondicion
     | 'for' (declaracion | asignacion)? ';' expresion? ';' (asignacion | contador)? bloque  # ForClasico
+    | 'for' IDENTIFICADOR ',' IDENTIFICADOR ':=' 'range' expresion bloque  # ForRange
     ;
 
 contador
     : IDENTIFICADOR MAS MAS    # Incremento
-    | IDENTIFICADOR MENOS MENOS # Decremento
+    | IDENTIFICADOR MENOS MENOS  # Decremento
     ;
 
 //slice

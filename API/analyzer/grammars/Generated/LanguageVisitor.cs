@@ -133,6 +133,13 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitForClasico([NotNull] LanguageParser.ForClasicoContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ForRange</c>
+	/// labeled alternative in <see cref="LanguageParser.forStmt"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitForRange([NotNull] LanguageParser.ForRangeContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Incremento</c>
 	/// labeled alternative in <see cref="LanguageParser.contador"/>.
 	/// </summary>
