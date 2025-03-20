@@ -19,7 +19,7 @@ public class Compile : ControllerBase
 
     public class CompileRequest
     {
-        public string Code { get; set; }
+        public string? Code { get; set; }
     }
 
     [HttpPost]
@@ -45,8 +45,14 @@ public class Compile : ControllerBase
             return BadRequest(new { output = "Error al generar el árbol de sintaxis.", errores });
         }
 
+        if (errores.Count > 0)
+        {
+            return BadRequest(new { output = "Errores encontrados en el código.", errores });
+        }
+
         var visitor = new CompilerVisitor();
-        visitor.Visit(tree); 
+        visitor.Visit(tree);
+
         List<string> outputLines = visitor.ObtenerSalida();
         string salida = outputLines.Count > 0 ? string.Join("\n", outputLines) : "";
 

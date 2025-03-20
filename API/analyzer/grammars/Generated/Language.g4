@@ -10,10 +10,11 @@ MOD     : '%';
 IGUAL   : '=';
 PARENTESIS_IZQ : '(';
 PARENTESIS_DER : ')';
+L_CORCHETE : '[';
+R_CORCHETE : ']';
 PUNTOYCOMA : ';';
 
-//imprimir
-IMPRIMIR : 'fmt.Println';
+
 
 // Operadores Relacionales
 MAYOR    : '>';
@@ -48,26 +49,78 @@ programa : funcionMain ;
 //funcion main para ejecutar el archivo
 funcionMain : 'func' 'main' '(' ')' bloque ;
 
+//imprimir
+IMPRIMIR : 'fmt.Println';
+
 //condiciones
 bloque : '{' sentencia* '}' ;
 
 //sentencias
 sentencia
-    : asignacion PUNTOYCOMA               # SentenciaAsignacion
-    | imprimir PUNTOYCOMA                 # SentenciaImprimir
-    | expresion PUNTOYCOMA                # SentenciaExpresion
-    | ifStmt                               # SentenciaIf  
+    : (declaracion
+      | asignacion
+      | imprimir
+      | expresion
+      | ifStmt
+      | switchStmt
+      | forStmt
+      ) PUNTOYCOMA?
     ;
+
 
 //sentencia if y else
 ifStmt
     : 'if' expresion bloque ( 'else' ifStmt | 'else' bloque )? # IfElse
     ;
 
+//declaracion de variables
+declaracion
+    : 'var' IDENTIFICADOR (tipo)? (IGUAL expresion)?    // Declaración explícita
+    | IDENTIFICADOR ':=' expresion                       // Declaración implícita (inferencia de tipo)
+    ;
+
 //asignacion de variables
 asignacion
     : IDENTIFICADOR IGUAL expresion       # Asignar
     ;
+
+//tipo de variables
+tipo
+    : IDENTIFICADOR
+    ;
+
+// switch
+switchStmt
+    : 'switch' expresion '{' caseBlock* defaultBlock? '}' # SwitchCase
+    ;
+
+//case
+caseBlock
+    : 'case' expresion ':' (sentencia)+ 
+    ;
+
+//break
+defaultBlock
+    : 'default' ':' (sentencia)+
+    ;
+
+//ciclo for
+forStmt
+    : 'for' expresion bloque                           # ForCondicion
+    | 'for' (declaracion | asignacion) ';' expresion ';' (asignacion | contador) bloque  # ForClasico
+    ;
+
+contador
+    : IDENTIFICADOR MAS MAS    # Incremento
+    | IDENTIFICADOR MENOS MENOS # Decremento
+    ;
+
+//slice
+sliceLiteral
+    : L_CORCHETE R_CORCHETE IDENTIFICADOR? '{' (expresion (',' expresion)*)? '}'
+    ;
+
+
 
 //imprimir argumentos
 imprimir
@@ -91,6 +144,7 @@ expresion
     | expresion '||' expresion             # Or
     | '!' expresion                        # Not
     | PARENTESIS_IZQ expresion PARENTESIS_DER # Parentesis
+    | sliceLiteral                         # Slice
     | LIT_ENTERO                           # LiteralEntero
     | LIT_FLOAT                            # LiteralFlotante
     | LIT_RUNE                             # LiteralRune
