@@ -41,20 +41,21 @@ public partial class LanguageParser : Parser {
 		T__17=18, T__18=19, T__19=20, T__20=21, MAS=22, MENOS=23, MULT=24, DIV=25, 
 		MOD=26, IGUAL=27, PARENTESIS_IZQ=28, PARENTESIS_DER=29, L_CORCHETE=30, 
 		R_CORCHETE=31, PUNTOYCOMA=32, MAYOR=33, MENOR=34, MAYOR_IGUAL=35, MENOR_IGUAL=36, 
-		IGUALDAD=37, DIFERENTE=38, VERDADERO=39, FALSO=40, NULO=41, LIT_STRING=42, 
-		LIT_RUNE=43, LIT_FLOAT=44, LIT_ENTERO=45, IDENTIFICADOR=46, ESPACIOS=47, 
-		COMENTARIO=48, COMENTARIO_MULTILINEA=49, IMPRIMIR=50;
+		IGUALDAD=37, DIFERENTE=38, VERDADERO=39, FALSO=40, NULO=41, AGREGAR=42, 
+		LONGITUD=43, INDICE=44, UNIR=45, LIT_STRING=46, LIT_RUNE=47, LIT_FLOAT=48, 
+		LIT_ENTERO=49, IDENTIFICADOR=50, ESPACIOS=51, COMENTARIO=52, COMENTARIO_MULTILINEA=53, 
+		IMPRIMIR=54;
 	public const int
 		RULE_programa = 0, RULE_funcionMain = 1, RULE_breakStmt = 2, RULE_continueStmt = 3, 
 		RULE_returnStmt = 4, RULE_bloque = 5, RULE_sentencia = 6, RULE_ifStmt = 7, 
 		RULE_declaracion = 8, RULE_asignacion = 9, RULE_tipo = 10, RULE_switchStmt = 11, 
 		RULE_caseBlock = 12, RULE_defaultBlock = 13, RULE_forStmt = 14, RULE_contador = 15, 
-		RULE_sliceLiteral = 16, RULE_imprimir = 17, RULE_expresion = 18;
+		RULE_sliceLiteral = 16, RULE_sliceElemento = 17, RULE_imprimir = 18, RULE_expresion = 19;
 	public static readonly string[] ruleNames = {
 		"programa", "funcionMain", "breakStmt", "continueStmt", "returnStmt", 
 		"bloque", "sentencia", "ifStmt", "declaracion", "asignacion", "tipo", 
 		"switchStmt", "caseBlock", "defaultBlock", "forStmt", "contador", "sliceLiteral", 
-		"imprimir", "expresion"
+		"sliceElemento", "imprimir", "expresion"
 	};
 
 	private static readonly string[] _LiteralNames = {
@@ -63,16 +64,17 @@ public partial class LanguageParser : Parser {
 		"'default'", "'for'", "','", "'range'", "'&&'", "'||'", "'!'", "'+'", 
 		"'-'", "'*'", "'/'", "'%'", "'='", "'('", "')'", "'['", "']'", "';'", 
 		"'>'", "'<'", "'>='", "'<='", "'=='", "'!='", "'true'", "'false'", "'nil'", 
-		null, null, null, null, null, null, null, null, "'fmt.Println'"
+		"'append'", "'len'", "'slice.Index'", "'strings.Join'", null, null, null, 
+		null, null, null, null, null, "'fmt.Println'"
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, "MAS", "MENOS", 
 		"MULT", "DIV", "MOD", "IGUAL", "PARENTESIS_IZQ", "PARENTESIS_DER", "L_CORCHETE", 
 		"R_CORCHETE", "PUNTOYCOMA", "MAYOR", "MENOR", "MAYOR_IGUAL", "MENOR_IGUAL", 
-		"IGUALDAD", "DIFERENTE", "VERDADERO", "FALSO", "NULO", "LIT_STRING", "LIT_RUNE", 
-		"LIT_FLOAT", "LIT_ENTERO", "IDENTIFICADOR", "ESPACIOS", "COMENTARIO", 
-		"COMENTARIO_MULTILINEA", "IMPRIMIR"
+		"IGUALDAD", "DIFERENTE", "VERDADERO", "FALSO", "NULO", "AGREGAR", "LONGITUD", 
+		"INDICE", "UNIR", "LIT_STRING", "LIT_RUNE", "LIT_FLOAT", "LIT_ENTERO", 
+		"IDENTIFICADOR", "ESPACIOS", "COMENTARIO", "COMENTARIO_MULTILINEA", "IMPRIMIR"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -140,7 +142,7 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 38;
+			State = 40;
 			funcionMain();
 			}
 		}
@@ -191,15 +193,15 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 40;
-			Match(T__0);
-			State = 41;
-			Match(T__1);
 			State = 42;
-			Match(PARENTESIS_IZQ);
+			Match(T__0);
 			State = 43;
-			Match(PARENTESIS_DER);
+			Match(T__1);
 			State = 44;
+			Match(PARENTESIS_IZQ);
+			State = 45;
+			Match(PARENTESIS_DER);
+			State = 46;
 			bloque();
 			}
 		}
@@ -245,7 +247,7 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 46;
+			State = 48;
 			Match(T__2);
 			}
 		}
@@ -291,7 +293,7 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 48;
+			State = 50;
 			Match(T__3);
 			}
 		}
@@ -340,14 +342,14 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 50;
-			Match(T__4);
 			State = 52;
+			Match(T__4);
+			State = 54;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,0,Context) ) {
 			case 1:
 				{
-				State = 51;
+				State = 53;
 				expresion(0);
 				}
 				break;
@@ -403,23 +405,23 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 54;
+			State = 56;
 			Match(T__5);
-			State = 58;
+			State = 60;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 1266088983729464L) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & 20265649911698744L) != 0)) {
 				{
 				{
-				State = 55;
+				State = 57;
 				sentencia();
 				}
 				}
-				State = 60;
+				State = 62;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
-			State = 61;
+			State = 63;
 			Match(T__6);
 			}
 		}
@@ -497,76 +499,76 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 73;
+			State = 75;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,2,Context) ) {
 			case 1:
 				{
-				State = 63;
+				State = 65;
 				declaracion();
 				}
 				break;
 			case 2:
 				{
-				State = 64;
+				State = 66;
 				asignacion();
 				}
 				break;
 			case 3:
 				{
-				State = 65;
+				State = 67;
 				imprimir();
 				}
 				break;
 			case 4:
 				{
-				State = 66;
+				State = 68;
 				expresion(0);
 				}
 				break;
 			case 5:
 				{
-				State = 67;
+				State = 69;
 				ifStmt();
 				}
 				break;
 			case 6:
 				{
-				State = 68;
+				State = 70;
 				switchStmt();
 				}
 				break;
 			case 7:
 				{
-				State = 69;
+				State = 71;
 				forStmt();
 				}
 				break;
 			case 8:
 				{
-				State = 70;
+				State = 72;
 				breakStmt();
 				}
 				break;
 			case 9:
 				{
-				State = 71;
+				State = 73;
 				continueStmt();
 				}
 				break;
 			case 10:
 				{
-				State = 72;
+				State = 74;
 				returnStmt();
 				}
 				break;
 			}
-			State = 76;
+			State = 78;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==PUNTOYCOMA) {
 				{
-				State = 75;
+				State = 77;
 				Match(PUNTOYCOMA);
 				}
 			}
@@ -636,28 +638,28 @@ public partial class LanguageParser : Parser {
 			_localctx = new IfElseContext(_localctx);
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 78;
-			Match(T__7);
-			State = 79;
-			expresion(0);
 			State = 80;
+			Match(T__7);
+			State = 81;
+			expresion(0);
+			State = 82;
 			bloque();
-			State = 85;
+			State = 87;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,4,Context) ) {
 			case 1:
 				{
-				State = 81;
+				State = 83;
 				Match(T__8);
-				State = 82;
+				State = 84;
 				ifStmt();
 				}
 				break;
 			case 2:
 				{
-				State = 83;
+				State = 85;
 				Match(T__8);
-				State = 84;
+				State = 86;
 				bloque();
 				}
 				break;
@@ -713,34 +715,34 @@ public partial class LanguageParser : Parser {
 		EnterRule(_localctx, 16, RULE_declaracion);
 		int _la;
 		try {
-			State = 99;
+			State = 101;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case T__9:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 87;
+				State = 89;
 				Match(T__9);
-				State = 88;
-				Match(IDENTIFICADOR);
 				State = 90;
+				Match(IDENTIFICADOR);
+				State = 92;
 				ErrorHandler.Sync(this);
 				switch ( Interpreter.AdaptivePredict(TokenStream,5,Context) ) {
 				case 1:
 					{
-					State = 89;
+					State = 91;
 					tipo();
 					}
 					break;
 				}
-				State = 94;
+				State = 96;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				if (_la==IGUAL) {
 					{
-					State = 92;
+					State = 94;
 					Match(IGUAL);
-					State = 93;
+					State = 95;
 					expresion(0);
 					}
 				}
@@ -750,11 +752,11 @@ public partial class LanguageParser : Parser {
 			case IDENTIFICADOR:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 96;
-				Match(IDENTIFICADOR);
-				State = 97;
-				Match(T__10);
 				State = 98;
+				Match(IDENTIFICADOR);
+				State = 99;
+				Match(T__10);
+				State = 100;
 				expresion(0);
 				}
 				break;
@@ -809,21 +811,133 @@ public partial class LanguageParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
+	public partial class AsignarSliceContext : AsignacionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IDENTIFICADOR() { return GetToken(LanguageParser.IDENTIFICADOR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode L_CORCHETE() { return GetToken(LanguageParser.L_CORCHETE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode R_CORCHETE() { return GetToken(LanguageParser.R_CORCHETE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IGUAL() { return GetToken(LanguageParser.IGUAL, 0); }
+		public AsignarSliceContext(AsignacionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterAsignarSlice(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitAsignarSlice(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAsignarSlice(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class AsignarMatrizContext : AsignacionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IDENTIFICADOR() { return GetToken(LanguageParser.IDENTIFICADOR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] L_CORCHETE() { return GetTokens(LanguageParser.L_CORCHETE); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode L_CORCHETE(int i) {
+			return GetToken(LanguageParser.L_CORCHETE, i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] R_CORCHETE() { return GetTokens(LanguageParser.R_CORCHETE); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode R_CORCHETE(int i) {
+			return GetToken(LanguageParser.R_CORCHETE, i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IGUAL() { return GetToken(LanguageParser.IGUAL, 0); }
+		public AsignarMatrizContext(AsignacionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterAsignarMatriz(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitAsignarMatriz(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAsignarMatriz(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 
 	[RuleVersion(0)]
 	public AsignacionContext asignacion() {
 		AsignacionContext _localctx = new AsignacionContext(Context, State);
 		EnterRule(_localctx, 18, RULE_asignacion);
 		try {
-			_localctx = new AsignarContext(_localctx);
-			EnterOuterAlt(_localctx, 1);
-			{
-			State = 101;
-			Match(IDENTIFICADOR);
-			State = 102;
-			Match(IGUAL);
-			State = 103;
-			expresion(0);
+			State = 123;
+			ErrorHandler.Sync(this);
+			switch ( Interpreter.AdaptivePredict(TokenStream,8,Context) ) {
+			case 1:
+				_localctx = new AsignarContext(_localctx);
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 103;
+				Match(IDENTIFICADOR);
+				State = 104;
+				Match(IGUAL);
+				State = 105;
+				expresion(0);
+				}
+				break;
+			case 2:
+				_localctx = new AsignarSliceContext(_localctx);
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 106;
+				Match(IDENTIFICADOR);
+				State = 107;
+				Match(L_CORCHETE);
+				State = 108;
+				expresion(0);
+				State = 109;
+				Match(R_CORCHETE);
+				State = 110;
+				Match(IGUAL);
+				State = 111;
+				expresion(0);
+				}
+				break;
+			case 3:
+				_localctx = new AsignarMatrizContext(_localctx);
+				EnterOuterAlt(_localctx, 3);
+				{
+				State = 113;
+				Match(IDENTIFICADOR);
+				State = 114;
+				Match(L_CORCHETE);
+				State = 115;
+				expresion(0);
+				State = 116;
+				Match(R_CORCHETE);
+				State = 117;
+				Match(L_CORCHETE);
+				State = 118;
+				expresion(0);
+				State = 119;
+				Match(R_CORCHETE);
+				State = 120;
+				Match(IGUAL);
+				State = 121;
+				expresion(0);
+				}
+				break;
 			}
 		}
 		catch (RecognitionException re) {
@@ -869,7 +983,7 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 105;
+			State = 125;
 			Match(IDENTIFICADOR);
 			}
 		}
@@ -937,37 +1051,37 @@ public partial class LanguageParser : Parser {
 			_localctx = new SwitchContext(_localctx);
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 107;
+			State = 127;
 			Match(T__11);
-			State = 108;
+			State = 128;
 			expresion(0);
-			State = 109;
+			State = 129;
 			Match(T__5);
-			State = 113;
+			State = 133;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			while (_la==T__12) {
 				{
 				{
-				State = 110;
+				State = 130;
 				caseBlock();
 				}
 				}
-				State = 115;
+				State = 135;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
-			State = 117;
+			State = 137;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==T__14) {
 				{
-				State = 116;
+				State = 136;
 				defaultBlock();
 				}
 			}
 
-			State = 119;
+			State = 139;
 			Match(T__6);
 			}
 		}
@@ -1027,34 +1141,34 @@ public partial class LanguageParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 121;
+			State = 141;
 			Match(T__12);
-			State = 122;
+			State = 142;
 			expresion(0);
-			State = 123;
+			State = 143;
 			Match(T__13);
-			State = 127;
+			State = 147;
 			ErrorHandler.Sync(this);
-			_alt = Interpreter.AdaptivePredict(TokenStream,10,Context);
+			_alt = Interpreter.AdaptivePredict(TokenStream,11,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 124;
+					State = 144;
 					sentencia();
 					}
 					} 
 				}
-				State = 129;
+				State = 149;
 				ErrorHandler.Sync(this);
-				_alt = Interpreter.AdaptivePredict(TokenStream,10,Context);
+				_alt = Interpreter.AdaptivePredict(TokenStream,11,Context);
 			}
-			State = 131;
+			State = 151;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==T__2) {
 				{
-				State = 130;
+				State = 150;
 				breakStmt();
 				}
 			}
@@ -1114,32 +1228,32 @@ public partial class LanguageParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 133;
+			State = 153;
 			Match(T__14);
-			State = 134;
+			State = 154;
 			Match(T__13);
-			State = 138;
+			State = 158;
 			ErrorHandler.Sync(this);
-			_alt = Interpreter.AdaptivePredict(TokenStream,12,Context);
+			_alt = Interpreter.AdaptivePredict(TokenStream,13,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					State = 135;
+					State = 155;
 					sentencia();
 					}
 					} 
 				}
-				State = 140;
+				State = 160;
 				ErrorHandler.Sync(this);
-				_alt = Interpreter.AdaptivePredict(TokenStream,12,Context);
+				_alt = Interpreter.AdaptivePredict(TokenStream,13,Context);
 			}
-			State = 142;
+			State = 162;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==T__2) {
 				{
-				State = 141;
+				State = 161;
 				breakStmt();
 				}
 			}
@@ -1271,18 +1385,18 @@ public partial class LanguageParser : Parser {
 		EnterRule(_localctx, 28, RULE_forStmt);
 		int _la;
 		try {
-			State = 172;
+			State = 192;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,17,Context) ) {
+			switch ( Interpreter.AdaptivePredict(TokenStream,18,Context) ) {
 			case 1:
 				_localctx = new ForCondicionContext(_localctx);
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 144;
+				State = 164;
 				Match(T__15);
-				State = 145;
+				State = 165;
 				expresion(0);
-				State = 146;
+				State = 166;
 				bloque();
 				}
 				break;
@@ -1290,55 +1404,55 @@ public partial class LanguageParser : Parser {
 				_localctx = new ForClasicoContext(_localctx);
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 148;
+				State = 168;
 				Match(T__15);
-				State = 151;
+				State = 171;
 				ErrorHandler.Sync(this);
-				switch ( Interpreter.AdaptivePredict(TokenStream,14,Context) ) {
+				switch ( Interpreter.AdaptivePredict(TokenStream,15,Context) ) {
 				case 1:
 					{
-					State = 149;
+					State = 169;
 					declaracion();
 					}
 					break;
 				case 2:
 					{
-					State = 150;
+					State = 170;
 					asignacion();
 					}
 					break;
 				}
-				State = 153;
+				State = 173;
 				Match(PUNTOYCOMA);
-				State = 155;
+				State = 175;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 140189076815872L) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 2251251402145792L) != 0)) {
 					{
-					State = 154;
+					State = 174;
 					expresion(0);
 					}
 				}
 
-				State = 157;
+				State = 177;
 				Match(PUNTOYCOMA);
-				State = 160;
+				State = 180;
 				ErrorHandler.Sync(this);
-				switch ( Interpreter.AdaptivePredict(TokenStream,16,Context) ) {
+				switch ( Interpreter.AdaptivePredict(TokenStream,17,Context) ) {
 				case 1:
 					{
-					State = 158;
+					State = 178;
 					asignacion();
 					}
 					break;
 				case 2:
 					{
-					State = 159;
+					State = 179;
 					contador();
 					}
 					break;
 				}
-				State = 162;
+				State = 182;
 				bloque();
 				}
 				break;
@@ -1346,21 +1460,21 @@ public partial class LanguageParser : Parser {
 				_localctx = new ForRangeContext(_localctx);
 				EnterOuterAlt(_localctx, 3);
 				{
-				State = 163;
+				State = 183;
 				Match(T__15);
-				State = 164;
+				State = 184;
 				Match(IDENTIFICADOR);
-				State = 165;
+				State = 185;
 				Match(T__16);
-				State = 166;
+				State = 186;
 				Match(IDENTIFICADOR);
-				State = 167;
+				State = 187;
 				Match(T__10);
-				State = 168;
+				State = 188;
 				Match(T__17);
-				State = 169;
+				State = 189;
 				expresion(0);
-				State = 170;
+				State = 190;
 				bloque();
 				}
 				break;
@@ -1443,18 +1557,18 @@ public partial class LanguageParser : Parser {
 		ContadorContext _localctx = new ContadorContext(Context, State);
 		EnterRule(_localctx, 30, RULE_contador);
 		try {
-			State = 180;
+			State = 200;
 			ErrorHandler.Sync(this);
-			switch ( Interpreter.AdaptivePredict(TokenStream,18,Context) ) {
+			switch ( Interpreter.AdaptivePredict(TokenStream,19,Context) ) {
 			case 1:
 				_localctx = new IncrementoContext(_localctx);
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 174;
+				State = 194;
 				Match(IDENTIFICADOR);
-				State = 175;
+				State = 195;
 				Match(MAS);
-				State = 176;
+				State = 196;
 				Match(MAS);
 				}
 				break;
@@ -1462,11 +1576,11 @@ public partial class LanguageParser : Parser {
 				_localctx = new DecrementoContext(_localctx);
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 177;
+				State = 197;
 				Match(IDENTIFICADOR);
-				State = 178;
+				State = 198;
 				Match(MENOS);
-				State = 179;
+				State = 199;
 				Match(MENOS);
 				}
 				break;
@@ -1487,11 +1601,11 @@ public partial class LanguageParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode L_CORCHETE() { return GetToken(LanguageParser.L_CORCHETE, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode R_CORCHETE() { return GetToken(LanguageParser.R_CORCHETE, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IDENTIFICADOR() { return GetToken(LanguageParser.IDENTIFICADOR, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
-			return GetRuleContexts<ExpresionContext>();
+		[System.Diagnostics.DebuggerNonUserCode] public SliceElementoContext[] sliceElemento() {
+			return GetRuleContexts<SliceElementoContext>();
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
-			return GetRuleContext<ExpresionContext>(i);
+		[System.Diagnostics.DebuggerNonUserCode] public SliceElementoContext sliceElemento(int i) {
+			return GetRuleContext<SliceElementoContext>(i);
 		}
 		public SliceLiteralContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -1524,50 +1638,115 @@ public partial class LanguageParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 182;
+			State = 202;
 			Match(L_CORCHETE);
-			State = 183;
+			State = 203;
 			Match(R_CORCHETE);
-			State = 185;
+			State = 205;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			if (_la==IDENTIFICADOR) {
 				{
-				State = 184;
+				State = 204;
 				Match(IDENTIFICADOR);
 				}
 			}
 
-			State = 187;
+			State = 207;
 			Match(T__5);
-			State = 196;
+			State = 216;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 140189076815872L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 2251251402145792L) != 0)) {
 				{
-				State = 188;
-				expresion(0);
-				State = 193;
+				State = 208;
+				sliceElemento();
+				State = 213;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				while (_la==T__16) {
 					{
 					{
-					State = 189;
+					State = 209;
 					Match(T__16);
-					State = 190;
-					expresion(0);
+					State = 210;
+					sliceElemento();
 					}
 					}
-					State = 195;
+					State = 215;
 					ErrorHandler.Sync(this);
 					_la = TokenStream.LA(1);
 				}
 				}
 			}
 
-			State = 198;
+			State = 218;
 			Match(T__6);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class SliceElementoContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion() {
+			return GetRuleContext<ExpresionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public SliceLiteralContext sliceLiteral() {
+			return GetRuleContext<SliceLiteralContext>(0);
+		}
+		public SliceElementoContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_sliceElemento; } }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterSliceElemento(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitSliceElemento(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitSliceElemento(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public SliceElementoContext sliceElemento() {
+		SliceElementoContext _localctx = new SliceElementoContext(Context, State);
+		EnterRule(_localctx, 34, RULE_sliceElemento);
+		try {
+			State = 222;
+			ErrorHandler.Sync(this);
+			switch ( Interpreter.AdaptivePredict(TokenStream,23,Context) ) {
+			case 1:
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 220;
+				expresion(0);
+				}
+				break;
+			case 2:
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 221;
+				sliceLiteral();
+				}
+				break;
 			}
 		}
 		catch (RecognitionException re) {
@@ -1625,43 +1804,43 @@ public partial class LanguageParser : Parser {
 	[RuleVersion(0)]
 	public ImprimirContext imprimir() {
 		ImprimirContext _localctx = new ImprimirContext(Context, State);
-		EnterRule(_localctx, 34, RULE_imprimir);
+		EnterRule(_localctx, 36, RULE_imprimir);
 		int _la;
 		try {
 			_localctx = new ImprimeContext(_localctx);
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 200;
+			State = 224;
 			Match(IMPRIMIR);
-			State = 201;
+			State = 225;
 			Match(PARENTESIS_IZQ);
-			State = 210;
+			State = 234;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 140189076815872L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 2251251402145792L) != 0)) {
 				{
-				State = 202;
+				State = 226;
 				expresion(0);
-				State = 207;
+				State = 231;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				while (_la==T__16) {
 					{
 					{
-					State = 203;
+					State = 227;
 					Match(T__16);
-					State = 204;
+					State = 228;
 					expresion(0);
 					}
 					}
-					State = 209;
+					State = 233;
 					ErrorHandler.Sync(this);
 					_la = TokenStream.LA(1);
 				}
 				}
 			}
 
-			State = 212;
+			State = 236;
 			Match(PARENTESIS_DER);
 			}
 		}
@@ -1686,32 +1865,6 @@ public partial class LanguageParser : Parser {
 		public ExpresionContext() { }
 		public virtual void CopyFrom(ExpresionContext context) {
 			base.CopyFrom(context);
-		}
-	}
-	public partial class ComparacionDiferenteContext : ExpresionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
-			return GetRuleContexts<ExpresionContext>();
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
-			return GetRuleContext<ExpresionContext>(i);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DIFERENTE() { return GetToken(LanguageParser.DIFERENTE, 0); }
-		public ComparacionDiferenteContext(ExpresionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void EnterRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterComparacionDiferente(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void ExitRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitComparacionDiferente(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitComparacionDiferente(this);
-			else return visitor.VisitChildren(this);
 		}
 	}
 	public partial class ComparacionIgualContext : ExpresionContext {
@@ -1762,6 +1915,229 @@ public partial class LanguageParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitOr(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class FuncionAppendContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode AGREGAR() { return GetToken(LanguageParser.AGREGAR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_IZQ() { return GetToken(LanguageParser.PARENTESIS_IZQ, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_DER() { return GetToken(LanguageParser.PARENTESIS_DER, 0); }
+		public FuncionAppendContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterFuncionAppend(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitFuncionAppend(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitFuncionAppend(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class LiteralEnteroContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LIT_ENTERO() { return GetToken(LanguageParser.LIT_ENTERO, 0); }
+		public LiteralEnteroContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterLiteralEntero(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitLiteralEntero(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitLiteralEntero(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class MultiplicacionContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MULT() { return GetToken(LanguageParser.MULT, 0); }
+		public MultiplicacionContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterMultiplicacion(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitMultiplicacion(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitMultiplicacion(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class LiteralVerdaderoContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode VERDADERO() { return GetToken(LanguageParser.VERDADERO, 0); }
+		public LiteralVerdaderoContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterLiteralVerdadero(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitLiteralVerdadero(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitLiteralVerdadero(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class AccesoSliceContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IDENTIFICADOR() { return GetToken(LanguageParser.IDENTIFICADOR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode L_CORCHETE() { return GetToken(LanguageParser.L_CORCHETE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion() {
+			return GetRuleContext<ExpresionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode R_CORCHETE() { return GetToken(LanguageParser.R_CORCHETE, 0); }
+		public AccesoSliceContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterAccesoSlice(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitAccesoSlice(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitAccesoSlice(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class MenorOIgualContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MENOR_IGUAL() { return GetToken(LanguageParser.MENOR_IGUAL, 0); }
+		public MenorOIgualContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterMenorOIgual(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitMenorOIgual(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitMenorOIgual(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class DivisionContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DIV() { return GetToken(LanguageParser.DIV, 0); }
+		public DivisionContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterDivision(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitDivision(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitDivision(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class RestaContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MENOS() { return GetToken(LanguageParser.MENOS, 0); }
+		public RestaContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterResta(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitResta(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitResta(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class ComparacionDiferenteContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DIFERENTE() { return GetToken(LanguageParser.DIFERENTE, 0); }
+		public ComparacionDiferenteContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterComparacionDiferente(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitComparacionDiferente(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitComparacionDiferente(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -1835,26 +2211,6 @@ public partial class LanguageParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class LiteralEnteroContext : ExpresionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LIT_ENTERO() { return GetToken(LanguageParser.LIT_ENTERO, 0); }
-		public LiteralEnteroContext(ExpresionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void EnterRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterLiteralEntero(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void ExitRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitLiteralEntero(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitLiteralEntero(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
 	public partial class LiteralRuneContext : ExpresionContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LIT_RUNE() { return GetToken(LanguageParser.LIT_RUNE, 0); }
 		public LiteralRuneContext(ExpresionContext context) { CopyFrom(context); }
@@ -1875,49 +2231,37 @@ public partial class LanguageParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class MultiplicacionContext : ExpresionContext {
+	public partial class AccesoSlice2DContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IDENTIFICADOR() { return GetToken(LanguageParser.IDENTIFICADOR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] L_CORCHETE() { return GetTokens(LanguageParser.L_CORCHETE); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode L_CORCHETE(int i) {
+			return GetToken(LanguageParser.L_CORCHETE, i);
+		}
 		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
 			return GetRuleContexts<ExpresionContext>();
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
 			return GetRuleContext<ExpresionContext>(i);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MULT() { return GetToken(LanguageParser.MULT, 0); }
-		public MultiplicacionContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] R_CORCHETE() { return GetTokens(LanguageParser.R_CORCHETE); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode R_CORCHETE(int i) {
+			return GetToken(LanguageParser.R_CORCHETE, i);
+		}
+		public AccesoSlice2DContext(ExpresionContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override void EnterRule(IParseTreeListener listener) {
 			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterMultiplicacion(this);
+			if (typedListener != null) typedListener.EnterAccesoSlice2D(this);
 		}
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override void ExitRule(IParseTreeListener listener) {
 			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitMultiplicacion(this);
+			if (typedListener != null) typedListener.ExitAccesoSlice2D(this);
 		}
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitMultiplicacion(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class LiteralVerdaderoContext : ExpresionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode VERDADERO() { return GetToken(LanguageParser.VERDADERO, 0); }
-		public LiteralVerdaderoContext(ExpresionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void EnterRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterLiteralVerdadero(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void ExitRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitLiteralVerdadero(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitLiteralVerdadero(this);
+			if (typedVisitor != null) return typedVisitor.VisitAccesoSlice2D(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -1938,6 +2282,34 @@ public partial class LanguageParser : Parser {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitLiteralFlotante(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class FuncionJoinContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode UNIR() { return GetToken(LanguageParser.UNIR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_IZQ() { return GetToken(LanguageParser.PARENTESIS_IZQ, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
+			return GetRuleContexts<ExpresionContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
+			return GetRuleContext<ExpresionContext>(i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_DER() { return GetToken(LanguageParser.PARENTESIS_DER, 0); }
+		public FuncionJoinContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterFuncionJoin(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitFuncionJoin(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitFuncionJoin(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -1989,29 +2361,56 @@ public partial class LanguageParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class MenorOIgualContext : ExpresionContext {
+	public partial class FuncionLenContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LONGITUD() { return GetToken(LanguageParser.LONGITUD, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_IZQ() { return GetToken(LanguageParser.PARENTESIS_IZQ, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion() {
+			return GetRuleContext<ExpresionContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_DER() { return GetToken(LanguageParser.PARENTESIS_DER, 0); }
+		public FuncionLenContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.EnterFuncionLen(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			ILanguageListener typedListener = listener as ILanguageListener;
+			if (typedListener != null) typedListener.ExitFuncionLen(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitFuncionLen(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+	public partial class FuncionIndexContext : ExpresionContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode INDICE() { return GetToken(LanguageParser.INDICE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_IZQ() { return GetToken(LanguageParser.PARENTESIS_IZQ, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
 			return GetRuleContexts<ExpresionContext>();
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
 			return GetRuleContext<ExpresionContext>(i);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MENOR_IGUAL() { return GetToken(LanguageParser.MENOR_IGUAL, 0); }
-		public MenorOIgualContext(ExpresionContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PARENTESIS_DER() { return GetToken(LanguageParser.PARENTESIS_DER, 0); }
+		public FuncionIndexContext(ExpresionContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override void EnterRule(IParseTreeListener listener) {
 			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterMenorOIgual(this);
+			if (typedListener != null) typedListener.EnterFuncionIndex(this);
 		}
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override void ExitRule(IParseTreeListener listener) {
 			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitMenorOIgual(this);
+			if (typedListener != null) typedListener.ExitFuncionIndex(this);
 		}
 		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitMenorOIgual(this);
+			if (typedVisitor != null) return typedVisitor.VisitFuncionIndex(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -2128,32 +2527,6 @@ public partial class LanguageParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class DivisionContext : ExpresionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
-			return GetRuleContexts<ExpresionContext>();
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
-			return GetRuleContext<ExpresionContext>(i);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DIV() { return GetToken(LanguageParser.DIV, 0); }
-		public DivisionContext(ExpresionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void EnterRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterDivision(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void ExitRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitDivision(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitDivision(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
 	public partial class MayorQueContext : ExpresionContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
 			return GetRuleContexts<ExpresionContext>();
@@ -2200,32 +2573,6 @@ public partial class LanguageParser : Parser {
 			else return visitor.VisitChildren(this);
 		}
 	}
-	public partial class RestaContext : ExpresionContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
-			return GetRuleContexts<ExpresionContext>();
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext expresion(int i) {
-			return GetRuleContext<ExpresionContext>(i);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MENOS() { return GetToken(LanguageParser.MENOS, 0); }
-		public RestaContext(ExpresionContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void EnterRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.EnterResta(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override void ExitRule(IParseTreeListener listener) {
-			ILanguageListener typedListener = listener as ILanguageListener;
-			if (typedListener != null) typedListener.ExitResta(this);
-		}
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			ILanguageVisitor<TResult> typedVisitor = visitor as ILanguageVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitResta(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
 	public partial class MenorQueContext : ExpresionContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ExpresionContext[] expresion() {
 			return GetRuleContexts<ExpresionContext>();
@@ -2263,299 +2610,405 @@ public partial class LanguageParser : Parser {
 		int _parentState = State;
 		ExpresionContext _localctx = new ExpresionContext(Context, _parentState);
 		ExpresionContext _prevctx = _localctx;
-		int _startState = 36;
-		EnterRecursionRule(_localctx, 36, RULE_expresion, _p);
+		int _startState = 38;
+		EnterRecursionRule(_localctx, 38, RULE_expresion, _p);
 		try {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 230;
+			State = 293;
 			ErrorHandler.Sync(this);
-			switch (TokenStream.LA(1)) {
-			case T__20:
+			switch ( Interpreter.AdaptivePredict(TokenStream,26,Context) ) {
+			case 1:
 				{
 				_localctx = new NotContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
 
-				State = 215;
+				State = 239;
 				Match(T__20);
-				State = 216;
-				expresion(11);
+				State = 240;
+				expresion(17);
 				}
 				break;
-			case PARENTESIS_IZQ:
+			case 2:
 				{
 				_localctx = new ParentesisContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 217;
+				State = 241;
 				Match(PARENTESIS_IZQ);
-				State = 218;
+				State = 242;
 				expresion(0);
-				State = 219;
+				State = 243;
 				Match(PARENTESIS_DER);
 				}
 				break;
-			case L_CORCHETE:
+			case 3:
 				{
 				_localctx = new SliceContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 221;
+				State = 245;
 				sliceLiteral();
 				}
 				break;
-			case LIT_ENTERO:
+			case 4:
+				{
+				_localctx = new AccesoSliceContext(_localctx);
+				Context = _localctx;
+				_prevctx = _localctx;
+				State = 246;
+				Match(IDENTIFICADOR);
+				State = 247;
+				Match(L_CORCHETE);
+				State = 248;
+				expresion(0);
+				State = 249;
+				Match(R_CORCHETE);
+				}
+				break;
+			case 5:
+				{
+				_localctx = new FuncionAppendContext(_localctx);
+				Context = _localctx;
+				_prevctx = _localctx;
+				State = 251;
+				Match(AGREGAR);
+				State = 252;
+				Match(PARENTESIS_IZQ);
+				State = 253;
+				expresion(0);
+				State = 254;
+				Match(T__16);
+				State = 255;
+				expresion(0);
+				State = 256;
+				Match(PARENTESIS_DER);
+				}
+				break;
+			case 6:
+				{
+				_localctx = new FuncionLenContext(_localctx);
+				Context = _localctx;
+				_prevctx = _localctx;
+				State = 258;
+				Match(LONGITUD);
+				State = 259;
+				Match(PARENTESIS_IZQ);
+				State = 260;
+				expresion(0);
+				State = 261;
+				Match(PARENTESIS_DER);
+				}
+				break;
+			case 7:
+				{
+				_localctx = new FuncionIndexContext(_localctx);
+				Context = _localctx;
+				_prevctx = _localctx;
+				State = 263;
+				Match(INDICE);
+				State = 264;
+				Match(PARENTESIS_IZQ);
+				State = 265;
+				expresion(0);
+				State = 266;
+				Match(T__16);
+				State = 267;
+				expresion(0);
+				State = 268;
+				Match(PARENTESIS_DER);
+				}
+				break;
+			case 8:
+				{
+				_localctx = new FuncionJoinContext(_localctx);
+				Context = _localctx;
+				_prevctx = _localctx;
+				State = 270;
+				Match(UNIR);
+				State = 271;
+				Match(PARENTESIS_IZQ);
+				State = 272;
+				expresion(0);
+				State = 273;
+				Match(T__16);
+				State = 274;
+				expresion(0);
+				State = 275;
+				Match(PARENTESIS_DER);
+				}
+				break;
+			case 9:
+				{
+				_localctx = new AccesoSlice2DContext(_localctx);
+				Context = _localctx;
+				_prevctx = _localctx;
+				State = 277;
+				Match(IDENTIFICADOR);
+				State = 278;
+				Match(L_CORCHETE);
+				State = 279;
+				expresion(0);
+				State = 280;
+				Match(R_CORCHETE);
+				State = 281;
+				Match(L_CORCHETE);
+				State = 282;
+				expresion(0);
+				State = 283;
+				Match(R_CORCHETE);
+				}
+				break;
+			case 10:
 				{
 				_localctx = new LiteralEnteroContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 222;
+				State = 285;
 				Match(LIT_ENTERO);
 				}
 				break;
-			case LIT_FLOAT:
+			case 11:
 				{
 				_localctx = new LiteralFlotanteContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 223;
+				State = 286;
 				Match(LIT_FLOAT);
 				}
 				break;
-			case LIT_RUNE:
+			case 12:
 				{
 				_localctx = new LiteralRuneContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 224;
+				State = 287;
 				Match(LIT_RUNE);
 				}
 				break;
-			case LIT_STRING:
+			case 13:
 				{
 				_localctx = new LiteralCadenaContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 225;
+				State = 288;
 				Match(LIT_STRING);
 				}
 				break;
-			case VERDADERO:
+			case 14:
 				{
 				_localctx = new LiteralVerdaderoContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 226;
+				State = 289;
 				Match(VERDADERO);
 				}
 				break;
-			case FALSO:
+			case 15:
 				{
 				_localctx = new LiteralFalsoContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 227;
+				State = 290;
 				Match(FALSO);
 				}
 				break;
-			case NULO:
+			case 16:
 				{
 				_localctx = new LiteralNuloContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 228;
+				State = 291;
 				Match(NULO);
 				}
 				break;
-			case IDENTIFICADOR:
+			case 17:
 				{
 				_localctx = new IdentificadorContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 229;
+				State = 292;
 				Match(IDENTIFICADOR);
 				}
 				break;
-			default:
-				throw new NoViableAltException(this);
 			}
 			Context.Stop = TokenStream.LT(-1);
-			State = 273;
+			State = 336;
 			ErrorHandler.Sync(this);
-			_alt = Interpreter.AdaptivePredict(TokenStream,26,Context);
+			_alt = Interpreter.AdaptivePredict(TokenStream,28,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					if ( ParseListeners!=null )
 						TriggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					State = 271;
+					State = 334;
 					ErrorHandler.Sync(this);
-					switch ( Interpreter.AdaptivePredict(TokenStream,25,Context) ) {
+					switch ( Interpreter.AdaptivePredict(TokenStream,27,Context) ) {
 					case 1:
 						{
 						_localctx = new SumaContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 232;
-						if (!(Precpred(Context, 24))) throw new FailedPredicateException(this, "Precpred(Context, 24)");
-						State = 233;
+						State = 295;
+						if (!(Precpred(Context, 30))) throw new FailedPredicateException(this, "Precpred(Context, 30)");
+						State = 296;
 						Match(MAS);
-						State = 234;
-						expresion(25);
+						State = 297;
+						expresion(31);
 						}
 						break;
 					case 2:
 						{
 						_localctx = new RestaContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 235;
-						if (!(Precpred(Context, 23))) throw new FailedPredicateException(this, "Precpred(Context, 23)");
-						State = 236;
+						State = 298;
+						if (!(Precpred(Context, 29))) throw new FailedPredicateException(this, "Precpred(Context, 29)");
+						State = 299;
 						Match(MENOS);
-						State = 237;
-						expresion(24);
+						State = 300;
+						expresion(30);
 						}
 						break;
 					case 3:
 						{
 						_localctx = new MultiplicacionContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 238;
-						if (!(Precpred(Context, 22))) throw new FailedPredicateException(this, "Precpred(Context, 22)");
-						State = 239;
+						State = 301;
+						if (!(Precpred(Context, 28))) throw new FailedPredicateException(this, "Precpred(Context, 28)");
+						State = 302;
 						Match(MULT);
-						State = 240;
-						expresion(23);
+						State = 303;
+						expresion(29);
 						}
 						break;
 					case 4:
 						{
 						_localctx = new DivisionContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 241;
-						if (!(Precpred(Context, 21))) throw new FailedPredicateException(this, "Precpred(Context, 21)");
-						State = 242;
+						State = 304;
+						if (!(Precpred(Context, 27))) throw new FailedPredicateException(this, "Precpred(Context, 27)");
+						State = 305;
 						Match(DIV);
-						State = 243;
-						expresion(22);
+						State = 306;
+						expresion(28);
 						}
 						break;
 					case 5:
 						{
 						_localctx = new ModuloContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 244;
-						if (!(Precpred(Context, 20))) throw new FailedPredicateException(this, "Precpred(Context, 20)");
-						State = 245;
+						State = 307;
+						if (!(Precpred(Context, 26))) throw new FailedPredicateException(this, "Precpred(Context, 26)");
+						State = 308;
 						Match(MOD);
-						State = 246;
-						expresion(21);
+						State = 309;
+						expresion(27);
 						}
 						break;
 					case 6:
 						{
 						_localctx = new ComparacionIgualContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 247;
-						if (!(Precpred(Context, 19))) throw new FailedPredicateException(this, "Precpred(Context, 19)");
-						State = 248;
+						State = 310;
+						if (!(Precpred(Context, 25))) throw new FailedPredicateException(this, "Precpred(Context, 25)");
+						State = 311;
 						Match(IGUALDAD);
-						State = 249;
-						expresion(20);
+						State = 312;
+						expresion(26);
 						}
 						break;
 					case 7:
 						{
 						_localctx = new ComparacionDiferenteContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 250;
-						if (!(Precpred(Context, 18))) throw new FailedPredicateException(this, "Precpred(Context, 18)");
-						State = 251;
+						State = 313;
+						if (!(Precpred(Context, 24))) throw new FailedPredicateException(this, "Precpred(Context, 24)");
+						State = 314;
 						Match(DIFERENTE);
-						State = 252;
-						expresion(19);
+						State = 315;
+						expresion(25);
 						}
 						break;
 					case 8:
 						{
 						_localctx = new MayorQueContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 253;
-						if (!(Precpred(Context, 17))) throw new FailedPredicateException(this, "Precpred(Context, 17)");
-						State = 254;
+						State = 316;
+						if (!(Precpred(Context, 23))) throw new FailedPredicateException(this, "Precpred(Context, 23)");
+						State = 317;
 						Match(MAYOR);
-						State = 255;
-						expresion(18);
+						State = 318;
+						expresion(24);
 						}
 						break;
 					case 9:
 						{
 						_localctx = new MenorQueContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 256;
-						if (!(Precpred(Context, 16))) throw new FailedPredicateException(this, "Precpred(Context, 16)");
-						State = 257;
+						State = 319;
+						if (!(Precpred(Context, 22))) throw new FailedPredicateException(this, "Precpred(Context, 22)");
+						State = 320;
 						Match(MENOR);
-						State = 258;
-						expresion(17);
+						State = 321;
+						expresion(23);
 						}
 						break;
 					case 10:
 						{
 						_localctx = new MayorOIgualContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 259;
-						if (!(Precpred(Context, 15))) throw new FailedPredicateException(this, "Precpred(Context, 15)");
-						State = 260;
+						State = 322;
+						if (!(Precpred(Context, 21))) throw new FailedPredicateException(this, "Precpred(Context, 21)");
+						State = 323;
 						Match(MAYOR_IGUAL);
-						State = 261;
-						expresion(16);
+						State = 324;
+						expresion(22);
 						}
 						break;
 					case 11:
 						{
 						_localctx = new MenorOIgualContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 262;
-						if (!(Precpred(Context, 14))) throw new FailedPredicateException(this, "Precpred(Context, 14)");
-						State = 263;
+						State = 325;
+						if (!(Precpred(Context, 20))) throw new FailedPredicateException(this, "Precpred(Context, 20)");
+						State = 326;
 						Match(MENOR_IGUAL);
-						State = 264;
-						expresion(15);
+						State = 327;
+						expresion(21);
 						}
 						break;
 					case 12:
 						{
 						_localctx = new AndContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 265;
-						if (!(Precpred(Context, 13))) throw new FailedPredicateException(this, "Precpred(Context, 13)");
-						State = 266;
+						State = 328;
+						if (!(Precpred(Context, 19))) throw new FailedPredicateException(this, "Precpred(Context, 19)");
+						State = 329;
 						Match(T__18);
-						State = 267;
-						expresion(14);
+						State = 330;
+						expresion(20);
 						}
 						break;
 					case 13:
 						{
 						_localctx = new OrContext(new ExpresionContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expresion);
-						State = 268;
-						if (!(Precpred(Context, 12))) throw new FailedPredicateException(this, "Precpred(Context, 12)");
-						State = 269;
+						State = 331;
+						if (!(Precpred(Context, 18))) throw new FailedPredicateException(this, "Precpred(Context, 18)");
+						State = 332;
 						Match(T__19);
-						State = 270;
-						expresion(13);
+						State = 333;
+						expresion(19);
 						}
 						break;
 					}
 					} 
 				}
-				State = 275;
+				State = 338;
 				ErrorHandler.Sync(this);
-				_alt = Interpreter.AdaptivePredict(TokenStream,26,Context);
+				_alt = Interpreter.AdaptivePredict(TokenStream,28,Context);
 			}
 			}
 		}
@@ -2572,124 +3025,146 @@ public partial class LanguageParser : Parser {
 
 	public override bool Sempred(RuleContext _localctx, int ruleIndex, int predIndex) {
 		switch (ruleIndex) {
-		case 18: return expresion_sempred((ExpresionContext)_localctx, predIndex);
+		case 19: return expresion_sempred((ExpresionContext)_localctx, predIndex);
 		}
 		return true;
 	}
 	private bool expresion_sempred(ExpresionContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 0: return Precpred(Context, 24);
-		case 1: return Precpred(Context, 23);
-		case 2: return Precpred(Context, 22);
-		case 3: return Precpred(Context, 21);
-		case 4: return Precpred(Context, 20);
-		case 5: return Precpred(Context, 19);
-		case 6: return Precpred(Context, 18);
-		case 7: return Precpred(Context, 17);
-		case 8: return Precpred(Context, 16);
-		case 9: return Precpred(Context, 15);
-		case 10: return Precpred(Context, 14);
-		case 11: return Precpred(Context, 13);
-		case 12: return Precpred(Context, 12);
+		case 0: return Precpred(Context, 30);
+		case 1: return Precpred(Context, 29);
+		case 2: return Precpred(Context, 28);
+		case 3: return Precpred(Context, 27);
+		case 4: return Precpred(Context, 26);
+		case 5: return Precpred(Context, 25);
+		case 6: return Precpred(Context, 24);
+		case 7: return Precpred(Context, 23);
+		case 8: return Precpred(Context, 22);
+		case 9: return Precpred(Context, 21);
+		case 10: return Precpred(Context, 20);
+		case 11: return Precpred(Context, 19);
+		case 12: return Precpred(Context, 18);
 		}
 		return true;
 	}
 
 	private static int[] _serializedATN = {
-		4,1,50,277,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
+		4,1,54,340,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
 		7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,14,
-		2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,1,0,1,0,1,1,1,1,1,1,1,1,1,1,1,
-		1,1,2,1,2,1,3,1,3,1,4,1,4,3,4,53,8,4,1,5,1,5,5,5,57,8,5,10,5,12,5,60,9,
-		5,1,5,1,5,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,3,6,74,8,6,1,6,3,6,77,
-		8,6,1,7,1,7,1,7,1,7,1,7,1,7,1,7,3,7,86,8,7,1,8,1,8,1,8,3,8,91,8,8,1,8,
-		1,8,3,8,95,8,8,1,8,1,8,1,8,3,8,100,8,8,1,9,1,9,1,9,1,9,1,10,1,10,1,11,
-		1,11,1,11,1,11,5,11,112,8,11,10,11,12,11,115,9,11,1,11,3,11,118,8,11,1,
-		11,1,11,1,12,1,12,1,12,1,12,5,12,126,8,12,10,12,12,12,129,9,12,1,12,3,
-		12,132,8,12,1,13,1,13,1,13,5,13,137,8,13,10,13,12,13,140,9,13,1,13,3,13,
-		143,8,13,1,14,1,14,1,14,1,14,1,14,1,14,1,14,3,14,152,8,14,1,14,1,14,3,
-		14,156,8,14,1,14,1,14,1,14,3,14,161,8,14,1,14,1,14,1,14,1,14,1,14,1,14,
-		1,14,1,14,1,14,1,14,3,14,173,8,14,1,15,1,15,1,15,1,15,1,15,1,15,3,15,181,
-		8,15,1,16,1,16,1,16,3,16,186,8,16,1,16,1,16,1,16,1,16,5,16,192,8,16,10,
-		16,12,16,195,9,16,3,16,197,8,16,1,16,1,16,1,17,1,17,1,17,1,17,1,17,5,17,
-		206,8,17,10,17,12,17,209,9,17,3,17,211,8,17,1,17,1,17,1,18,1,18,1,18,1,
-		18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,3,18,231,
-		8,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,
-		1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,
-		1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,5,18,272,8,
-		18,10,18,12,18,275,9,18,1,18,0,1,36,19,0,2,4,6,8,10,12,14,16,18,20,22,
-		24,26,28,30,32,34,36,0,0,316,0,38,1,0,0,0,2,40,1,0,0,0,4,46,1,0,0,0,6,
-		48,1,0,0,0,8,50,1,0,0,0,10,54,1,0,0,0,12,73,1,0,0,0,14,78,1,0,0,0,16,99,
-		1,0,0,0,18,101,1,0,0,0,20,105,1,0,0,0,22,107,1,0,0,0,24,121,1,0,0,0,26,
-		133,1,0,0,0,28,172,1,0,0,0,30,180,1,0,0,0,32,182,1,0,0,0,34,200,1,0,0,
-		0,36,230,1,0,0,0,38,39,3,2,1,0,39,1,1,0,0,0,40,41,5,1,0,0,41,42,5,2,0,
-		0,42,43,5,28,0,0,43,44,5,29,0,0,44,45,3,10,5,0,45,3,1,0,0,0,46,47,5,3,
-		0,0,47,5,1,0,0,0,48,49,5,4,0,0,49,7,1,0,0,0,50,52,5,5,0,0,51,53,3,36,18,
-		0,52,51,1,0,0,0,52,53,1,0,0,0,53,9,1,0,0,0,54,58,5,6,0,0,55,57,3,12,6,
-		0,56,55,1,0,0,0,57,60,1,0,0,0,58,56,1,0,0,0,58,59,1,0,0,0,59,61,1,0,0,
-		0,60,58,1,0,0,0,61,62,5,7,0,0,62,11,1,0,0,0,63,74,3,16,8,0,64,74,3,18,
-		9,0,65,74,3,34,17,0,66,74,3,36,18,0,67,74,3,14,7,0,68,74,3,22,11,0,69,
-		74,3,28,14,0,70,74,3,4,2,0,71,74,3,6,3,0,72,74,3,8,4,0,73,63,1,0,0,0,73,
-		64,1,0,0,0,73,65,1,0,0,0,73,66,1,0,0,0,73,67,1,0,0,0,73,68,1,0,0,0,73,
-		69,1,0,0,0,73,70,1,0,0,0,73,71,1,0,0,0,73,72,1,0,0,0,74,76,1,0,0,0,75,
-		77,5,32,0,0,76,75,1,0,0,0,76,77,1,0,0,0,77,13,1,0,0,0,78,79,5,8,0,0,79,
-		80,3,36,18,0,80,85,3,10,5,0,81,82,5,9,0,0,82,86,3,14,7,0,83,84,5,9,0,0,
-		84,86,3,10,5,0,85,81,1,0,0,0,85,83,1,0,0,0,85,86,1,0,0,0,86,15,1,0,0,0,
-		87,88,5,10,0,0,88,90,5,46,0,0,89,91,3,20,10,0,90,89,1,0,0,0,90,91,1,0,
-		0,0,91,94,1,0,0,0,92,93,5,27,0,0,93,95,3,36,18,0,94,92,1,0,0,0,94,95,1,
-		0,0,0,95,100,1,0,0,0,96,97,5,46,0,0,97,98,5,11,0,0,98,100,3,36,18,0,99,
-		87,1,0,0,0,99,96,1,0,0,0,100,17,1,0,0,0,101,102,5,46,0,0,102,103,5,27,
-		0,0,103,104,3,36,18,0,104,19,1,0,0,0,105,106,5,46,0,0,106,21,1,0,0,0,107,
-		108,5,12,0,0,108,109,3,36,18,0,109,113,5,6,0,0,110,112,3,24,12,0,111,110,
-		1,0,0,0,112,115,1,0,0,0,113,111,1,0,0,0,113,114,1,0,0,0,114,117,1,0,0,
-		0,115,113,1,0,0,0,116,118,3,26,13,0,117,116,1,0,0,0,117,118,1,0,0,0,118,
-		119,1,0,0,0,119,120,5,7,0,0,120,23,1,0,0,0,121,122,5,13,0,0,122,123,3,
-		36,18,0,123,127,5,14,0,0,124,126,3,12,6,0,125,124,1,0,0,0,126,129,1,0,
-		0,0,127,125,1,0,0,0,127,128,1,0,0,0,128,131,1,0,0,0,129,127,1,0,0,0,130,
-		132,3,4,2,0,131,130,1,0,0,0,131,132,1,0,0,0,132,25,1,0,0,0,133,134,5,15,
-		0,0,134,138,5,14,0,0,135,137,3,12,6,0,136,135,1,0,0,0,137,140,1,0,0,0,
-		138,136,1,0,0,0,138,139,1,0,0,0,139,142,1,0,0,0,140,138,1,0,0,0,141,143,
-		3,4,2,0,142,141,1,0,0,0,142,143,1,0,0,0,143,27,1,0,0,0,144,145,5,16,0,
-		0,145,146,3,36,18,0,146,147,3,10,5,0,147,173,1,0,0,0,148,151,5,16,0,0,
-		149,152,3,16,8,0,150,152,3,18,9,0,151,149,1,0,0,0,151,150,1,0,0,0,151,
-		152,1,0,0,0,152,153,1,0,0,0,153,155,5,32,0,0,154,156,3,36,18,0,155,154,
-		1,0,0,0,155,156,1,0,0,0,156,157,1,0,0,0,157,160,5,32,0,0,158,161,3,18,
-		9,0,159,161,3,30,15,0,160,158,1,0,0,0,160,159,1,0,0,0,160,161,1,0,0,0,
-		161,162,1,0,0,0,162,173,3,10,5,0,163,164,5,16,0,0,164,165,5,46,0,0,165,
-		166,5,17,0,0,166,167,5,46,0,0,167,168,5,11,0,0,168,169,5,18,0,0,169,170,
-		3,36,18,0,170,171,3,10,5,0,171,173,1,0,0,0,172,144,1,0,0,0,172,148,1,0,
-		0,0,172,163,1,0,0,0,173,29,1,0,0,0,174,175,5,46,0,0,175,176,5,22,0,0,176,
-		181,5,22,0,0,177,178,5,46,0,0,178,179,5,23,0,0,179,181,5,23,0,0,180,174,
-		1,0,0,0,180,177,1,0,0,0,181,31,1,0,0,0,182,183,5,30,0,0,183,185,5,31,0,
-		0,184,186,5,46,0,0,185,184,1,0,0,0,185,186,1,0,0,0,186,187,1,0,0,0,187,
-		196,5,6,0,0,188,193,3,36,18,0,189,190,5,17,0,0,190,192,3,36,18,0,191,189,
-		1,0,0,0,192,195,1,0,0,0,193,191,1,0,0,0,193,194,1,0,0,0,194,197,1,0,0,
-		0,195,193,1,0,0,0,196,188,1,0,0,0,196,197,1,0,0,0,197,198,1,0,0,0,198,
-		199,5,7,0,0,199,33,1,0,0,0,200,201,5,50,0,0,201,210,5,28,0,0,202,207,3,
-		36,18,0,203,204,5,17,0,0,204,206,3,36,18,0,205,203,1,0,0,0,206,209,1,0,
-		0,0,207,205,1,0,0,0,207,208,1,0,0,0,208,211,1,0,0,0,209,207,1,0,0,0,210,
-		202,1,0,0,0,210,211,1,0,0,0,211,212,1,0,0,0,212,213,5,29,0,0,213,35,1,
-		0,0,0,214,215,6,18,-1,0,215,216,5,21,0,0,216,231,3,36,18,11,217,218,5,
-		28,0,0,218,219,3,36,18,0,219,220,5,29,0,0,220,231,1,0,0,0,221,231,3,32,
-		16,0,222,231,5,45,0,0,223,231,5,44,0,0,224,231,5,43,0,0,225,231,5,42,0,
-		0,226,231,5,39,0,0,227,231,5,40,0,0,228,231,5,41,0,0,229,231,5,46,0,0,
-		230,214,1,0,0,0,230,217,1,0,0,0,230,221,1,0,0,0,230,222,1,0,0,0,230,223,
-		1,0,0,0,230,224,1,0,0,0,230,225,1,0,0,0,230,226,1,0,0,0,230,227,1,0,0,
-		0,230,228,1,0,0,0,230,229,1,0,0,0,231,273,1,0,0,0,232,233,10,24,0,0,233,
-		234,5,22,0,0,234,272,3,36,18,25,235,236,10,23,0,0,236,237,5,23,0,0,237,
-		272,3,36,18,24,238,239,10,22,0,0,239,240,5,24,0,0,240,272,3,36,18,23,241,
-		242,10,21,0,0,242,243,5,25,0,0,243,272,3,36,18,22,244,245,10,20,0,0,245,
-		246,5,26,0,0,246,272,3,36,18,21,247,248,10,19,0,0,248,249,5,37,0,0,249,
-		272,3,36,18,20,250,251,10,18,0,0,251,252,5,38,0,0,252,272,3,36,18,19,253,
-		254,10,17,0,0,254,255,5,33,0,0,255,272,3,36,18,18,256,257,10,16,0,0,257,
-		258,5,34,0,0,258,272,3,36,18,17,259,260,10,15,0,0,260,261,5,35,0,0,261,
-		272,3,36,18,16,262,263,10,14,0,0,263,264,5,36,0,0,264,272,3,36,18,15,265,
-		266,10,13,0,0,266,267,5,19,0,0,267,272,3,36,18,14,268,269,10,12,0,0,269,
-		270,5,20,0,0,270,272,3,36,18,13,271,232,1,0,0,0,271,235,1,0,0,0,271,238,
-		1,0,0,0,271,241,1,0,0,0,271,244,1,0,0,0,271,247,1,0,0,0,271,250,1,0,0,
-		0,271,253,1,0,0,0,271,256,1,0,0,0,271,259,1,0,0,0,271,262,1,0,0,0,271,
-		265,1,0,0,0,271,268,1,0,0,0,272,275,1,0,0,0,273,271,1,0,0,0,273,274,1,
-		0,0,0,274,37,1,0,0,0,275,273,1,0,0,0,27,52,58,73,76,85,90,94,99,113,117,
-		127,131,138,142,151,155,160,172,180,185,193,196,207,210,230,271,273
+		2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,1,0,1,0,1,1,1,1,1,1,
+		1,1,1,1,1,1,1,2,1,2,1,3,1,3,1,4,1,4,3,4,55,8,4,1,5,1,5,5,5,59,8,5,10,5,
+		12,5,62,9,5,1,5,1,5,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,1,6,3,6,76,8,6,
+		1,6,3,6,79,8,6,1,7,1,7,1,7,1,7,1,7,1,7,1,7,3,7,88,8,7,1,8,1,8,1,8,3,8,
+		93,8,8,1,8,1,8,3,8,97,8,8,1,8,1,8,1,8,3,8,102,8,8,1,9,1,9,1,9,1,9,1,9,
+		1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,1,9,3,9,124,8,
+		9,1,10,1,10,1,11,1,11,1,11,1,11,5,11,132,8,11,10,11,12,11,135,9,11,1,11,
+		3,11,138,8,11,1,11,1,11,1,12,1,12,1,12,1,12,5,12,146,8,12,10,12,12,12,
+		149,9,12,1,12,3,12,152,8,12,1,13,1,13,1,13,5,13,157,8,13,10,13,12,13,160,
+		9,13,1,13,3,13,163,8,13,1,14,1,14,1,14,1,14,1,14,1,14,1,14,3,14,172,8,
+		14,1,14,1,14,3,14,176,8,14,1,14,1,14,1,14,3,14,181,8,14,1,14,1,14,1,14,
+		1,14,1,14,1,14,1,14,1,14,1,14,1,14,3,14,193,8,14,1,15,1,15,1,15,1,15,1,
+		15,1,15,3,15,201,8,15,1,16,1,16,1,16,3,16,206,8,16,1,16,1,16,1,16,1,16,
+		5,16,212,8,16,10,16,12,16,215,9,16,3,16,217,8,16,1,16,1,16,1,17,1,17,3,
+		17,223,8,17,1,18,1,18,1,18,1,18,1,18,5,18,230,8,18,10,18,12,18,233,9,18,
+		3,18,235,8,18,1,18,1,18,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,
+		19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,
+		19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,
+		19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,
+		19,1,19,1,19,1,19,3,19,294,8,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,
+		1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,
+		1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,1,19,
+		1,19,1,19,1,19,5,19,335,8,19,10,19,12,19,338,9,19,1,19,0,1,38,20,0,2,4,
+		6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,0,0,387,0,40,1,0,0,0,
+		2,42,1,0,0,0,4,48,1,0,0,0,6,50,1,0,0,0,8,52,1,0,0,0,10,56,1,0,0,0,12,75,
+		1,0,0,0,14,80,1,0,0,0,16,101,1,0,0,0,18,123,1,0,0,0,20,125,1,0,0,0,22,
+		127,1,0,0,0,24,141,1,0,0,0,26,153,1,0,0,0,28,192,1,0,0,0,30,200,1,0,0,
+		0,32,202,1,0,0,0,34,222,1,0,0,0,36,224,1,0,0,0,38,293,1,0,0,0,40,41,3,
+		2,1,0,41,1,1,0,0,0,42,43,5,1,0,0,43,44,5,2,0,0,44,45,5,28,0,0,45,46,5,
+		29,0,0,46,47,3,10,5,0,47,3,1,0,0,0,48,49,5,3,0,0,49,5,1,0,0,0,50,51,5,
+		4,0,0,51,7,1,0,0,0,52,54,5,5,0,0,53,55,3,38,19,0,54,53,1,0,0,0,54,55,1,
+		0,0,0,55,9,1,0,0,0,56,60,5,6,0,0,57,59,3,12,6,0,58,57,1,0,0,0,59,62,1,
+		0,0,0,60,58,1,0,0,0,60,61,1,0,0,0,61,63,1,0,0,0,62,60,1,0,0,0,63,64,5,
+		7,0,0,64,11,1,0,0,0,65,76,3,16,8,0,66,76,3,18,9,0,67,76,3,36,18,0,68,76,
+		3,38,19,0,69,76,3,14,7,0,70,76,3,22,11,0,71,76,3,28,14,0,72,76,3,4,2,0,
+		73,76,3,6,3,0,74,76,3,8,4,0,75,65,1,0,0,0,75,66,1,0,0,0,75,67,1,0,0,0,
+		75,68,1,0,0,0,75,69,1,0,0,0,75,70,1,0,0,0,75,71,1,0,0,0,75,72,1,0,0,0,
+		75,73,1,0,0,0,75,74,1,0,0,0,76,78,1,0,0,0,77,79,5,32,0,0,78,77,1,0,0,0,
+		78,79,1,0,0,0,79,13,1,0,0,0,80,81,5,8,0,0,81,82,3,38,19,0,82,87,3,10,5,
+		0,83,84,5,9,0,0,84,88,3,14,7,0,85,86,5,9,0,0,86,88,3,10,5,0,87,83,1,0,
+		0,0,87,85,1,0,0,0,87,88,1,0,0,0,88,15,1,0,0,0,89,90,5,10,0,0,90,92,5,50,
+		0,0,91,93,3,20,10,0,92,91,1,0,0,0,92,93,1,0,0,0,93,96,1,0,0,0,94,95,5,
+		27,0,0,95,97,3,38,19,0,96,94,1,0,0,0,96,97,1,0,0,0,97,102,1,0,0,0,98,99,
+		5,50,0,0,99,100,5,11,0,0,100,102,3,38,19,0,101,89,1,0,0,0,101,98,1,0,0,
+		0,102,17,1,0,0,0,103,104,5,50,0,0,104,105,5,27,0,0,105,124,3,38,19,0,106,
+		107,5,50,0,0,107,108,5,30,0,0,108,109,3,38,19,0,109,110,5,31,0,0,110,111,
+		5,27,0,0,111,112,3,38,19,0,112,124,1,0,0,0,113,114,5,50,0,0,114,115,5,
+		30,0,0,115,116,3,38,19,0,116,117,5,31,0,0,117,118,5,30,0,0,118,119,3,38,
+		19,0,119,120,5,31,0,0,120,121,5,27,0,0,121,122,3,38,19,0,122,124,1,0,0,
+		0,123,103,1,0,0,0,123,106,1,0,0,0,123,113,1,0,0,0,124,19,1,0,0,0,125,126,
+		5,50,0,0,126,21,1,0,0,0,127,128,5,12,0,0,128,129,3,38,19,0,129,133,5,6,
+		0,0,130,132,3,24,12,0,131,130,1,0,0,0,132,135,1,0,0,0,133,131,1,0,0,0,
+		133,134,1,0,0,0,134,137,1,0,0,0,135,133,1,0,0,0,136,138,3,26,13,0,137,
+		136,1,0,0,0,137,138,1,0,0,0,138,139,1,0,0,0,139,140,5,7,0,0,140,23,1,0,
+		0,0,141,142,5,13,0,0,142,143,3,38,19,0,143,147,5,14,0,0,144,146,3,12,6,
+		0,145,144,1,0,0,0,146,149,1,0,0,0,147,145,1,0,0,0,147,148,1,0,0,0,148,
+		151,1,0,0,0,149,147,1,0,0,0,150,152,3,4,2,0,151,150,1,0,0,0,151,152,1,
+		0,0,0,152,25,1,0,0,0,153,154,5,15,0,0,154,158,5,14,0,0,155,157,3,12,6,
+		0,156,155,1,0,0,0,157,160,1,0,0,0,158,156,1,0,0,0,158,159,1,0,0,0,159,
+		162,1,0,0,0,160,158,1,0,0,0,161,163,3,4,2,0,162,161,1,0,0,0,162,163,1,
+		0,0,0,163,27,1,0,0,0,164,165,5,16,0,0,165,166,3,38,19,0,166,167,3,10,5,
+		0,167,193,1,0,0,0,168,171,5,16,0,0,169,172,3,16,8,0,170,172,3,18,9,0,171,
+		169,1,0,0,0,171,170,1,0,0,0,171,172,1,0,0,0,172,173,1,0,0,0,173,175,5,
+		32,0,0,174,176,3,38,19,0,175,174,1,0,0,0,175,176,1,0,0,0,176,177,1,0,0,
+		0,177,180,5,32,0,0,178,181,3,18,9,0,179,181,3,30,15,0,180,178,1,0,0,0,
+		180,179,1,0,0,0,180,181,1,0,0,0,181,182,1,0,0,0,182,193,3,10,5,0,183,184,
+		5,16,0,0,184,185,5,50,0,0,185,186,5,17,0,0,186,187,5,50,0,0,187,188,5,
+		11,0,0,188,189,5,18,0,0,189,190,3,38,19,0,190,191,3,10,5,0,191,193,1,0,
+		0,0,192,164,1,0,0,0,192,168,1,0,0,0,192,183,1,0,0,0,193,29,1,0,0,0,194,
+		195,5,50,0,0,195,196,5,22,0,0,196,201,5,22,0,0,197,198,5,50,0,0,198,199,
+		5,23,0,0,199,201,5,23,0,0,200,194,1,0,0,0,200,197,1,0,0,0,201,31,1,0,0,
+		0,202,203,5,30,0,0,203,205,5,31,0,0,204,206,5,50,0,0,205,204,1,0,0,0,205,
+		206,1,0,0,0,206,207,1,0,0,0,207,216,5,6,0,0,208,213,3,34,17,0,209,210,
+		5,17,0,0,210,212,3,34,17,0,211,209,1,0,0,0,212,215,1,0,0,0,213,211,1,0,
+		0,0,213,214,1,0,0,0,214,217,1,0,0,0,215,213,1,0,0,0,216,208,1,0,0,0,216,
+		217,1,0,0,0,217,218,1,0,0,0,218,219,5,7,0,0,219,33,1,0,0,0,220,223,3,38,
+		19,0,221,223,3,32,16,0,222,220,1,0,0,0,222,221,1,0,0,0,223,35,1,0,0,0,
+		224,225,5,54,0,0,225,234,5,28,0,0,226,231,3,38,19,0,227,228,5,17,0,0,228,
+		230,3,38,19,0,229,227,1,0,0,0,230,233,1,0,0,0,231,229,1,0,0,0,231,232,
+		1,0,0,0,232,235,1,0,0,0,233,231,1,0,0,0,234,226,1,0,0,0,234,235,1,0,0,
+		0,235,236,1,0,0,0,236,237,5,29,0,0,237,37,1,0,0,0,238,239,6,19,-1,0,239,
+		240,5,21,0,0,240,294,3,38,19,17,241,242,5,28,0,0,242,243,3,38,19,0,243,
+		244,5,29,0,0,244,294,1,0,0,0,245,294,3,32,16,0,246,247,5,50,0,0,247,248,
+		5,30,0,0,248,249,3,38,19,0,249,250,5,31,0,0,250,294,1,0,0,0,251,252,5,
+		42,0,0,252,253,5,28,0,0,253,254,3,38,19,0,254,255,5,17,0,0,255,256,3,38,
+		19,0,256,257,5,29,0,0,257,294,1,0,0,0,258,259,5,43,0,0,259,260,5,28,0,
+		0,260,261,3,38,19,0,261,262,5,29,0,0,262,294,1,0,0,0,263,264,5,44,0,0,
+		264,265,5,28,0,0,265,266,3,38,19,0,266,267,5,17,0,0,267,268,3,38,19,0,
+		268,269,5,29,0,0,269,294,1,0,0,0,270,271,5,45,0,0,271,272,5,28,0,0,272,
+		273,3,38,19,0,273,274,5,17,0,0,274,275,3,38,19,0,275,276,5,29,0,0,276,
+		294,1,0,0,0,277,278,5,50,0,0,278,279,5,30,0,0,279,280,3,38,19,0,280,281,
+		5,31,0,0,281,282,5,30,0,0,282,283,3,38,19,0,283,284,5,31,0,0,284,294,1,
+		0,0,0,285,294,5,49,0,0,286,294,5,48,0,0,287,294,5,47,0,0,288,294,5,46,
+		0,0,289,294,5,39,0,0,290,294,5,40,0,0,291,294,5,41,0,0,292,294,5,50,0,
+		0,293,238,1,0,0,0,293,241,1,0,0,0,293,245,1,0,0,0,293,246,1,0,0,0,293,
+		251,1,0,0,0,293,258,1,0,0,0,293,263,1,0,0,0,293,270,1,0,0,0,293,277,1,
+		0,0,0,293,285,1,0,0,0,293,286,1,0,0,0,293,287,1,0,0,0,293,288,1,0,0,0,
+		293,289,1,0,0,0,293,290,1,0,0,0,293,291,1,0,0,0,293,292,1,0,0,0,294,336,
+		1,0,0,0,295,296,10,30,0,0,296,297,5,22,0,0,297,335,3,38,19,31,298,299,
+		10,29,0,0,299,300,5,23,0,0,300,335,3,38,19,30,301,302,10,28,0,0,302,303,
+		5,24,0,0,303,335,3,38,19,29,304,305,10,27,0,0,305,306,5,25,0,0,306,335,
+		3,38,19,28,307,308,10,26,0,0,308,309,5,26,0,0,309,335,3,38,19,27,310,311,
+		10,25,0,0,311,312,5,37,0,0,312,335,3,38,19,26,313,314,10,24,0,0,314,315,
+		5,38,0,0,315,335,3,38,19,25,316,317,10,23,0,0,317,318,5,33,0,0,318,335,
+		3,38,19,24,319,320,10,22,0,0,320,321,5,34,0,0,321,335,3,38,19,23,322,323,
+		10,21,0,0,323,324,5,35,0,0,324,335,3,38,19,22,325,326,10,20,0,0,326,327,
+		5,36,0,0,327,335,3,38,19,21,328,329,10,19,0,0,329,330,5,19,0,0,330,335,
+		3,38,19,20,331,332,10,18,0,0,332,333,5,20,0,0,333,335,3,38,19,19,334,295,
+		1,0,0,0,334,298,1,0,0,0,334,301,1,0,0,0,334,304,1,0,0,0,334,307,1,0,0,
+		0,334,310,1,0,0,0,334,313,1,0,0,0,334,316,1,0,0,0,334,319,1,0,0,0,334,
+		322,1,0,0,0,334,325,1,0,0,0,334,328,1,0,0,0,334,331,1,0,0,0,335,338,1,
+		0,0,0,336,334,1,0,0,0,336,337,1,0,0,0,337,39,1,0,0,0,338,336,1,0,0,0,29,
+		54,60,75,78,87,92,96,101,123,133,137,147,151,158,162,171,175,180,192,200,
+		205,213,216,222,231,234,293,334,336
 	};
 
 	public static readonly ATN _ATN =

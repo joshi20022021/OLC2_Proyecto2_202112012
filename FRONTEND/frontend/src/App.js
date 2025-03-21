@@ -188,17 +188,18 @@ function App() {
       </div>
 
       <div className="row flex-grow-1 m-0">
-        <div className="col-md-8 d-flex flex-column p-0">
-          <div className="flex-grow-1 border-end border-secondary">
+        <div className="col-md-8 d-flex flex-column p-0" style={{ height: 'calc(100vh - 96px)' }}>
+          <div className="flex-grow-1 border-end border-secondary" style={{ height: '70%' }}>
             <div className="h-100 position-relative overflow-hidden">
               <div className="position-absolute line-numbers bg-secondary text-white pe-2" 
                    style={{ 
                      zIndex: 1,
-                     left: 0,
+                     left: 1,
                      top: 0,
                      bottom: 0,
-                     width: '45px',
-                     overflow: 'hidden'
+                     width: '55px',
+                     overflow: 'hidden',
+                     textAlign: 'right' 
                    }}>
                 {files[activeFileIndex].content.split('\n').map((_, i) => (
                   <div key={i} style={{ paddingLeft: '8px' }}>{i + 1}</div>
@@ -207,10 +208,10 @@ function App() {
               <textarea
                 className="w-100 h-100 border-0 bg-dark text-light"
                 style={{ 
+                  padding: '10px 25px 10px 55px !important',
                   fontFamily: "'Fira Code', monospace",
                   outline: 'none',
                   resize: 'none',
-                  padding: '10px 15px 10px 55px !important',
                   tabSize: 4,
                   lineHeight: '1.5',
                   whiteSpace: 'pre-wrap'
@@ -229,7 +230,7 @@ function App() {
               />
             </div>
           </div>
-          <div className="border-top border-secondary" style={{ height: '200px' }}>
+          <div className="border-top border-secondary" style={{ height: '30%', minHeight: '120px' }}>
             <div className="p-2 bg-secondary border-bottom border-secondary">Consola</div>
             <pre className="m-0 p-2 bg-dark text-light" style={{ height: 'calc(200px - 38px)', overflowY: 'auto' }}>
               {consoleOutput}
@@ -237,7 +238,7 @@ function App() {
           </div>
         </div>
 
-        <div className="col-md-4 p-0 bg-dark">
+        <div className="col-md-4 p-0 bg-dark" style={{ height: 'calc(100vh - 96px)' }}>
           <div className="h-100 d-flex flex-column">
             <div className="d-flex justify-content-around p-2 border-bottom border-secondary">
               <button
@@ -339,6 +340,25 @@ const styles = `
   textarea::-webkit-scrollbar-thumb {
     background-color: #333;
     border-radius: 4px;
+  }
+    .editor-container {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    overflow: hidden;
+  }
+  
+  .console-output {
+    flex-grow: 1;
+    min-height: 100px;
+    max-height: 300px;
+    overflow-y: auto;
+    resize: vertical;
+  }
+
+  .report-panel {
+    flex: 1 1 auto;
+    min-height: 200px;
+    overflow-y: auto;
   }
 `;
 

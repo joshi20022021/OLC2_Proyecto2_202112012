@@ -115,6 +115,34 @@ namespace API.compiler
             return null;
         }
 
+        private object AsignarEnMatriz(string nombre, long fila, long columna, object nuevoValor)
+        {
+            foreach (var entorno in pilaEntornos)
+            {
+                if (entorno.TryGetValue(nombre, out var entrada) && entrada.Valor is List<object> matriz)
+                {
+                    if (matriz[(int)fila] is List<object> sublista)
+                    {
+                        if (columna >= 0 && columna < sublista.Count)
+                        {
+                            sublista[(int)columna] = nuevoValor;
+                            return nuevoValor;
+                        }
+                        else
+                        {
+                            throw new Exception("Índice de columna fuera de rango.");
+                        }
+                    }
+                    else
+                    {
+                        throw new Exception("Fila no es un slice.");
+                    }
+                }
+            }
+
+            throw new Exception($"Variable '{nombre}' no encontrada.");
+        }
+
 
         // visitor para la regla principal del programa
         public override object VisitPrograma(LanguageParser.ProgramaContext context)
@@ -202,8 +230,9 @@ namespace API.compiler
             };
             if (value is List<object> lista)
             {
-                entornoActual[varName].Valor = $"[{string.Join(", ", lista)}]";
+                entornoActual[varName].Valor = lista; 
             }
+
             return value;
         }     
 
@@ -831,21 +860,227 @@ namespace API.compiler
         }
 
 
-
         // implementacion de slice basico
         public override object VisitSliceLiteral(LanguageParser.SliceLiteralContext context)
         {
             List<object> elementos = new List<object>();
 
-            if (context.expresion() != null)
+            if (context.sliceElemento() != null)
             {
-                foreach (var expr in context.expresion())
+                foreach (var elem in context.sliceElemento())
                 {
-                    elementos.Add(Visit(expr));
+                    elementos.Add(Visit(elem));
                 }
             }
-            
+
             return elementos;
+        }
+
+
+        public override object VisitAsignarSlice(LanguageParser.AsignarSliceContext context) {
+            string nombre = context.IDENTIFICADOR().GetText();
+            object indiceObj = Visit(context.expresion(0));
+            object valor = Visit(context.expresion(1));
+
+            if (indiceObj is long indice) {
+                foreach (var entorno in pilaEntornos) {
+                    if (entorno.TryGetValue(nombre, out var entrada) && entrada.Valor is List<object> lista) {
+                        if (indice >= 0 && indice < lista.Count) {
+                            lista[(int)indice] = valor;
+                            return valor;
+                        } else {
+                            AgregarError("Índice fuera de rango", context.Start.Line, context.Start.Column);
+                            return "nulo";
+                        }
+                    }
+                }
+                AgregarError($"Slice '{nombre}' no definido", context.Start.Line, context.Start.Column);
+            } else {
+                AgregarError("Índice no es un entero", context.Start.Line, context.Start.Column);
+            }
+            return "nulo";
+        }
+
+
+        //visitar acceso slice
+        public override object VisitAccesoSlice(LanguageParser.AccesoSliceContext context)
+        {
+            string nombre = context.IDENTIFICADOR().GetText();
+            object indice = Visit(context.expresion());
+
+            foreach (var entorno in pilaEntornos)
+            {
+                if (entorno.ContainsKey(nombre))
+                {
+                    var valor = entorno[nombre].Valor;
+                    if (valor is List<object> lista && indice is long idx)
+                    {
+                        try
+                        {
+                            return SliceHelper.AccesoSlice(lista, idx);
+                        }
+                        catch (Exception ex)
+                        {
+                            AgregarError($"Error: {ex.Message}", context.Start.Line, context.Start.Column);
+                            return "nulo";
+                        }
+                    }
+                }
+            }
+
+            AgregarError($"Error: la variable '{nombre}' no está definida o no es un slice.", context.Start.Line, context.Start.Column);
+            return "nulo";
+        }
+
+
+        //visitar append
+        public override object VisitFuncionAppend(LanguageParser.FuncionAppendContext context)
+        {
+            var slice = Visit(context.expresion(0));
+            var nuevoElemento = Visit(context.expresion(1));
+
+            if (slice is List<object> lista)
+            {
+                try
+                {
+                    return SliceHelper.Append(lista, nuevoElemento);
+                }
+                catch (Exception ex)
+                {
+                    AgregarError($"Error en append: {ex.Message}", context.Start.Line, context.Start.Column);
+                    return "nulo";
+                }
+            }
+
+            AgregarError("Error: append solo se puede aplicar a slices.", context.Start.Line, context.Start.Column);
+            return "nulo";
+        }
+
+
+        //visit funcion len
+        public override object VisitFuncionLen(LanguageParser.FuncionLenContext context)
+        {
+            var slice = Visit(context.expresion());
+
+            if (slice is List<object> lista)
+            {
+                try
+                {
+                    return SliceHelper.Len(lista);
+                }
+                catch (Exception ex)
+                {
+                    AgregarError($"Error en len: {ex.Message}", context.Start.Line, context.Start.Column);
+                    return "nulo";
+                }
+            }
+
+            AgregarError("Error: len solo se puede aplicar a slices.", context.Start.Line, context.Start.Column);
+            return "nulo";
+        }
+
+
+        //visit funcion Index
+        public override object VisitFuncionIndex(LanguageParser.FuncionIndexContext context)
+        {
+            var slice = Visit(context.expresion(0));
+            var valorBuscado = Visit(context.expresion(1));
+
+            if (slice is List<object> lista)
+            {
+                try
+                {
+                    return SliceHelper.Index(lista, valorBuscado);
+                }
+                catch (Exception ex)
+                {
+                    AgregarError($"Error en slice.Index: {ex.Message}", context.Start.Line, context.Start.Column);
+                    return -1;
+                }
+            }
+
+            AgregarError("Error: slice.Index solo se puede aplicar a slices.", context.Start.Line, context.Start.Column);
+            return -1;
+        }
+
+
+                //visit join
+        public override object VisitFuncionJoin(LanguageParser.FuncionJoinContext context)
+        {
+            var slice = Visit(context.expresion(0));
+            var separador = Visit(context.expresion(1));
+
+            if (slice is List<object> lista && separador is string sep)
+            {
+                try
+                {
+                    return SliceHelper.Join(lista, sep);
+                }
+                catch (Exception ex)
+                {
+                    AgregarError($"Error en Join: {ex.Message}", context.Start.Line, context.Start.Column);
+                    return "nulo";
+                }
+            }
+
+            AgregarError("Error: strings.Join requiere un slice de strings y un separador de tipo string.", context.Start.Line, context.Start.Column);
+            return "nulo";
+        }
+
+        public override object VisitAccesoSlice2D(LanguageParser.AccesoSlice2DContext context)
+        {
+            string nombre = context.IDENTIFICADOR().GetText();
+            object fila = Visit(context.expresion(0));
+            object columna = Visit(context.expresion(1));
+
+            if (fila is long f && columna is long c)
+            {
+                foreach (var entorno in pilaEntornos)
+                {
+                    if (entorno.ContainsKey(nombre))
+                    {
+                        var valor = entorno[nombre].Valor;
+                        if (valor is List<object> matriz)
+                        {
+                            try
+                            {
+                                return SliceHelper.AccesoSlice2D(matriz, f, c);
+                            }
+                            catch (Exception ex)
+                            {
+                                AgregarError($"Error: {ex.Message}", context.Start.Line, context.Start.Column);
+                                return "nulo";
+                            }
+                        }
+                    }
+                }
+            }
+
+            AgregarError($"Error: la variable '{nombre}' no está definida o no es una matriz válida.", context.Start.Line, context.Start.Column);
+            return "nulo";
+        }
+
+
+        public override object VisitAsignarMatriz(LanguageParser.AsignarMatrizContext context)
+        {
+            string nombre = context.IDENTIFICADOR().GetText();
+            var fila = Visit(context.expresion(0));
+            var columna = Visit(context.expresion(1));
+            var nuevoValor = Visit(context.expresion(2));
+
+            if (fila is long f && columna is long c)
+            {
+                try
+                {
+                    return AsignarEnMatriz(nombre, f, c, nuevoValor);
+                }
+                catch (Exception ex)
+                {
+                    AgregarError($"Error: {ex.Message}", context.Start.Line, context.Start.Column);
+                }
+            }
+
+            return "nulo";
         }
 
 

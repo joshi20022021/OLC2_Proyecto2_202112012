@@ -27,6 +27,12 @@ VERDADERO : 'true';
 FALSO     : 'false';
 NULO      : 'nil';
 
+//SLICES
+AGREGAR: 'append';
+LONGITUD: 'len';
+INDICE: 'slice.Index';
+UNIR: 'strings.Join';
+
 //sintaxis y tipos de datos
 LIT_STRING : '"' (~["])* '"';  
 LIT_RUNE   : '\'' ~['\n\r] '\''; 
@@ -88,6 +94,8 @@ declaracion
 //asignacion de variables
 asignacion
     : IDENTIFICADOR IGUAL expresion       # Asignar
+    | IDENTIFICADOR L_CORCHETE expresion R_CORCHETE IGUAL expresion   # AsignarSlice
+    | IDENTIFICADOR L_CORCHETE expresion R_CORCHETE L_CORCHETE expresion R_CORCHETE IGUAL expresion  # AsignarMatriz
     ;
 
 //tipo de variables
@@ -124,10 +132,13 @@ contador
 
 //slice
 sliceLiteral
-    : L_CORCHETE R_CORCHETE IDENTIFICADOR? '{' (expresion (',' expresion)*)? '}'
+    : L_CORCHETE R_CORCHETE IDENTIFICADOR? '{' (sliceElemento (',' sliceElemento)*)? '}'
     ;
 
-
+sliceElemento
+    : expresion         
+    | sliceLiteral     
+    ;
 
 //imprimir argumentos
 imprimir
@@ -152,6 +163,12 @@ expresion
     | '!' expresion                        # Not
     | PARENTESIS_IZQ expresion PARENTESIS_DER # Parentesis
     | sliceLiteral                         # Slice
+    | IDENTIFICADOR L_CORCHETE expresion R_CORCHETE     # AccesoSlice
+    | AGREGAR PARENTESIS_IZQ expresion ',' expresion PARENTESIS_DER          # FuncionAppend
+    | LONGITUD PARENTESIS_IZQ expresion PARENTESIS_DER                           # FuncionLen
+    | INDICE PARENTESIS_IZQ expresion ',' expresion PARENTESIS_DER    # FuncionIndex
+    | UNIR PARENTESIS_IZQ expresion ',' expresion PARENTESIS_DER    # FuncionJoin
+    | IDENTIFICADOR L_CORCHETE expresion R_CORCHETE L_CORCHETE expresion R_CORCHETE  # AccesoSlice2D
     | LIT_ENTERO                           # LiteralEntero
     | LIT_FLOAT                            # LiteralFlotante
     | LIT_RUNE                             # LiteralRune
@@ -161,3 +178,5 @@ expresion
     | NULO                                 # LiteralNulo
     | IDENTIFICADOR                        # Identificador
     ;
+
+
