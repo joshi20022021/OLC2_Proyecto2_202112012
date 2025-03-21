@@ -5,6 +5,8 @@ using API.compiler;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using System.Linq; 
+using API.compiler;
+
 
 [ApiController]
 [Route("[controller]")]
@@ -26,14 +28,19 @@ public class Compile : ControllerBase
     public IActionResult Post([FromBody] CompileRequest request)
     {
         var errores = new List<CustomError>();
+        var erroresLexicos = new List<CustomError>();
+        var erroresSintacticos = new List<CustomError>();
 
         var inputStream = new AntlrInputStream(request.Code);
+        
         var lexer = new LanguageLexer(inputStream);
+        lexer.RemoveErrorListeners();
+        lexer.AddErrorListener(new LexerErrorListener(erroresLexicos));
         var tokenStream = new CommonTokenStream(lexer);
-        var parser = new LanguageParser(tokenStream);
 
+        var parser = new LanguageParser(tokenStream);
         parser.RemoveErrorListeners();
-        parser.AddErrorListener(new CustomErrorListener(errores));
+        parser.AddErrorListener(new CustomErrorListener(erroresSintacticos)); 
 
         var tree = parser.programa(); 
         Console.WriteLine("\n===== ÁRBOL DE SINTAXIS GENERADO =====");
@@ -53,16 +60,35 @@ public class Compile : ControllerBase
         var visitor = new CompilerVisitor();
         visitor.Visit(tree);
 
+        var todosErrores = erroresLexicos
+        .Concat(erroresSintacticos)
+        .Concat(visitor.ErroresSemanticos)
+        .ToList();
+
+
         List<string> outputLines = visitor.ObtenerSalida();
         string salida = outputLines.Count > 0 ? string.Join("\n", outputLines) : "";
 
 
         return Ok(new
         {
-            output = salida,  
-            errors = errores.Select(e => new { e.Line, e.Column, e.Message, e.Type }),
-            symbolTable = visitor.ObtenerTablaSimbolos(), 
+            output = salida,
+            errors = todosErrores.Select(e => new { 
+                e.Line, 
+                e.Column, 
+                message = e.Message, 
+                type = e.Type 
+            }),
+            symbolTable = visitor.ObtenerTablaSimbolos().Select(s => new {
+                s.Id,
+                s.TipoSimbolo,
+                s.TipoDato,
+                s.Ambito,
+                s.Linea,
+                s.Columna,
+                s.Valor
+            }), 
             ast = tree.ToStringTree(parser)
         });
-    }
+        }
 }

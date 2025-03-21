@@ -77,6 +77,7 @@ function App() {
               <thead>
                 <tr>
                   <th>Línea</th>
+                  <th>Columna</th>
                   <th>Descripción</th>
                   <th>Tipo</th>
                 </tr>
@@ -85,7 +86,8 @@ function App() {
                 {reportErrors.map((error, idx) => (
                   <tr key={idx}>
                     <td>{error.line}</td>
-                    <td>{error.Message}</td>
+                    <td>{error.column}</td>
+                    <td>{error.message}</td>
                     <td>{error.type}</td>
                   </tr>
                 ))}
@@ -93,31 +95,37 @@ function App() {
             </table>
           </div>
         );
-      case 'symbols':
-        return (
-          <div className="table-responsive">
-            <table className="table table-dark table-hover">
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Ámbito</th>
-                  <th>Valor</th>
-                </tr>
-              </thead>
-              <tbody>
-                {symbolTable.map((symbol, idx) => (
-                  <tr key={idx}>
-                    <td>{symbol.name}</td>
-                    <td>{symbol.type}</td>
-                    <td>{symbol.context}</td>
-                    <td>{symbol.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
+        case 'symbols':
+            return (
+                <div className="table-responsive">
+                    <table className="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tipo símbolo</th>
+                                <th>Tipo dato</th>
+                                <th>Ámbito</th>
+                                <th>Línea</th>
+                                <th>Columna</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {symbolTable.map((symbol, idx) => (
+                                <tr key={idx}>
+                                    <td>{symbol.id}</td>
+                                    <td>{symbol.tipoSimbolo}</td>
+                                    <td>{symbol.tipoDato}</td>
+                                    <td>{symbol.ambito}</td>
+                                    <td>{symbol.linea}</td>
+                                    <td>{symbol.columna}</td>
+                                    <td>{symbol.valor?.toString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            );
       case 'ast':
         return (
           <pre className="p-2 bg-dark text-light rounded border">

@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Collections.Generic;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
+using Antlr4.Runtime;
 using API.compiler;
 
 namespace API.compiler
@@ -10,16 +11,37 @@ namespace API.compiler
     public class CompilerVisitor : LanguageBaseVisitor<object>
     {
         private Stack<Dictionary<string, EntradaSimbolo>> pilaEntornos = new Stack<Dictionary<string, EntradaSimbolo>>();
-
+        private Stack<string> _ambitoActual = new Stack<string>();
+        //errores 
+         public List<CustomError> ErroresSemanticos { get; } = new List<CustomError>();
+          private void AgregarError(string mensaje, int line, int column)
+            {
+                ErroresSemanticos.Add(new CustomError
+                {
+                    Line = line,
+                    Column = column,
+                    Message = mensaje,
+                    Type = "Semántico"
+                });
+                mensajesSalida.Add($"ERROR DETECTADO: {mensaje}");
+            }
         
         // Clase para representar una entrada en la tabla de símbolos
         public class EntradaSimbolo
         {
+            public int Id { get; set; }
+            public string TipoSimbolo { get; set; } = "Variable"; // Variable/Funcion/Procedimiento
             public string Nombre { get; set; } = string.Empty;
-            public string Tipo { get; set; } = "indefinido";
+            public string TipoDato { get; set; } = "indefinido";
             public object Valor { get; set; } = "nulo";
-            public string Contexto { get; set; } = "Global";
-            public List<object> Lista { get; set; } = new List<object>(); 
+            public string Ambito { get; set; } = "Global";
+            public int Linea { get; set; }
+            public int Columna { get; set; }
+            public List<object> Lista { get; set; } = new List<object>();
+            
+            // Nueva propiedad para seguimiento de ID único
+            private static int _contadorId = 1;
+            public EntradaSimbolo() => Id = _contadorId++;
         }
 
         // Clase para representar un nodo en el AST
@@ -42,7 +64,10 @@ namespace API.compiler
         public List<NodoAST> ObtenerAST() => nodosAST;
         public List<string> ObtenerSalida() => mensajesSalida;
 
-        
+        public class BreakCommand { }
+
+        public class ContinueCommand { }
+
         // Método para obtener el tipo de un valor
         private string ObtenerNombreTipo(object valor)
         {
@@ -97,7 +122,9 @@ namespace API.compiler
             var funcionMain = context.funcionMain();
             if (funcionMain == null)
             {
-                AgregarError("No se encontró la función main().");
+                AgregarError("No se encontró la función main().", 
+                            context.Start.Line, 
+                            context.Start.Column);
                 return null;
             }
 
@@ -134,8 +161,11 @@ namespace API.compiler
                         // Si no hay tipo, error
                         if (varType == null)
                         {
-                            AgregarError($"Error: Tipo no especificado para '{varName}'.");
-                            return null;
+                        var errorToken = context.IDENTIFICADOR().Symbol;
+                        AgregarError($"Error: Tipo no especificado para '{varName}'.",
+                                    errorToken.Line,
+                                    errorToken.Column + 1); // Column es 0-based
+                        return null;
                         }
                         value = null; 
                         break;
@@ -147,7 +177,7 @@ namespace API.compiler
                 varType = ObtenerNombreTipo(value);
             }
 
-            Dictionary<string, EntradaSimbolo> entornoActual = null;
+            Dictionary<string, EntradaSimbolo> entornoActual = new Dictionary<string, EntradaSimbolo>();
             if (pilaEntornos.Count > 0)
             {
                 entornoActual = pilaEntornos.Peek();
@@ -159,13 +189,21 @@ namespace API.compiler
                 pilaEntornos.Push(entornoActual);
             }
 
+            var token = context.IDENTIFICADOR().Symbol;
+            
             entornoActual[varName] = new EntradaSimbolo
             {
                 Nombre = varName,
-                Tipo = varType,
-                Valor = value
+                TipoDato = varType,
+                Valor = value,
+                Ambito = _ambitoActual.Count > 0 ? _ambitoActual.Peek() : "Global",
+                Linea = token.Line,
+                Columna = token.Column + 1
             };
-
+            if (value is List<object> lista)
+            {
+                entornoActual[varName].Valor = $"[{string.Join(", ", lista)}]";
+            }
             return value;
         }     
 
@@ -174,7 +212,7 @@ namespace API.compiler
         {
             var varName = context.IDENTIFICADOR().GetText();
             var value = Visit(context.expresion());
-
+            var token = context.IDENTIFICADOR().Symbol;
             // Buscar en todos los entornos (pila y global)
             foreach (var entorno in pilaEntornos)
             {
@@ -195,8 +233,11 @@ namespace API.compiler
                 return value;
             }
 
-            AgregarError($"Error: La variable '{varName}' no está definida.");
+            AgregarError($"Error: La variable '{varName}' no está definida.", 
+                        token.Line, 
+                        token.Column + 1);
             return "nulo";
+
         }
 
          // Visitor para el fmt.println
@@ -246,6 +287,12 @@ namespace API.compiler
         {
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
+
+            // Si alguno es cadena, realizar concatenación
+            if (izq is string || der is string)
+            {
+                return (izq?.ToString() ?? "") + (der?.ToString() ?? "");
+            }
 
             double? valIzq = ConvertirANumero(izq);
             double? valDer = ConvertirANumero(der);
@@ -463,7 +510,10 @@ namespace API.compiler
             var valor = Visit(context.expresion());
             if (valor is bool boolValor)
                 return !boolValor;
-            AgregarError($"Error: Operador '!' requiere un booleano, recibió {ObtenerNombreTipo(valor)}.");
+             var token = context.Start;
+            AgregarError($"Error: Operador '!' requiere un booleano, recibió {ObtenerNombreTipo(valor)}.", 
+                token.Line, 
+                token.Column + 1);
             return "nulo";
         }
 
@@ -490,47 +540,55 @@ namespace API.compiler
             }
             else
             {
-                AgregarError("Error: La condición del if debe ser booleana.");
-            }
-            
+            var token = ctx.expresion().Start;
+                    AgregarError("Error: La condición del if debe ser booleana.", 
+                                token.Line, 
+                                token.Column + 1);
+                }
+                    
             return null;
         }
 
         //switch case        
-        public override object VisitSwitch(LanguageParser.SwitchContext context)
+            public override object VisitSwitch(LanguageParser.SwitchContext context)
         {
             EnSwitch = true;
             var switchValue = Visit(context.expresion());
+
             if (switchValue == null)
             {
-                AgregarError("Error: La expresión del switch no puede ser nula.");
-                EnSwitch = false;
-                return null;
+            var token = context.expresion().Start;
+            AgregarError("Error: La expresión del switch no puede ser nula.", 
+                        token.Line, 
+                        token.Column + 1);
+            EnSwitch = false;
+            return null;
             }
 
-            // Recorre los case
             foreach (var caseBlock in context.caseBlock())
             {
                 var caseValue = Visit(caseBlock.expresion());
+
                 if (switchValue.Equals(caseValue))
                 {
-                    // Ejecuta el bloque del case
                     object resultado = Visit(caseBlock);
 
-                    // rompemos el switch
-                    if (resultado is string comando && comando == "BREAK_SWITCH")
+                    // Si hay un break, salir del switch
+                    if (resultado is BreakCommand)
                     {
                         EnSwitch = false;
-                        return null;  // Rompe el switch 
+                        return null;
                     }
                 }
             }
 
-            // Default
+            // Evaluar default si existe
             if (context.defaultBlock() != null)
             {
                 object resultado = Visit(context.defaultBlock());
-                if (resultado is string comando && comando == "BREAK_SWITCH")
+
+                // Si hay un break, salir del switch
+                if (resultado is BreakCommand)
                 {
                     EnSwitch = false;
                     return null;
@@ -541,6 +599,7 @@ namespace API.compiler
             return null;
         }
 
+
         //for con condicion
         public override object VisitForCondicion(LanguageParser.ForCondicionContext ctx)
         {
@@ -550,31 +609,39 @@ namespace API.compiler
             while (cond is bool bCond && bCond)
             {
                 object resultado = Visit(ctx.bloque());
-                
-                if (resultado is string comando && comando == "BREAK_LOOP")
+
+                // Si el bloque retornó un BreakCommand, salir del bucle
+                if (resultado is BreakCommand)
+                    break;
+
+                // Si el bloque retornó un ContinueCommand, saltar a la siguiente iteración
+                if (resultado is ContinueCommand)
                 {
-                    break; // Rompe el while 
+                    cond = Visit(ctx.expresion()); // Reevaluar la condición
+                    continue;
                 }
-                
-                cond = Visit(ctx.expresion()); //evalua de nuevo la condicion
+
+                // Reevaluar la condición del ciclo
+                cond = Visit(ctx.expresion());
             }
-            
+
             EnCiclo = false;
             return null;
         }
+
         //for clasico con contador
         public override object VisitForClasico(LanguageParser.ForClasicoContext ctx)
         {
             EnCiclo = true;
             pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
-            
-            //Inicialización 
+
+            // Inicialización
             if (ctx.declaracion() != null)
                 Visit(ctx.declaracion());
             else if (ctx.asignacion().Length > 0)
                 Visit(ctx.asignacion(0));
 
-            //Bucle
+            // Bucle
             while (true)
             {
                 // Evaluar condición
@@ -584,22 +651,32 @@ namespace API.compiler
 
                 // Ejecutar bloque
                 object resultado = Visit(ctx.bloque());
-                if (resultado is string comando)
+                
+                // Si hay un break, salir del bucle
+                if (resultado is BreakCommand)
+                    break;
+                
+                // Si hay un continue, saltar la iteración
+                if (resultado is ContinueCommand)
                 {
-                    if (comando == "BREAK_LOOP") break;
-                    if (comando == "CONTINUE") 
-                    {
-                    }
+                    // Aplicar incremento si existe
+                    if (ctx.contador() != null)
+                        Visit(ctx.contador());
+                    else if (ctx.asignacion().Length > 1)
+                        Visit(ctx.asignacion(1));
+                    
+                    continue;
                 }
-                // Incremento
+
+                // Aplicar incremento si existe
                 if (ctx.contador() != null)
                     Visit(ctx.contador());
                 else if (ctx.asignacion().Length > 1)
                     Visit(ctx.asignacion(1));
             }
+
             pilaEntornos.Pop();
             EnCiclo = false;
-            
             return null;
         }
 
@@ -618,15 +695,18 @@ namespace API.compiler
             {
                 for (int i = 0; i < lista.Count; i++)
                 {
-                    pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, Tipo = "int", Valor = i };
-                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, Tipo = ObtenerNombreTipo(lista[i]), Valor = lista[i] };
+                    pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, TipoDato = "int", Valor = i };
+                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, TipoDato = ObtenerNombreTipo(lista[i]), Valor = lista[i] };
 
                     Visit(context.bloque());
                 }
             }
             else
             {
-                AgregarError("Error: for range requiere una lista.");
+                var token = context.expresion().Start;
+                AgregarError("Error: for range requiere una lista.", 
+                            token.Line, 
+                            token.Column + 1);
             }
 
             pilaEntornos.Pop();
@@ -635,7 +715,7 @@ namespace API.compiler
         }
 
         // Método común para actualizar el contador
-        private object ActualizarContador(string varName, int delta)
+            private object ActualizarContador(string varName, int delta, ParserRuleContext context)
         {
             // Buscar la variable
             object valorActual = null;
@@ -651,7 +731,8 @@ namespace API.compiler
             if (valorActual == null)
             {
                 var simboloGlobal = tablaSimbolos.Find(s => s.Nombre == varName);
-                if (simboloGlobal != null) valorActual = simboloGlobal.Valor;
+                if (simboloGlobal != null)
+                    valorActual = simboloGlobal.Valor;
             }
 
             if (valorActual is long longVal)
@@ -668,12 +749,13 @@ namespace API.compiler
                 }
                 // Actualizar global si no está en la pila
                 var simbolo = tablaSimbolos.Find(s => s.Nombre == varName);
-                if (simbolo != null) simbolo.Valor = nuevoValor;
+                if (simbolo != null)
+                    simbolo.Valor = nuevoValor;
                 return nuevoValor;
             }
             else
             {
-                AgregarError($"Error: '{varName}' no es un entero.");
+                AgregarError($"Error: '{varName}' no es un entero.", context.Start.Line, context.Start.Column + 1);
                 return valorActual;
             }
         }
@@ -682,34 +764,32 @@ namespace API.compiler
         public override object VisitIncremento(LanguageParser.IncrementoContext context)
         {
             string varName = context.IDENTIFICADOR().GetText();
-            return ActualizarContador(varName, 1);
+            // Se agrega el parámetro 'context'
+            return ActualizarContador(varName, 1, context);
         }
 
-        // Visitor para el decremento
         public override object VisitDecremento(LanguageParser.DecrementoContext context)
         {
             string varName = context.IDENTIFICADOR().GetText();
-            return ActualizarContador(varName, -1);
+            // Se agrega el parámetro 'context'
+            return ActualizarContador(varName, -1, context);
         }
+
 
         //implementacion break
         public override object VisitBreakStmt(LanguageParser.BreakStmtContext context)
         {
             Console.WriteLine("DEBUG: Se encontró un 'break'");
-            // Validar si estamos en un for o un switch
+
+            // Validar si estamos dentro de un bucle o un switch
             if (!EnCiclo && !EnSwitch)
             {
-                AgregarError("Error: 'break' solo puede usarse dentro de un bucle o switch.");
+                AgregarError("Error: 'break'...", context.Start.Line, context.Start.Column + 1);
                 return null;
             }
-            if (EnSwitch)
-            {
-                return "BREAK_SWITCH";
-            }
-            else 
-            {
-                return "BREAK_LOOP";
-            }
+
+            // Si estamos en un switch, retornamos BreakCommand
+            return new BreakCommand();
         }
 
 
@@ -717,12 +797,16 @@ namespace API.compiler
         public override object VisitContinueStmt(LanguageParser.ContinueStmtContext context)
         {
             Console.WriteLine("DEBUG: Se encontró un 'continue'");
+
+            // Validar si estamos dentro de un bucle
             if (!EnCiclo)
             {
-                AgregarError("Error: 'continue' solo puede usarse dentro de un bucle.");
+            AgregarError("Error: 'continue'...", context.Start.Line, context.Start.Column + 1);
                 return null;
             }
-            return "CONTINUE";
+
+            // Retornar el objeto ContinueCommand
+            return new ContinueCommand();
         }
 
 
@@ -732,8 +816,9 @@ namespace API.compiler
         {
             if (!EnFuncion)
             {
-                AgregarError("Error: 'return' solo puede usarse dentro de una función.");
-                return null;
+            var token = context.Start;
+            AgregarError("Error: 'return'...", token.Line, token.Column + 1);
+            return null;
             }
 
             object valorRetorno = null;
@@ -742,7 +827,7 @@ namespace API.compiler
                 valorRetorno = Visit(context.expresion());
             }
 
-            return new Tuple<string, object>("RETURN", valorRetorno);
+            return new Tuple<string, object>("RETURN", valorRetorno ?? "nulo");
         }
 
 
@@ -802,8 +887,11 @@ namespace API.compiler
             var simbolo = tablaSimbolos.Find(s => s.Nombre == id);
             if (simbolo != null)
                 return simbolo.Valor;
-            AgregarError($"Error: La variable '{id}' no está definida.");
-            return "nulo";
+            var token = context.IDENTIFICADOR().Symbol;
+            AgregarError($"Error: La variable '{id}' no está definida.", 
+                        token.Line, 
+                        token.Column + 1);
+            return null!;
         }
 
         
@@ -823,18 +911,23 @@ namespace API.compiler
         //visitor para la funcion main
         public override object VisitFuncionMain(LanguageParser.FuncionMainContext context)
         {
+            var funcionSymbol = new EntradaSimbolo
+            {
+                TipoSimbolo = "Función",
+                Nombre = "main",
+                TipoDato = "void",
+                Ambito = "Global",
+                Linea = context.Start.Line,
+                Columna = context.Start.Column + 1
+            };
+            
+            tablaSimbolos.Add(funcionSymbol);
+            _ambitoActual.Push("main");
             pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>()); // Iniciar entorno global
             var resultado = Visit(context.bloque());
             pilaEntornos.Pop(); // Eliminar el entorno al salir
+            _ambitoActual.Pop();
             return resultado;
-        }
-
-
-        // Método errores
-        private void AgregarError(string mensaje)
-        {
-            Console.WriteLine($"ERROR DETECTADO: {mensaje}"); 
-            mensajesSalida.Add($"ERROR DETECTADO: {mensaje}"); 
         }
 
 
