@@ -265,3 +265,79 @@ public override object VisitAsignar(LanguageParser.AsignarContext context)
     return "nulo";
 }
 ```
+
+## Manejo tabla de simbolos
+
+```bash
+  public class EntradaSimbolo
+        {
+            public int Id { get; set; }
+            public string TipoSimbolo { get; set; } = "Variable"; // Variable/Funcion/Procedimiento
+            public string Nombre { get; set; } = string.Empty;
+            public string TipoDato { get; set; } = "indefinido";
+            public object Valor { get; set; } = "nulo";
+            public string Ambito { get; set; } = "Global";
+            public int Linea { get; set; }
+            public int Columna { get; set; }
+            public List<object> Lista { get; set; } = new List<object>();
+            
+            // Nueva propiedad para seguimiento de ID único
+            private static int _contadorId = 1;
+            public EntradaSimbolo() => Id = _contadorId++;
+        }
+```
+
+## Metodo para obtener el tipo de variable
+
+```bash
+private string ObtenerNombreTipo(object valor)
+        {
+            return valor switch
+            {
+                null => "nulo",
+                long _ => "int",
+                double _ => "float64",
+                bool _ => "bool",
+                string _ => "string",
+                char _ => "rune",  
+                _ => valor.GetType().Name
+            };
+        }
+```
+
+
+## CustomErrorListener.cs
+
+### Manejo de errores lexicos
+
+```bash
+    public void SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, 
+        int line, int charPositionInLine, string msg, RecognitionException e)
+    {
+        _errores.Add(new CustomError
+        {
+            Line = line,
+            Column = charPositionInLine,
+            Message = msg,
+            Type = "Léxico"
+        });
+    }
+}
+```
+
+### Manejo de errores sintacticos
+
+```bash
+    public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, 
+        int line, int charPositionInLine, string msg, RecognitionException e)
+    {
+        _errores.Add(new CustomError
+        {
+            Line = line,
+            Column = charPositionInLine,
+            Message = msg,
+            Type = "Sintáctico"
+        });
+    }
+```
+
