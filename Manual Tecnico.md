@@ -199,3 +199,69 @@ expresion
 ```
 
 ## Compiler Visitor
+## Manejo de Entornos y Tabla de Símbolos
+
+El Visitor utiliza una pila de entornos para manejar el ámbito de las variables y una tabla de símbolos para almacenar información sobre variables, funciones y otros elementos.
+
+```bash
+private Stack<Dictionary<string, EntradaSimbolo>> pilaEntornos = new Stack<Dictionary<string, EntradaSimbolo>>();
+private readonly List<EntradaSimbolo> tablaSimbolos = new List<EntradaSimbolo>();
+```
+
+## Manejo de Errores Semánticos
+
+El Visitor recopila errores semánticos durante la ejecución y los almacena en una lista.
+
+```bash
+public List<CustomError> ErroresSemanticos { get; } = new List<CustomError>();
+private void AgregarError(string mensaje, int line, int column)
+{
+    ErroresSemanticos.Add(new CustomError
+    {
+        Line = line,
+        Column = column,
+        Message = mensaje,
+        Type = "Semántico"
+    });
+    mensajesSalida.Add($"ERROR DETECTADO: {mensaje}");
+}
+```
+
+## Evaluación de Expresiones
+
+El Visitor evalúa expresiones aritméticas, lógicas y de comparación.
+
+```bash
+public override object VisitSuma(LanguageParser.SumaContext context)
+{
+    var izq = Visit(context.expresion(0));
+    var der = Visit(context.expresion(1));
+    if (izq is string || der is string)
+        return (izq?.ToString() ?? "") + (der?.ToString() ?? "");
+    double? valIzq = ConvertirANumero(izq);
+    double? valDer = ConvertirANumero(der);
+    return valIzq.HasValue && valDer.HasValue ? valIzq.Value + valDer.Value : "Error: Tipos incompatibles en suma.";
+}
+```
+
+## Manejo de Variables
+
+El Visitor maneja la declaración, asignación y acceso a variables.
+
+```bash
+public override object VisitAsignar(LanguageParser.AsignarContext context)
+{
+    var varName = context.IDENTIFICADOR().GetText();
+    var value = Visit(context.expresion());
+    foreach (var entorno in pilaEntornos)
+    {
+        if (entorno.ContainsKey(varName))
+        {
+            entorno[varName].Valor = value;
+            return value;
+        }
+    }
+    AgregarError($"Error: La variable '{varName}' no está definida.", context.Start.Line, context.Start.Column + 1);
+    return "nulo";
+}
+```
