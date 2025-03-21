@@ -25,8 +25,29 @@ a guardar en este caso lo guardara como .glt
 
 ![](img/MENU.png)
 
-### MENU
+### Abrir archivo
 - Abrir: Al momento de seleccionarlo se abrira el explorador de archivos del sistema en donde debera buscar el archivo .glt
 y automaticamente se abrira el archivo en la interfaz y se mostrara el codigo en consola.
 
 ![](img/ABRIR.png)
+
+### Ejecutar Interprete
+- Al momento de colocar el texto del archivo en la consola puede proceder a ejecutar el codigo a traves del boton **Ejecutar** y
+se procedera a ejecutar el codigo interprete mostrando su salida en consola.
+
+![](img/SALIDA.png)
+
+### Ver errores
+- Al momento de ejecutar el codigo hay un apartado derecho para ver los errores al darle clic se puede proceder a observar los
+errores que tiene dicho archivo de entrada, mostrando el tipo de error y la ubicacion.
+
+![](img/ERRORES.png)
+
+### Ver tabla de simbolos
+-Asi tambien al momento de ejecutar el codigo hay un apartado derecho para ver la tabla de simbolos al darle clic se puede proceder a observar los
+simbolos que tiene dicho archivo de entrada, mostrando el tipo de simbolo y la ubicacion.
+
+![](img/TABLASIMBOLOS.png)
+
+
+
