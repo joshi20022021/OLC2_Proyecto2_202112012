@@ -14,3 +14,19 @@ se ingresara el codigo, tambien los botones de interaccion con la interfaz
 y el apartado izquierdo de los errores, tabla de simbolos y el AST.
 
 ![](img/INICIO.png)
+
+### MENU
+SE LE MUESTRAN 4 BOTONES EN DONDE CADA UNO EJECUTA UNA FUNCION EN LA INTERFAZ
+- Nuevo: El usuario podra crear una nueva pestaña en donde podra ingresar el codigo a interpretar
+- Abrir: Al momento de seleccionarlo se abrira el explorador de archivos del sistema en donde debera buscar el archivo
+a cargar que en este caso es .glt
+- Guardar: Al momento de seleccionarlo se abrira el explorador de archivos del sistema en donde debera buscar la ubicacion del archivo
+a guardar en este caso lo guardara como .glt
+
+![](img/MENU.png)
+
+### MENU
+- Abrir: Al momento de seleccionarlo se abrira el explorador de archivos del sistema en donde debera buscar el archivo .glt
+y automaticamente se abrira el archivo en la interfaz y se mostrara el codigo en consola.
+
+![](img/ABRIR.png)
