@@ -44,7 +44,7 @@ errores que tiene dicho archivo de entrada, mostrando el tipo de error y la ubic
 ![](img/ERRORES.png)
 
 ### Ver tabla de simbolos
--Asi tambien al momento de ejecutar el codigo hay un apartado derecho para ver la tabla de simbolos al darle clic se puede proceder a observar los
+- Asi tambien al momento de ejecutar el codigo hay un apartado derecho para ver la tabla de simbolos al darle clic se puede proceder a observar los
 simbolos que tiene dicho archivo de entrada, mostrando el tipo de simbolo y la ubicacion.
 
 ![](img/TABLASIMBOLOS.png)
