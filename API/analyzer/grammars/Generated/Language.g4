@@ -48,7 +48,9 @@ COMENTARIO_MULTILINEA : '/*' .*? '*/' -> skip;
 // ** Reglas Sintácticas **
 
 //inicio de mi programa
-programa : funcionMain ;
+programa : funcionMain 
+         | (declaracionStruct | funcionStruct | declaracion)+ funcionMain
+          ;
 
 //funcion main para ejecutar el archivo
 funcionMain : 'func' 'main' '(' ')' bloque ;
@@ -126,6 +128,7 @@ forStmt
     | 'for' IDENTIFICADOR ',' IDENTIFICADOR ':=' 'range' expresion bloque  # ForRange
     ;
 
+//contador incremento y decremento
 contador
     : IDENTIFICADOR MAS MAS    # Incremento
     | IDENTIFICADOR MENOS MENOS  # Decremento
@@ -153,9 +156,39 @@ funcionCall
     : (IDENTIFICADOR '.')? IDENTIFICADOR PARENTESIS_IZQ (expresion (',' expresion)*)? PARENTESIS_DER
     ;
 
+//parametros funcion
+parametros
+    : parametro (',' parametro)*
+    ;
+
+parametro
+    : tipo IDENTIFICADOR
+    ;
+
 //imprimir argumentos
 imprimir
     : IMPRIMIR PARENTESIS_IZQ (expresion (',' expresion)*)? PARENTESIS_DER # Imprime
+    ;
+
+// Definición de un struct
+declaracionStruct
+    : 'type' IDENTIFICADOR 'struct' '{' (atributoStruct)* '}' #StructDeclaracion 
+    ;
+
+atributoStruct
+    : tipo IDENTIFICADOR #Atributo
+    ;
+
+funcionStruct
+    : 'func' '(' IDENTIFICADOR IDENTIFICADOR ')' IDENTIFICADOR '(' parametros? ')' tipo? bloque #MetodoStruct // ✅ Nombre único
+    ;
+
+expresionLiteralStruct
+    : IDENTIFICADOR '{' (atributosInicializacion)? '}'  
+    ;
+    
+atributosInicializacion
+    : IDENTIFICADOR ':' expresion (',' IDENTIFICADOR ':' expresion)*
     ;
 
 //expresion aritmeticas,logicas, relacionales, tipos de datos
@@ -183,6 +216,8 @@ expresion
     | UNIR PARENTESIS_IZQ expresion ',' expresion PARENTESIS_DER    # FuncionJoin
     | IDENTIFICADOR L_CORCHETE expresion R_CORCHETE L_CORCHETE expresion R_CORCHETE  # AccesoSlice2D
     | funcionCall                          # FuncionLlamada
+    | expresionLiteralStruct               #ExpresionStructLiteral
+    | expresion '.' IDENTIFICADOR #ExpresionAccesoAtributo
     | LIT_ENTERO                           # LiteralEntero
     | LIT_FLOAT                            # LiteralFlotante
     | LIT_RUNE                             # LiteralRune

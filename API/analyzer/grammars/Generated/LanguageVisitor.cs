@@ -192,12 +192,57 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFuncionCall([NotNull] LanguageParser.FuncionCallContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.parametros"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitParametros([NotNull] LanguageParser.ParametrosContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.parametro"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitParametro([NotNull] LanguageParser.ParametroContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Imprime</c>
 	/// labeled alternative in <see cref="LanguageParser.imprimir"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitImprime([NotNull] LanguageParser.ImprimeContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>StructDeclaracion</c>
+	/// labeled alternative in <see cref="LanguageParser.declaracionStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitStructDeclaracion([NotNull] LanguageParser.StructDeclaracionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>Atributo</c>
+	/// labeled alternative in <see cref="LanguageParser.atributoStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAtributo([NotNull] LanguageParser.AtributoContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>MetodoStruct</c>
+	/// labeled alternative in <see cref="LanguageParser.funcionStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitMetodoStruct([NotNull] LanguageParser.MetodoStructContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.expresionLiteralStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpresionLiteralStruct([NotNull] LanguageParser.ExpresionLiteralStructContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="LanguageParser.atributosInicializacion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAtributosInicializacion([NotNull] LanguageParser.AtributosInicializacionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ComparacionIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
@@ -346,12 +391,26 @@ public interface ILanguageVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitNot([NotNull] LanguageParser.NotContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpresionAccesoAtributo</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpresionAccesoAtributo([NotNull] LanguageParser.ExpresionAccesoAtributoContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>FuncionLen</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitFuncionLen([NotNull] LanguageParser.FuncionLenContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ExpresionStructLiteral</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitExpresionStructLiteral([NotNull] LanguageParser.ExpresionStructLiteralContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>FuncionIndex</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

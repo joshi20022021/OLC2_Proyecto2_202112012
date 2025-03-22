@@ -356,6 +356,30 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncionCall([NotNull] LanguageParser.FuncionCallContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.parametros"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterParametros([NotNull] LanguageParser.ParametrosContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.parametros"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitParametros([NotNull] LanguageParser.ParametrosContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.parametro"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterParametro([NotNull] LanguageParser.ParametroContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.parametro"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitParametro([NotNull] LanguageParser.ParametroContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Imprime</c>
 	/// labeled alternative in <see cref="LanguageParser.imprimir"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -369,6 +393,72 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitImprime([NotNull] LanguageParser.ImprimeContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StructDeclaracion</c>
+	/// labeled alternative in <see cref="LanguageParser.declaracionStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterStructDeclaracion([NotNull] LanguageParser.StructDeclaracionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StructDeclaracion</c>
+	/// labeled alternative in <see cref="LanguageParser.declaracionStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitStructDeclaracion([NotNull] LanguageParser.StructDeclaracionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>Atributo</c>
+	/// labeled alternative in <see cref="LanguageParser.atributoStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAtributo([NotNull] LanguageParser.AtributoContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Atributo</c>
+	/// labeled alternative in <see cref="LanguageParser.atributoStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAtributo([NotNull] LanguageParser.AtributoContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>MetodoStruct</c>
+	/// labeled alternative in <see cref="LanguageParser.funcionStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterMetodoStruct([NotNull] LanguageParser.MetodoStructContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>MetodoStruct</c>
+	/// labeled alternative in <see cref="LanguageParser.funcionStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitMetodoStruct([NotNull] LanguageParser.MetodoStructContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.expresionLiteralStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpresionLiteralStruct([NotNull] LanguageParser.ExpresionLiteralStructContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.expresionLiteralStruct"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpresionLiteralStruct([NotNull] LanguageParser.ExpresionLiteralStructContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.atributosInicializacion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAtributosInicializacion([NotNull] LanguageParser.AtributosInicializacionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.atributosInicializacion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAtributosInicializacion([NotNull] LanguageParser.AtributosInicializacionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ComparacionIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
@@ -664,6 +754,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitNot([NotNull] LanguageParser.NotContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpresionAccesoAtributo</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpresionAccesoAtributo([NotNull] LanguageParser.ExpresionAccesoAtributoContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpresionAccesoAtributo</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpresionAccesoAtributo([NotNull] LanguageParser.ExpresionAccesoAtributoContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>FuncionLen</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -677,6 +781,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncionLen([NotNull] LanguageParser.FuncionLenContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpresionStructLiteral</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterExpresionStructLiteral([NotNull] LanguageParser.ExpresionStructLiteralContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpresionStructLiteral</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitExpresionStructLiteral([NotNull] LanguageParser.ExpresionStructLiteralContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>FuncionIndex</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

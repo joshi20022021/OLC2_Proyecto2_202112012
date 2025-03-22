@@ -301,6 +301,26 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitFuncionCall([NotNull] LanguageParser.FuncionCallContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.parametros"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterParametros([NotNull] LanguageParser.ParametrosContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.parametros"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitParametros([NotNull] LanguageParser.ParametrosContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.parametro"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterParametro([NotNull] LanguageParser.ParametroContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.parametro"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitParametro([NotNull] LanguageParser.ParametroContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Imprime</c>
 	/// labeled alternative in <see cref="LanguageParser.imprimir"/>.
 	/// </summary>
@@ -312,6 +332,62 @@ public interface ILanguageListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitImprime([NotNull] LanguageParser.ImprimeContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>StructDeclaracion</c>
+	/// labeled alternative in <see cref="LanguageParser.declaracionStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStructDeclaracion([NotNull] LanguageParser.StructDeclaracionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>StructDeclaracion</c>
+	/// labeled alternative in <see cref="LanguageParser.declaracionStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStructDeclaracion([NotNull] LanguageParser.StructDeclaracionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>Atributo</c>
+	/// labeled alternative in <see cref="LanguageParser.atributoStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAtributo([NotNull] LanguageParser.AtributoContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>Atributo</c>
+	/// labeled alternative in <see cref="LanguageParser.atributoStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAtributo([NotNull] LanguageParser.AtributoContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>MetodoStruct</c>
+	/// labeled alternative in <see cref="LanguageParser.funcionStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterMetodoStruct([NotNull] LanguageParser.MetodoStructContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>MetodoStruct</c>
+	/// labeled alternative in <see cref="LanguageParser.funcionStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitMetodoStruct([NotNull] LanguageParser.MetodoStructContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.expresionLiteralStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpresionLiteralStruct([NotNull] LanguageParser.ExpresionLiteralStructContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.expresionLiteralStruct"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpresionLiteralStruct([NotNull] LanguageParser.ExpresionLiteralStructContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.atributosInicializacion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAtributosInicializacion([NotNull] LanguageParser.AtributosInicializacionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.atributosInicializacion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAtributosInicializacion([NotNull] LanguageParser.AtributosInicializacionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ComparacionIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
@@ -565,6 +641,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitNot([NotNull] LanguageParser.NotContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpresionAccesoAtributo</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpresionAccesoAtributo([NotNull] LanguageParser.ExpresionAccesoAtributoContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpresionAccesoAtributo</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpresionAccesoAtributo([NotNull] LanguageParser.ExpresionAccesoAtributoContext context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>FuncionLen</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
 	/// </summary>
@@ -576,6 +664,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitFuncionLen([NotNull] LanguageParser.FuncionLenContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>ExpresionStructLiteral</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterExpresionStructLiteral([NotNull] LanguageParser.ExpresionStructLiteralContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>ExpresionStructLiteral</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitExpresionStructLiteral([NotNull] LanguageParser.ExpresionStructLiteralContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>FuncionIndex</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

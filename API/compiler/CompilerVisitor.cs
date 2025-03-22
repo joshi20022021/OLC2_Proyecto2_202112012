@@ -10,6 +10,7 @@ namespace API.compiler
 {
     public class CompilerVisitor : LanguageBaseVisitor<object>
     {
+        private Dictionary<string, MetodoStruct> _tablaFuncionesStruct = new();
         private Stack<Dictionary<string, EntradaSimbolo>> pilaEntornos = new Stack<Dictionary<string, EntradaSimbolo>>();
         private Stack<string> _ambitoActual = new Stack<string>();
         //errores 
@@ -72,30 +73,27 @@ namespace API.compiler
 
 
                 // visitor para la regla principal del programa
-        public override object VisitPrograma(LanguageParser.ProgramaContext context)
-        {
-            try
-            {
+        public override object VisitPrograma(LanguageParser.ProgramaContext context) {
+            try {
                 var funcionMain = context.funcionMain();
-                if (funcionMain == null)
-                {
+
+                if (funcionMain == null) {
                     AgregarError("No se encontró la función main().", context.Start.Line, context.Start.Column);
                     return null;
                 }
 
+                // Ejecutar la función main
                 Visit(funcionMain);
             }
-            catch (Exception ex)
-            {
-                AgregarError($"Error crítico: {ex.Message}", 0, 0); // Línea y columna genéricas
+            catch (Exception ex) {
+                AgregarError($"Error de parsing: {ex.Message}", context.Start.Line, context.Start.Column);
             }
 
-            if (ErroresSemanticos.Count > 0 || mensajesSalida.Any(m => m.StartsWith("ERROR")))
-            {
-                Console.WriteLine("\n===== ERRORES DETECTADOS =====");
-                foreach (var error in mensajesSalida.Where(m => m.StartsWith("ERROR")))
-                {
-                    Console.WriteLine(error);
+            // Mostrar errores si existen
+            if (ErroresSemanticos.Any()) {
+                Console.WriteLine("\n===== ERRORES SEMÁNTICOS =====");
+                foreach (var error in ErroresSemanticos) {
+                    Console.WriteLine($"[Línea {error.Line}] {error.Message}");
                 }
             }
 
@@ -166,6 +164,12 @@ namespace API.compiler
                     string tipoInferido = InferirTipoSlice(lista);
                     entornoActual[varName].TipoDato = tipoInferido;
                 }
+                pilaEntornos.Peek()[varName] = new EntradaSimbolo
+                {
+                    Nombre = varName,
+                    TipoDato = TipoDato.ObtenerNombreTipo(value),
+                    Valor = value
+                };
 
             return value;
         }     
@@ -199,7 +203,7 @@ namespace API.compiler
             AgregarError($"Error: La variable '{varName}' no está definida.", 
                         token.Line, 
                         token.Column + 1);
-            return "nulo";
+            return null; 
 
         }
 
@@ -482,7 +486,7 @@ namespace API.compiler
             AgregarError($"Error: Operador '!' requiere un booleano, recibió {TipoDato.ObtenerNombreTipo(valor)}.", 
                 token.Line, 
                 token.Column + 1);
-            return "nulo";
+            return null; 
         }
 
         //sentencia if y else
@@ -803,10 +807,13 @@ namespace API.compiler
         public override object VisitSliceLiteral(LanguageParser.SliceLiteralContext context)
         {
             List<object> elementos = new List<object>();
-            foreach (var elem in context.sliceElemento())
+            foreach (var elemCtx in context.sliceElemento())
             {
-                var valor = Visit(elem);
-                elementos.Add(valor);
+                var valor = Visit(elemCtx);
+                if (valor != null)
+                {
+                    elementos.Add(valor);
+                }
             }
             return elementos;
         }
@@ -817,7 +824,10 @@ namespace API.compiler
             foreach (var expr in context.expresion())
             {
                 var valor = Visit(expr);
-                if (valor != null) elementos.Add(valor);
+                if (valor != null) 
+                {
+                    elementos.Add(valor);
+                }
             }
             return elementos;
         }
@@ -850,7 +860,7 @@ namespace API.compiler
                             return valor;
                         } else {
                             AgregarError("Índice fuera de rango", context.Start.Line, context.Start.Column);
-                            return "nulo";
+                            return null; 
                         }
                     }
                 }
@@ -858,7 +868,7 @@ namespace API.compiler
             } else {
                 AgregarError("Índice no es un entero", context.Start.Line, context.Start.Column);
             }
-            return "nulo";
+            return null; 
         }
 
 
@@ -882,14 +892,14 @@ namespace API.compiler
                         catch (Exception ex)
                         {
                             AgregarError($"Error: {ex.Message}", context.Start.Line, context.Start.Column);
-                            return "nulo";
+                            return null; 
                         }
                     }
                 }
             }
 
             AgregarError($"Error: la variable '{nombre}' no está definida o no es un slice.", context.Start.Line, context.Start.Column);
-            return "nulo";
+            return null; 
         }
 
 
@@ -908,12 +918,12 @@ namespace API.compiler
                 catch (Exception ex)
                 {
                     AgregarError($"Error en append: {ex.Message}", context.Start.Line, context.Start.Column);
-                    return "nulo";
+                    return null;
                 }
             }
 
             AgregarError("Error: append solo se puede aplicar a slices.", context.Start.Line, context.Start.Column);
-            return "nulo";
+            return null;
         }
 
 
@@ -931,22 +941,20 @@ namespace API.compiler
         public override object VisitFuncionIndex(LanguageParser.FuncionIndexContext context)
         {
             var slice = Visit(context.expresion(0));
-            var valorBuscado = Visit(context.expresion(1));
+            var valor = Visit(context.expresion(1));
 
             if (slice is List<object> lista)
             {
-                try
+                for (int i = 0; i < lista.Count; i++)
                 {
-                    return SliceHelper.Index(lista, valorBuscado);
+                    if (lista[i]?.Equals(valor) == true)
+                    {
+                        return i;
+                    }
                 }
-                catch (Exception ex)
-                {
-                    AgregarError($"Error en slice.Index: {ex.Message}", context.Start.Line, context.Start.Column);
-                    return -1;
-                }
+                return -1; // No encontrado
             }
-
-            AgregarError("Error: slice.Index solo se puede aplicar a slices.", context.Start.Line, context.Start.Column);
+            AgregarError("slices.Index requiere un slice", context.Start.Line, context.Start.Column);
             return -1;
         }
 
@@ -955,23 +963,15 @@ namespace API.compiler
         public override object VisitFuncionJoin(LanguageParser.FuncionJoinContext context)
         {
             var slice = Visit(context.expresion(0));
-            var separador = Visit(context.expresion(1));
+            var separador = Visit(context.expresion(1))?.ToString() ?? "";
 
-            if (slice is List<object> lista && separador is string sep)
+            if (slice is List<object> lista && lista.All(x => x is string))
             {
-                try
-                {
-                    return SliceHelper.Join(lista, sep);
-                }
-                catch (Exception ex)
-                {
-                    AgregarError($"Error en Join: {ex.Message}", context.Start.Line, context.Start.Column);
-                    return "nulo";
-                }
+                return string.Join(separador, lista.Cast<string>());
             }
 
-            AgregarError("Error: strings.Join requiere un slice de strings y un separador de tipo string.", context.Start.Line, context.Start.Column);
-            return "nulo";
+            AgregarError("strings.Join requiere un slice de strings", context.Start.Line, context.Start.Column);
+            return "";
         }
 
         //visitar acceso slice en 2D
@@ -985,25 +985,25 @@ namespace API.compiler
                 if (entorno.TryGetValue(nombre, out var entrada) && entrada.Valor is List<object> matriz) {
                     if (fila < 0 || fila >= matriz.Count) {
                         AgregarError($"Fila {fila} fuera de rango", context.Start.Line, context.Start.Column);
-                        return "nulo";
+                        return null;
                     }
                     if (matriz[(int)fila] is List<object> filaLista) {
                         if (columna < 0 || columna >= filaLista.Count) {
                             AgregarError($"Columna {columna} fuera de rango", context.Start.Line, context.Start.Column);
-                            return "nulo";
+                            return null;
                         }
                         return filaLista[(int)columna];
                     } else {
                         AgregarError("La fila no es un slice", context.Start.Line, context.Start.Column);
-                        return "nulo";
+                        return null;
                     }
                 }
             }
             AgregarError($"Variable '{nombre}' no definida", context.Start.Line, context.Start.Column);
-            return "nulo";
+            return null;
         } else {
             AgregarError("Índices deben ser enteros", context.Start.Line, context.Start.Column);
-            return "nulo";
+            return null;
         }
     }
         //visitar asignacion de matrices
@@ -1026,35 +1026,246 @@ namespace API.compiler
                 }
             }
 
-            return "nulo";
+            return null;
         }
         //llamada funcion
-        public override object VisitFuncionCall(LanguageParser.FuncionCallContext context)
+     public override object VisitFuncionCall(LanguageParser.FuncionCallContext context)
         {
-            // Obtener todos los IDENTIFICADOR en la llamada 
-            var identificadores = context.IDENTIFICADOR();
-            
-            // El último IDENTIFICADOR es el nombre de la función
-            string nombreFuncion = identificadores.Last().GetText(); 
-
+            string nombreFuncion = string.Join(".", context.IDENTIFICADOR().Select(id => id.GetText()));
             List<object> argumentos = new List<object>();
+            
+                switch (nombreFuncion)
+            {
+                case "slices.Index":
+                    if (argumentos.Count != 2)
+                    {
+                        AgregarError("slices.Index requiere 2 argumentos", context.Start.Line, context.Start.Column);
+                        return -1;
+                    }
+                    // Lógica de Index aquí
+                    if (argumentos[0] is List<object> lista)
+                    {
+                        for (int i = 0; i < lista.Count; i++)
+                        {
+                            if (lista[i]?.Equals(argumentos[1]) == true) return i;
+                        }
+                        return -1;
+                    }
+                    AgregarError("slices.Index requiere un slice", context.Start.Line, context.Start.Column);
+                    return -1;
+
+                case "strings.Join":
+                    if (argumentos.Count != 2)
+                    {
+                        AgregarError("strings.Join requiere 2 argumentos", context.Start.Line, context.Start.Column);
+                        return "";
+                    }
+                    // Lógica de Join aquí
+                    if (argumentos[0] is List<object> listaStrings && argumentos[1] is string separador)
+                    {
+                        return string.Join(separador, listaStrings.Cast<string>());
+                    }
+                    AgregarError("strings.Join requiere un slice de strings y un separador", context.Start.Line, context.Start.Column);
+                    return "";
+
+                default:
+                    AgregarError($"Función no implementada: {nombreFuncion}", context.Start.Line, context.Start.Column);
+                    return null;
+            }
             foreach (var expr in context.expresion())
             {
                 argumentos.Add(Visit(expr));
             }
-
-            switch (nombreFuncion)
+        if (argumentos.Count > 0 && argumentos[0] is StructInstance instancia)
             {
-                case "Index":
-                    return SliceHelper.Index((List<object>)argumentos[0], argumentos[1]);
-                case "Join":
-                    return SliceHelper.Join((List<object>)argumentos[0], (string)argumentos[1]);
-                default:
-                    AgregarError($"Función no implementada: {nombreFuncion}", context.Start.Line, context.Start.Column);
-                    return "nulo";
+                string key = $"{instancia.Definicion.Nombre}_{nombreFuncion}";
+                if (_tablaFuncionesStruct.TryGetValue(key, out MetodoStruct metodo))
+                {
+                    // Validar parámetros
+                    if (metodo.Parametros.Count != argumentos.Count - 1) // -1 porque el primero es la instancia
+                    {
+                        AgregarError($"Número incorrecto de parámetros para {nombreFuncion}", 
+                                    context.Start.Line, 
+                                    context.Start.Column + 1);
+                    }
+
+                    // Crear nuevo entorno
+                    pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
+                    
+                    // Agregar parámetros al entorno
+                    for (int i = 0; i < metodo.Parametros.Count; i++)
+                    {
+                        string nombreParam = metodo.Parametros[i].Item2;
+                        pilaEntornos.Peek()[nombreParam] = new EntradaSimbolo { 
+                            Nombre = nombreParam,
+                            Valor = argumentos[i + 1] // +1 para saltar la instancia
+                        };
+                    }
+
+                    // Agregar la instancia como referencia
+                    pilaEntornos.Peek()[metodo.Parametros[0].Item2] = new EntradaSimbolo {
+                        Nombre = metodo.Parametros[0].Item2,
+                        Valor = instancia
+                    };
+
+                    // Ejecutar el bloque
+                    object resultado = Visit(metodo.Bloque);
+                    
+                    pilaEntornos.Pop();
+                    return resultado;
+                }
             }
         }
 
+        public override object VisitStructDeclaracion(LanguageParser.StructDeclaracionContext context) {
+            string nombreStruct = context.IDENTIFICADOR().GetText();
+            
+            // Validar ámbito global
+            if (_ambitoActual.Count > 0) {
+                AgregarError("Los structs solo pueden declararse en el ámbito global", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            var structDef = new StructDefinition { Nombre = nombreStruct };
+
+            // Procesar atributos
+            foreach (var attrCtx in context.atributoStruct()) {
+                if (attrCtx is LanguageParser.AtributoContext atributo) {
+                    string tipo = atributo.tipo().GetText();
+                    string nombreAttr = atributo.IDENTIFICADOR().GetText();
+                    
+                    // Validar tipo
+                    if (!TipoDato.EsTipoValido(tipo) && !StructManager.ExisteStruct(tipo)) {
+                        AgregarError($"Tipo inválido '{tipo}'", atributo.Start.Line, atributo.Start.Column);
+                        continue;
+                    }
+                    
+                    structDef.Atributos.Add(nombreAttr, tipo);
+                }
+            }
+            
+            StructManager.RegistrarStruct(structDef);
+            return null;
+        }
+        public override object VisitAtributo(LanguageParser.AtributoContext context)
+        {
+            string tipo = context.tipo().GetText();
+            string nombre = context.IDENTIFICADOR().GetText();
+            return Tuple.Create(tipo, nombre); // Devolver una tupla real
+        }
+        public override object VisitExpresionStructLiteral(LanguageParser.ExpresionStructLiteralContext context)
+        {
+            // Obtener el contexto interno de la regla expresionLiteralStruct
+            var structLiteralCtx = context.expresionLiteralStruct();
+
+            // 1. Obtener nombre del struct desde el IDENTIFICADOR
+            string nombreStruct = structLiteralCtx.IDENTIFICADOR().GetText();
+            var structDef = StructManager.ObtenerStruct(nombreStruct);
+            if (structDef == null) {
+                AgregarError($"Struct '{nombreStruct}' no definido", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            // 2. Crear instancia del struct
+            var instancia = new StructInstance { Definicion = structDef };
+
+            // 3. Procesar atributos inicializados (si existen)
+            var atributosInitCtx = structLiteralCtx.atributosInicializacion();
+            if (atributosInitCtx != null)
+            {
+                var ids = atributosInitCtx.IDENTIFICADOR(); 
+                var exprs = atributosInitCtx.expresion();
+
+                for (int i = 0; i < ids.Length; i++)
+                {
+                    string nombreAttr = ids[i].GetText();
+                    object valor = Visit(exprs[i]);
+
+                    // Validar que el atributo exista en el struct
+                    if (!structDef.Atributos.ContainsKey(nombreAttr))
+                    {
+                        AgregarError($"Atributo '{nombreAttr}' no existe en el struct '{nombreStruct}'",
+                            ids[i].Symbol.Line, ids[i].Symbol.Column + 1);
+                        continue;
+                    }
+
+                    // Validar tipo del valor
+                    string tipoEsperado = structDef.Atributos[nombreAttr];
+                    if (!TipoDato.ValidarTipo(valor, tipoEsperado))
+                    {
+                        AgregarError($"Tipo incorrecto para '{nombreAttr}'. Esperado: {tipoEsperado}, Recibido: {TipoDato.ObtenerNombreTipo(valor)}",
+                            exprs[i].Start.Line, exprs[i].Start.Column);
+                    }
+
+                    instancia.Valores[nombreAttr] = valor;
+                }
+                  return instancia;
+            }
+
+            // 4. Verificar que todos los atributos obligatorios estén inicializados
+            foreach (var attr in structDef.Atributos)
+            {
+                if (!instancia.Valores.ContainsKey(attr.Key))
+                {
+                    AgregarError($"Falta inicializar el atributo obligatorio '{attr.Key}'", 
+                        context.Start.Line, context.Start.Column);
+                }
+            }
+
+            return instancia;
+        }
+        public override object VisitExpresionAccesoAtributo(LanguageParser.ExpresionAccesoAtributoContext context) {
+            object padre = Visit(context.expresion());
+            string nombreAttr = context.IDENTIFICADOR().GetText();
+            
+            if (!(padre is StructInstance instancia)) {
+                AgregarError("Acceso a atributo en no instancia", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            if (!instancia.Definicion.Atributos.ContainsKey(nombreAttr)) {
+                AgregarError($"Atributo '{nombreAttr}' no existe", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            return instancia.Valores.TryGetValue(nombreAttr, out object valor) ? valor : "nulo";
+        }
+        public override object VisitMetodoStruct(LanguageParser.MetodoStructContext context)
+        {
+            // 1. Obtener metadata
+            string tipoStruct = context.IDENTIFICADOR(0).GetText();
+            string paramReferencia = context.IDENTIFICADOR(1).GetText();
+            string nombreMetodo = context.IDENTIFICADOR(2).GetText();
+            
+            // 2. Validar existencia del struct
+            if (!StructManager.ExisteStruct(tipoStruct))
+            {
+                AgregarError($"Struct '{tipoStruct}' no existe", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            // 3. Procesar parámetros
+            List<Tuple<string, string>> parametros = new List<Tuple<string, string>>();
+            foreach (var paramCtx in context.parametros().parametro())
+            {
+                string tipo = paramCtx.tipo().GetText();
+                string nombre = paramCtx.IDENTIFICADOR().GetText();
+                parametros.Add(Tuple.Create(tipo, nombre));
+            }
+
+            // 4. Registrar método en tabla de símbolos
+            string key = $"{tipoStruct}_{nombreMetodo}";
+            _tablaFuncionesStruct[key] = new MetodoStruct {
+                Nombre = nombreMetodo,
+                Parametros = context.parametros().parametro().Select(p => 
+                    Tuple.Create(p.tipo().GetText(), p.IDENTIFICADOR().GetText())).ToList(),
+                Bloque = context.bloque()
+            };
+
+            return null;
+        }
+
+        
         // Visitor para un literal entero
         public override object VisitLiteralEntero(LanguageParser.LiteralEnteroContext context)
         {
@@ -1083,21 +1294,26 @@ namespace API.compiler
         public override object VisitIdentificador(LanguageParser.IdentificadorContext context)
         {
             var id = context.IDENTIFICADOR().GetText();
-            // Buscar en la pila de entornos 
-            foreach (var env in pilaEntornos)
+            
+            foreach (var entorno in pilaEntornos)
             {
-                if (env.ContainsKey(id))
-                    return env[id].Valor;
+                if (entorno.TryGetValue(id, out var entrada))
+                {
+                    return entrada.Valor ?? "nulo";
+                }
             }
-            // Si no se encuentra en la pila, buscar en la tabla global
+
             var simbolo = tablaSimbolos.Find(s => s.Nombre == id);
             if (simbolo != null)
-                return simbolo.Valor;
+            {
+                return simbolo.Valor ?? "nulo";
+            }
+
             var token = context.IDENTIFICADOR().Symbol;
             AgregarError($"Error: La variable '{id}' no está definida.", 
-                        token.Line, 
-                        token.Column + 1);
-            return null!;
+                token.Line, token.Column + 1);
+            
+            return null; 
         }
 
         
