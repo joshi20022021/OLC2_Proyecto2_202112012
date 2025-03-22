@@ -271,6 +271,16 @@ public interface ILanguageListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSliceLiteral([NotNull] LanguageParser.SliceLiteralContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.listLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterListLiteral([NotNull] LanguageParser.ListLiteralContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.listLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitListLiteral([NotNull] LanguageParser.ListLiteralContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="LanguageParser.sliceElemento"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -280,6 +290,16 @@ public interface ILanguageListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitSliceElemento([NotNull] LanguageParser.SliceElementoContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.funcionCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncionCall([NotNull] LanguageParser.FuncionCallContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.funcionCall"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncionCall([NotNull] LanguageParser.FuncionCallContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>Imprime</c>
 	/// labeled alternative in <see cref="LanguageParser.imprimir"/>.
@@ -460,6 +480,18 @@ public interface ILanguageListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitModulo([NotNull] LanguageParser.ModuloContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>FuncionLlamada</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterFuncionLlamada([NotNull] LanguageParser.FuncionLlamadaContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>FuncionLlamada</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitFuncionLlamada([NotNull] LanguageParser.FuncionLlamadaContext context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralRune</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

@@ -25,32 +25,6 @@ namespace API.compiler
                 });
                 mensajesSalida.Add($"ERROR DETECTADO: {mensaje}");
             }
-        
-        // Clase para representar una entrada en la tabla de símbolos
-        public class EntradaSimbolo
-        {
-            public int Id { get; set; }
-            public string TipoSimbolo { get; set; } = "Variable"; // Variable/Funcion/Procedimiento
-            public string Nombre { get; set; } = string.Empty;
-            public string TipoDato { get; set; } = "indefinido";
-            public object Valor { get; set; } = "nulo";
-            public string Ambito { get; set; } = "Global";
-            public int Linea { get; set; }
-            public int Columna { get; set; }
-            public List<object> Lista { get; set; } = new List<object>();
-            
-            // Nueva propiedad para seguimiento de ID único
-            private static int _contadorId = 1;
-            public EntradaSimbolo() => Id = _contadorId++;
-        }
-
-        // Clase para representar un nodo en el AST
-        public class NodoAST
-        {
-            public string Tipo { get; set; } = "Desconocido";
-            public string? Valor { get; set; }
-            public List<NodoAST> Hijos { get; set; } = new List<NodoAST>();
-        }
 
         private bool EnCiclo = false;
         private bool EnSwitch = false;
@@ -67,53 +41,6 @@ namespace API.compiler
         public class BreakCommand { }
 
         public class ContinueCommand { }
-
-        // Método para obtener el tipo de un valor
-        private string ObtenerNombreTipo(object valor)
-        {
-            return valor switch
-            {
-                null => "nulo",
-                long _ => "int",
-                double _ => "float64",
-                bool _ => "bool",
-                string _ => "string",
-                char _ => "rune",  
-                _ => valor.GetType().Name
-            };
-        }
-
-
-        // Método para convertir un valor a double
-        private double? ConvertirADouble(object valor)
-        {
-            if (valor is int entero)
-                return (double)entero;  
-            if (valor is double flotante)
-                return flotante;
-            if (valor is string str && double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double resultado))
-                return resultado;
-
-            return null; 
-        }
-
-
-        // Método para obtener el valor numérico de un objeto
-        private double? ConvertirANumero(object valor)
-        {
-            if (valor is int entero)
-                return (double)entero;
-            if (valor is long enteroLargo) 
-                return (double)enteroLargo;
-            if (valor is double decimalNum)
-                return decimalNum;
-            if (valor is char rune)
-                return (double)rune;
-            if (valor is string str && double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double resultado))
-                return resultado;
-
-            return null;
-        }
 
         private object AsignarEnMatriz(string nombre, long fila, long columna, object nuevoValor)
         {
@@ -144,31 +71,36 @@ namespace API.compiler
         }
 
 
-        // visitor para la regla principal del programa
+                // visitor para la regla principal del programa
         public override object VisitPrograma(LanguageParser.ProgramaContext context)
         {
-            var funcionMain = context.funcionMain();
-            if (funcionMain == null)
+            try
             {
-                AgregarError("No se encontró la función main().", 
-                            context.Start.Line, 
-                            context.Start.Column);
-                return null;
+                var funcionMain = context.funcionMain();
+                if (funcionMain == null)
+                {
+                    AgregarError("No se encontró la función main().", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+
+                Visit(funcionMain);
+            }
+            catch (Exception ex)
+            {
+                AgregarError($"Error crítico: {ex.Message}", 0, 0); // Línea y columna genéricas
             }
 
-            Visit(funcionMain);
-
-            if (mensajesSalida.Count > 0)
+            if (ErroresSemanticos.Count > 0 || mensajesSalida.Any(m => m.StartsWith("ERROR")))
             {
                 Console.WriteLine("\n===== ERRORES DETECTADOS =====");
-                foreach (var error in mensajesSalida)
+                foreach (var error in mensajesSalida.Where(m => m.StartsWith("ERROR")))
                 {
                     Console.WriteLine(error);
                 }
             }
 
             return null;
-                }
+        }
 
         public override object VisitDeclaracion(LanguageParser.DeclaracionContext context)
         {
@@ -202,7 +134,7 @@ namespace API.compiler
 
             if (string.IsNullOrEmpty(varType))
             {
-                varType = ObtenerNombreTipo(value);
+                varType = TipoDato.ObtenerNombreTipo(value);
             }
 
             Dictionary<string, EntradaSimbolo> entornoActual = new Dictionary<string, EntradaSimbolo>();
@@ -229,9 +161,11 @@ namespace API.compiler
                 Columna = token.Column + 1
             };
             if (value is List<object> lista)
-            {
-                entornoActual[varName].Valor = lista; 
-            }
+                {
+                    // Inferir tipo multidimensional basado en la estructura
+                    string tipoInferido = InferirTipoSlice(lista);
+                    entornoActual[varName].TipoDato = tipoInferido;
+                }
 
             return value;
         }     
@@ -273,43 +207,48 @@ namespace API.compiler
         public override object VisitImprime(LanguageParser.ImprimeContext context)
         {
             List<string> valores = new List<string>();
-
-            if (context.expresion() != null)
+            foreach (var expr in context.expresion())
             {
-                foreach (var expr in context.expresion())
-                {
-                    var resultado = Visit(expr);
-
-                    if (resultado is List<object> lista)
-                    {
-                        valores.Add("[" + string.Join(" ", lista) + "]");
-                    }
-                    else if (resultado is double d)
-                    {
-                        valores.Add(d.ToString("0.######", CultureInfo.InvariantCulture));
-                    }
-                    else if (resultado is string str)
-                    {
-                        valores.Add(str.Replace("\\n", "\n")); 
-                    }
-                    else if (resultado is bool b)
-                    {
-                        valores.Add(b ? "true" : "false");
-                    }
-                    else
-                    {
-                        valores.Add(resultado?.ToString() ?? "nulo");
-                    }
-                }
+                var resultado = Visit(expr);
+                Console.WriteLine($"DEBUG: Valor a imprimir - Tipo: {resultado?.GetType().Name}, Valor: {resultado}");
+                valores.Add(FormatearValor(resultado));
             }
-
             string salida = string.Join(" ", valores);
-            Console.WriteLine(salida);  
+            Console.WriteLine(salida);
             mensajesSalida.Add(salida);
-            
             return null;
         }
 
+        // Función auxiliar recursiva para formatear
+        private string FormatearValor(object valor)
+        {
+            if (valor is List<object> lista)
+            {
+                List<string> elementos = new List<string>();
+                foreach (var elem in lista)
+                {
+                    elementos.Add(FormatearValor(elem));
+                }
+                return "[" + string.Join(" ", elementos) + "]";
+            }
+            else if (valor is string str)
+            {
+                return str;
+            }
+            else if (valor is double d)
+            {
+                return d.ToString("0.######", CultureInfo.InvariantCulture);
+            }
+            else if (valor is bool b)
+            {
+                return b ? "true" : "false";
+            }
+            else if (valor is long l)
+            {
+                return l.ToString();
+            }
+            return valor?.ToString() ?? "nulo";
+        }
 
         // Visitor para una operación de suma
         public override object VisitSuma(LanguageParser.SumaContext context)
@@ -323,8 +262,8 @@ namespace API.compiler
                 return (izq?.ToString() ?? "") + (der?.ToString() ?? "");
             }
 
-            double? valIzq = ConvertirANumero(izq);
-            double? valDer = ConvertirANumero(der);
+            double? valIzq = TipoDato.ConvertirANumero(izq);
+            double? valDer = TipoDato.ConvertirANumero(der);
 
             if (valIzq.HasValue && valDer.HasValue)
             {
@@ -341,8 +280,8 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            double? valIzq = ConvertirANumero(izq);
-            double? valDer = ConvertirANumero(der);
+            double? valIzq = TipoDato.ConvertirANumero(izq);
+            double? valDer = TipoDato.ConvertirANumero(der);
 
             if (valIzq.HasValue && valDer.HasValue)
             {
@@ -362,8 +301,8 @@ namespace API.compiler
             if (izq is long i && der is long j)
                 return i * j;
 
-            double? valIzq = ConvertirADouble(izq);
-            double? valDer = ConvertirADouble(der);
+            double? valIzq = TipoDato.ConvertirADouble(izq);
+            double? valDer = TipoDato.ConvertirADouble(der);
             if (valIzq.HasValue && valDer.HasValue)
             {
                 return valIzq.Value * valDer.Value;
@@ -384,8 +323,8 @@ namespace API.compiler
             if (izq is long i && der is long j)
                 return (double)i / j; 
 
-            double? valIzq = ConvertirADouble(izq);
-            double? valDer = ConvertirADouble(der);
+            double? valIzq = TipoDato.ConvertirADouble(izq);
+            double? valDer = TipoDato.ConvertirADouble(der);
             if (valIzq.HasValue && valDer.HasValue)
             {
                 if (valDer.Value == 0) return "Error: División por 0.";
@@ -415,8 +354,8 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            double? numIzq = ConvertirANumero(izq);
-            double? numDer = ConvertirANumero(der);
+            double? numIzq = TipoDato.ConvertirANumero(izq);
+            double? numDer = TipoDato.ConvertirANumero(der);
 
             return numIzq.HasValue && numDer.HasValue 
                 ? numIzq.Value > numDer.Value 
@@ -428,8 +367,8 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            double? numIzq = ConvertirANumero(izq);
-            double? numDer = ConvertirANumero(der);
+            double? numIzq = TipoDato.ConvertirANumero(izq);
+            double? numDer = TipoDato.ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
                 return numIzq.Value < numDer.Value;
@@ -447,13 +386,13 @@ namespace API.compiler
             if (izq is long lValIzq && der is long lValDer)
                 return lValIzq >= lValDer;
 
-            double? numIzq = ConvertirANumero(izq);
-            double? numDer = ConvertirANumero(der);
+            double? numIzq = TipoDato.ConvertirANumero(izq);
+            double? numDer = TipoDato.ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
                 return numIzq.Value >= numDer.Value;
 
-            return $"Error: Tipos incompatibles en '>=' (Recibidos: {ObtenerNombreTipo(izq)} y {ObtenerNombreTipo(der)}).";
+            return $"Error: Tipos incompatibles en '>=' (Recibidos: {TipoDato.ObtenerNombreTipo(izq)} y {TipoDato.ObtenerNombreTipo(der)}).";
         }
 
         // Visitor para una comparación de menor o igual que
@@ -462,13 +401,13 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            double? numIzq = ConvertirANumero(izq);
-            double? numDer = ConvertirANumero(der);
+            double? numIzq = TipoDato.ConvertirANumero(izq);
+            double? numDer = TipoDato.ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
                 return numIzq.Value <= numDer.Value;
 
-            return $"Error: Tipos incompatibles en comparación '<=' (Recibidos: {ObtenerNombreTipo(izq)} y {ObtenerNombreTipo(der)}).";
+            return $"Error: Tipos incompatibles en comparación '<=' (Recibidos: {TipoDato.ObtenerNombreTipo(izq)} y {TipoDato.ObtenerNombreTipo(der)}).";
         }
 
 
@@ -478,8 +417,8 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            double? numIzq = ConvertirANumero(izq);
-            double? numDer = ConvertirANumero(der);
+            double? numIzq = TipoDato.ConvertirANumero(izq);
+            double? numDer = TipoDato.ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
             {
@@ -496,8 +435,8 @@ namespace API.compiler
             var der = Visit(context.expresion(1));
 
             // Convertir a números 
-            double? numIzq = ConvertirANumero(izq);
-            double? numDer = ConvertirANumero(der);
+            double? numIzq = TipoDato.ConvertirANumero(izq);
+            double? numDer = TipoDato.ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
             {
@@ -516,7 +455,7 @@ namespace API.compiler
             if (izq is bool boolIzq && der is bool boolDer)
                 return boolIzq && boolDer;
 
-            return $"Error: Operador '&&' requiere operandos booleanos, pero recibió '{ObtenerNombreTipo(izq)}' y '{ObtenerNombreTipo(der)}'.";
+            return $"Error: Operador '&&' requiere operandos booleanos, pero recibió '{TipoDato.ObtenerNombreTipo(izq)}' y '{TipoDato.ObtenerNombreTipo(der)}'.";
         }
 
 
@@ -529,7 +468,7 @@ namespace API.compiler
             if (izq is bool boolIzq && der is bool boolDer)
                 return boolIzq || boolDer;
 
-            return $"Error: Operador '||' requiere operandos booleanos, pero recibió '{ObtenerNombreTipo(izq)}' y '{ObtenerNombreTipo(der)}'.";
+            return $"Error: Operador '||' requiere operandos booleanos, pero recibió '{TipoDato.ObtenerNombreTipo(izq)}' y '{TipoDato.ObtenerNombreTipo(der)}'.";
         }
 
 
@@ -540,7 +479,7 @@ namespace API.compiler
             if (valor is bool boolValor)
                 return !boolValor;
              var token = context.Start;
-            AgregarError($"Error: Operador '!' requiere un booleano, recibió {ObtenerNombreTipo(valor)}.", 
+            AgregarError($"Error: Operador '!' requiere un booleano, recibió {TipoDato.ObtenerNombreTipo(valor)}.", 
                 token.Line, 
                 token.Column + 1);
             return "nulo";
@@ -725,7 +664,7 @@ namespace API.compiler
                 for (int i = 0; i < lista.Count; i++)
                 {
                     pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, TipoDato = "int", Valor = i };
-                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, TipoDato = ObtenerNombreTipo(lista[i]), Valor = lista[i] };
+                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, TipoDato = TipoDato.ObtenerNombreTipo(lista[i]), Valor = lista[i] };
 
                     Visit(context.bloque());
                 }
@@ -864,19 +803,40 @@ namespace API.compiler
         public override object VisitSliceLiteral(LanguageParser.SliceLiteralContext context)
         {
             List<object> elementos = new List<object>();
-
-            if (context.sliceElemento() != null)
+            foreach (var elem in context.sliceElemento())
             {
-                foreach (var elem in context.sliceElemento())
-                {
-                    elementos.Add(Visit(elem));
-                }
+                var valor = Visit(elem);
+                elementos.Add(valor);
             }
-
             return elementos;
         }
+        //visitar literales
+        public override object VisitListLiteral(LanguageParser.ListLiteralContext context)
+        {
+            List<object> elementos = new List<object>();
+            foreach (var expr in context.expresion())
+            {
+                var valor = Visit(expr);
+                if (valor != null) elementos.Add(valor);
+            }
+            return elementos;
+        }
+        //tipo slice
+        private string InferirTipoSlice(List<object> lista)
+        {
+            if (lista.Count == 0) return "[]indefinido";
+            
+            var primerElemento = lista[0];
+            if (primerElemento is List<object>)
+            {
+                // Inferir tipo para matriz 2D
+                string tipoSubLista = InferirTipoSlice((List<object>)primerElemento);
+                return $"[]{tipoSubLista}";
+            }
+            return $"[]{TipoDato.ObtenerNombreTipo(primerElemento)}";
+        }
 
-
+        //visitar asignacion de slice
         public override object VisitAsignarSlice(LanguageParser.AsignarSliceContext context) {
             string nombre = context.IDENTIFICADOR().GetText();
             object indiceObj = Visit(context.expresion(0));
@@ -958,27 +918,14 @@ namespace API.compiler
 
 
         //visit funcion len
-        public override object VisitFuncionLen(LanguageParser.FuncionLenContext context)
-        {
+        public override object VisitFuncionLen(LanguageParser.FuncionLenContext context) {
             var slice = Visit(context.expresion());
-
-            if (slice is List<object> lista)
-            {
-                try
-                {
-                    return SliceHelper.Len(lista);
-                }
-                catch (Exception ex)
-                {
-                    AgregarError($"Error en len: {ex.Message}", context.Start.Line, context.Start.Column);
-                    return "nulo";
-                }
+            if (slice is List<object> lista) {
+                return lista.Count;
             }
-
-            AgregarError("Error: len solo se puede aplicar a slices.", context.Start.Line, context.Start.Column);
-            return "nulo";
+            AgregarError("len requiere un slice", context.Start.Line, context.Start.Column);
+            return 0;
         }
-
 
         //visit funcion Index
         public override object VisitFuncionIndex(LanguageParser.FuncionIndexContext context)
@@ -1027,40 +974,39 @@ namespace API.compiler
             return "nulo";
         }
 
-        public override object VisitAccesoSlice2D(LanguageParser.AccesoSlice2DContext context)
-        {
-            string nombre = context.IDENTIFICADOR().GetText();
-            object fila = Visit(context.expresion(0));
-            object columna = Visit(context.expresion(1));
+        //visitar acceso slice en 2D
+        public override object VisitAccesoSlice2D(LanguageParser.AccesoSlice2DContext context) {
+        string nombre = context.IDENTIFICADOR().GetText();
+        object filaObj = Visit(context.expresion(0));
+        object columnaObj = Visit(context.expresion(1));
 
-            if (fila is long f && columna is long c)
-            {
-                foreach (var entorno in pilaEntornos)
-                {
-                    if (entorno.ContainsKey(nombre))
-                    {
-                        var valor = entorno[nombre].Valor;
-                        if (valor is List<object> matriz)
-                        {
-                            try
-                            {
-                                return SliceHelper.AccesoSlice2D(matriz, f, c);
-                            }
-                            catch (Exception ex)
-                            {
-                                AgregarError($"Error: {ex.Message}", context.Start.Line, context.Start.Column);
-                                return "nulo";
-                            }
+        if (filaObj is long fila && columnaObj is long columna) {
+            foreach (var entorno in pilaEntornos) {
+                if (entorno.TryGetValue(nombre, out var entrada) && entrada.Valor is List<object> matriz) {
+                    if (fila < 0 || fila >= matriz.Count) {
+                        AgregarError($"Fila {fila} fuera de rango", context.Start.Line, context.Start.Column);
+                        return "nulo";
+                    }
+                    if (matriz[(int)fila] is List<object> filaLista) {
+                        if (columna < 0 || columna >= filaLista.Count) {
+                            AgregarError($"Columna {columna} fuera de rango", context.Start.Line, context.Start.Column);
+                            return "nulo";
                         }
+                        return filaLista[(int)columna];
+                    } else {
+                        AgregarError("La fila no es un slice", context.Start.Line, context.Start.Column);
+                        return "nulo";
                     }
                 }
             }
-
-            AgregarError($"Error: la variable '{nombre}' no está definida o no es una matriz válida.", context.Start.Line, context.Start.Column);
+            AgregarError($"Variable '{nombre}' no definida", context.Start.Line, context.Start.Column);
+            return "nulo";
+        } else {
+            AgregarError("Índices deben ser enteros", context.Start.Line, context.Start.Column);
             return "nulo";
         }
-
-
+    }
+        //visitar asignacion de matrices
         public override object VisitAsignarMatriz(LanguageParser.AsignarMatrizContext context)
         {
             string nombre = context.IDENTIFICADOR().GetText();
@@ -1082,7 +1028,32 @@ namespace API.compiler
 
             return "nulo";
         }
+        //llamada funcion
+        public override object VisitFuncionCall(LanguageParser.FuncionCallContext context)
+        {
+            // Obtener todos los IDENTIFICADOR en la llamada 
+            var identificadores = context.IDENTIFICADOR();
+            
+            // El último IDENTIFICADOR es el nombre de la función
+            string nombreFuncion = identificadores.Last().GetText(); 
 
+            List<object> argumentos = new List<object>();
+            foreach (var expr in context.expresion())
+            {
+                argumentos.Add(Visit(expr));
+            }
+
+            switch (nombreFuncion)
+            {
+                case "Index":
+                    return SliceHelper.Index((List<object>)argumentos[0], argumentos[1]);
+                case "Join":
+                    return SliceHelper.Join((List<object>)argumentos[0], (string)argumentos[1]);
+                default:
+                    AgregarError($"Función no implementada: {nombreFuncion}", context.Start.Line, context.Start.Column);
+                    return "nulo";
+            }
+        }
 
         // Visitor para un literal entero
         public override object VisitLiteralEntero(LanguageParser.LiteralEnteroContext context)

@@ -100,7 +100,8 @@ asignacion
 
 //tipo de variables
 tipo
-    : IDENTIFICADOR
+    : '[' ']' tipo    
+    | IDENTIFICADOR   
     ;
 
 // switch
@@ -132,12 +133,24 @@ contador
 
 //slice
 sliceLiteral
-    : L_CORCHETE R_CORCHETE IDENTIFICADOR? '{' (sliceElemento (',' sliceElemento)*)? '}'
+    : '[' ']' tipo? '{' (sliceElemento (',' sliceElemento)*)? '}'
     ;
 
+//lista
+listLiteral
+    : '{' (expresion (',' expresion)*)? '}'  
+    ;
+
+//elementos de lista
 sliceElemento
-    : expresion         
-    | sliceLiteral     
+    : expresion
+    | sliceLiteral
+    | listLiteral
+    ;
+
+//llamada funcion
+funcionCall
+    : (IDENTIFICADOR '.')? IDENTIFICADOR PARENTESIS_IZQ (expresion (',' expresion)*)? PARENTESIS_DER
     ;
 
 //imprimir argumentos
@@ -169,6 +182,7 @@ expresion
     | INDICE PARENTESIS_IZQ expresion ',' expresion PARENTESIS_DER    # FuncionIndex
     | UNIR PARENTESIS_IZQ expresion ',' expresion PARENTESIS_DER    # FuncionJoin
     | IDENTIFICADOR L_CORCHETE expresion R_CORCHETE L_CORCHETE expresion R_CORCHETE  # AccesoSlice2D
+    | funcionCall                          # FuncionLlamada
     | LIT_ENTERO                           # LiteralEntero
     | LIT_FLOAT                            # LiteralFlotante
     | LIT_RUNE                             # LiteralRune
