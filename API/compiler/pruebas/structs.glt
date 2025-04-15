@@ -1,0 +1,110 @@
+
+type Persona struct {
+	Nombre   string
+	Edad     int
+	Estatura float64
+	Activo   bool
+}
+
+// Declaración de struct con campos anidados
+type Empleado struct {
+	DatosPersonales Persona
+	ID              string
+	Departamento    string
+	Salario         float64
+}
+
+// Declaración de struct para nodo de lista enlazada
+type Nodo struct {
+	Nombre    string
+	Valor     int
+	Siguiente Nodo
+}
+
+// Método para Persona: Saludar
+func (p Persona) Saludar() string {
+	return "Hola, mi nombre es " + p.Nombre
+}
+
+// Método para Nodo: ObtenerNombre
+func (n Nodo) ObtenerNombre() string {
+	return n.Nombre
+}
+
+// Método para Nodo: CambiarValor
+func (n Nodo) CambiarValor(nuevoValor int) {
+	n.Valor = nuevoValor
+}
+
+// Método para Nodo: ImprimirNombre
+func (n Nodo) ImprimirNombre() {
+	fmt.Println("Nombre del nodo:", n.Nombre)
+}
+
+// Método para Nodo: ObtenerSiguienteNombre
+func (n Nodo) ObtenerSiguienteNombre() string {
+	if n.Siguiente == nil {
+		return "No hay siguiente nodo"
+	}
+	return n.Siguiente.Nombre
+}
+
+func main() {
+	puntos := 0
+
+	fmt.Println("=== Archivo de prueba de structs ===")
+
+	// 1. Declaración (1 punto)
+	fmt.Println("==== Declaración ====")
+	puntosDeclaracion := 0
+
+	fmt.Println("Declaración de structs:")
+	fmt.Println("type Persona struct {")
+	fmt.Println("    Nombre   string")
+	fmt.Println("    Edad     int")
+	fmt.Println("    Estatura float64")
+	fmt.Println("    Activo   bool")
+	fmt.Println("}")
+
+	fmt.Println("\ntype Nodo struct {")
+	fmt.Println("    Nombre    string")
+	fmt.Println("    Valor     int")
+	fmt.Println("    Siguiente Nodo")
+	fmt.Println("}")
+
+	// Verificación manual
+	puntosDeclaracion = puntosDeclaracion + 1
+
+
+	// Verificación manual
+	puntosDeclaracion = puntosDeclaracion + 1
+
+	// 2. Instanciación (2 puntos)
+	fmt.Println("\n==== Instanciación ====")
+	puntosInstanciacion := 0
+
+	fmt.Println("Instanciación con valores iniciales:")
+	persona1 := Persona{
+		Nombre:   "Juan",
+		Edad:     30,
+		Estatura: 1.75,
+		Activo:   true,
+	}
+	fmt.Println("###Validacion Manual")
+	fmt.Println("persona1:", persona1)
+	puntosInstanciacion = puntosInstanciacion + 2
+
+
+	// Resumen de puntos
+	puntos = puntosDeclaracion + puntosInstanciacion 
+
+	fmt.Println("\n=== Tabla de Resultados ===")
+	fmt.Println("+------------------------------------------+--------+-------+")
+	fmt.Println("| Característica                           | Puntos | Total |")
+	fmt.Println("+------------------------------------------+--------+-------+")
+	fmt.Println("| Declaración                              | ", puntosDeclaracion, "    | 1     |")
+	fmt.Println("| Instanciación                            | ", puntosInstanciacion, "    | 2     |")
+	fmt.Println("+------------------------------------------+--------+-------+")
+	fmt.Println("| TOTAL                                    | ", puntos, "   | 19    |")
+	fmt.Println("+------------------------------------------+--------+-------+")
+}

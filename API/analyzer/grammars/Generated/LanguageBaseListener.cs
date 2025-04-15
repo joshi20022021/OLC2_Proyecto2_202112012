@@ -408,6 +408,18 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStructDeclaracion([NotNull] LanguageParser.StructDeclaracionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.asignacionAtributo"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterAsignacionAtributo([NotNull] LanguageParser.AsignacionAtributoContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.asignacionAtributo"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitAsignacionAtributo([NotNull] LanguageParser.AsignacionAtributoContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by the <c>Atributo</c>
 	/// labeled alternative in <see cref="LanguageParser.atributoStruct"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -436,6 +448,18 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitMetodoStruct([NotNull] LanguageParser.MetodoStructContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="LanguageParser.funcionDeclaracion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncionDeclaracion([NotNull] LanguageParser.FuncionDeclaracionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="LanguageParser.funcionDeclaracion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncionDeclaracion([NotNull] LanguageParser.FuncionDeclaracionContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="LanguageParser.expresionLiteralStruct"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -459,6 +483,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAtributosInicializacion([NotNull] LanguageParser.AtributosInicializacionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>FuncionParseFloat</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncionParseFloat([NotNull] LanguageParser.FuncionParseFloatContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>FuncionParseFloat</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncionParseFloat([NotNull] LanguageParser.FuncionParseFloatContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>ComparacionIgual</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
@@ -501,6 +539,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFuncionAppend([NotNull] LanguageParser.FuncionAppendContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>FuncionAtoi</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncionAtoi([NotNull] LanguageParser.FuncionAtoiContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>FuncionAtoi</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncionAtoi([NotNull] LanguageParser.FuncionAtoiContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralEntero</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
@@ -697,6 +749,20 @@ public partial class LanguageBaseListener : ILanguageListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAccesoSlice2D([NotNull] LanguageParser.AccesoSlice2DContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by the <c>FuncionTypeOf</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterFuncionTypeOf([NotNull] LanguageParser.FuncionTypeOfContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by the <c>FuncionTypeOf</c>
+	/// labeled alternative in <see cref="LanguageParser.expresion"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitFuncionTypeOf([NotNull] LanguageParser.FuncionTypeOfContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by the <c>LiteralFlotante</c>
 	/// labeled alternative in <see cref="LanguageParser.expresion"/>.

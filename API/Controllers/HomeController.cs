@@ -1,6 +1,7 @@
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
 
+// Controlador de la página principal
 public class HomeController : Controller
 {
     private readonly InterpreterService _interpreterService;
@@ -16,6 +17,7 @@ public class HomeController : Controller
     }
 
     [HttpPost]
+    // Método para traducir el código
     public IActionResult Translate(string inputCode)
     {
         if (string.IsNullOrEmpty(inputCode))

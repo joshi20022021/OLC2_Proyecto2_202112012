@@ -7,7 +7,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
         policy => policy
-            .AllowAnyOrigin()  // Permitir cualquier origen (útil para desarrollo)
+            .AllowAnyOrigin()  // Permitir cualquier origen
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
@@ -25,25 +25,18 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-// Habilitar archivos estáticos
 app.UseStaticFiles();
 
-// 📌 **IMPORTANTE**: Usa `UseRouting()` antes de `UseCors()`
 app.UseRouting();
 
-// 📌 **IMPORTANTE**: Habilitar CORS después de `UseRouting()`
 app.UseCors("AllowAll");
 
-// Seguridad y autenticación
 app.UseAuthorization();
 
-// Usar redirección HTTPS (opcional)
 app.UseHttpsRedirection();
 
-// Mapear controladores
 app.MapControllers();
 
-// Agregar rutas
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

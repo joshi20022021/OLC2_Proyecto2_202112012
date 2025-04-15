@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO; 
 using Antlr4.Runtime;
 using API.compiler; 
+// Clase que representa un error personalizado
 public class CustomError
 {
     public int Line { get; set; }
@@ -9,7 +10,7 @@ public class CustomError
     public required string Message { get; set; } 
     public required string Type { get; set; }
 }   
-// Agrega esta clase en CustomErrorListener.cs
+// Clase que implementa la interfaz para manejar errores léxicos
 public class LexerErrorListener : IAntlrErrorListener<int>
 {
     private readonly List<CustomError> _errores;
@@ -31,6 +32,7 @@ public class LexerErrorListener : IAntlrErrorListener<int>
         });
     }
 }
+// Clase que implementa la interfaz para manejar errores sintácticos
 
 public class CustomErrorListener : IAntlrErrorListener<IToken>
 {

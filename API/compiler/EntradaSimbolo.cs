@@ -1,5 +1,6 @@
 namespace API.compiler
 {
+    // Entrada de un símbolo en la tabla de símbolos
     public class EntradaSimbolo
     {
         public int Id { get; set; }

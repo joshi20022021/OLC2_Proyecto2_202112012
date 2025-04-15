@@ -1,23 +1,38 @@
+using System;
 using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace API.compiler
 {
     public static class TipoDato
     {
+        // Obtiene el nombre del tipo de dato de un valor
         public static string ObtenerNombreTipo(object valor)
         {
+            if (valor == null) return "void";
+            
             return valor switch
             {
-                null => "nulo",
+                List<object> lista => $"[]{ObtenerNombreTipo(lista.FirstOrDefault())}",
+                StructInstance inst => inst.Definicion.Nombre,
                 long _ => "int",
                 double _ => "float64",
                 bool _ => "bool",
+                string s when s.Length == 1 => "char",
                 string _ => "string",
-                char _ => "rune",
                 _ => valor.GetType().Name
             };
         }
+        // Obtiene el tipo de dato de una lista
+        private static string ObtenerTipoSlice(List<object> lista)
+        {
+            if (lista.Count == 0) return "[]indefinido";
+            string tipoBase = ObtenerNombreTipo(lista[0]);
+            return $"[]{tipoBase}";
+        }
 
+        // Convierte un valor a un tipo de dato double
         public static double? ConvertirADouble(object valor)
         {
             if (valor is int entero)
@@ -28,7 +43,7 @@ namespace API.compiler
                 return resultado;
             return null;
         }
-
+        // Convierte un valor a un tipo de dato int
         public static double? ConvertirANumero(object valor)
         {
             if (valor is int entero)
@@ -43,11 +58,11 @@ namespace API.compiler
                 return resultado;
             return null;
         }
+        // Convierte un valor a un tipo de dato string
         public static bool ValidarTipo(object valor, string tipoEsperado)
         {
-            string tipoReal = TipoDato.ObtenerNombreTipo(valor);
+            string tipoReal = ObtenerNombreTipo(valor);
             
-            // Manejar structs
             if (StructManager.ExisteStruct(tipoEsperado))
             {
                 return valor is StructInstance instancia && 
@@ -56,7 +71,9 @@ namespace API.compiler
             
             return tipoReal == tipoEsperado;
         }
-         public static bool EsTipoValido(string tipo)
+        // Convierte un valor a un tipo de dato string
+
+        public static bool EsTipoValido(string tipo)
         {
             return tipo switch
             {

@@ -1,0 +1,11 @@
+--comando para generar gramatica
+ java -jar antlr-4.13.2-complete.jar -Dlanguage=CSharp -o analyzer/grammars/Generated -visitor -listener analyzer/grammars/Language.g4
+
+ --comandos para compilar el visitor
+ dotnet build
+ dotnet clean
+ dotnet run
+
+ --comando para el frontend
+ npm install
+ npm start

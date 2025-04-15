@@ -10,6 +10,8 @@ namespace API.compiler
 {
     public class CompilerVisitor : LanguageBaseVisitor<object>
     {
+        private Dictionary<string, Funcion> tablaFunciones = new Dictionary<string, Funcion>();
+        
         private Dictionary<string, MetodoStruct> _tablaFuncionesStruct = new();
         private Stack<Dictionary<string, EntradaSimbolo>> pilaEntornos = new Stack<Dictionary<string, EntradaSimbolo>>();
         private Stack<string> _ambitoActual = new Stack<string>();
@@ -43,6 +45,13 @@ namespace API.compiler
 
         public class ContinueCommand { }
 
+        public string GenerarASTDOT(NodoAST raiz)
+        {
+            var generador = new ASTGraphGenerator();
+            string dot = generador.GenerarDOT(raiz);
+            Console.WriteLine("DOT generado:\n" + dot); // Log para verificar el DOT generado
+            return dot;
+        }
         private object AsignarEnMatriz(string nombre, long fila, long columna, object nuevoValor)
         {
             foreach (var entorno in pilaEntornos)
@@ -73,16 +82,42 @@ namespace API.compiler
 
 
                 // visitor para la regla principal del programa
+
         public override object VisitPrograma(LanguageParser.ProgramaContext context) {
             try {
-                var funcionMain = context.funcionMain();
+                //Registrar los structs
+                foreach (LanguageParser.StructDeclaracionContext structDecl in context.declaracionStruct()) {
+                    string nombreStruct = structDecl.IDENTIFICADOR().GetText();
+                    var structDef = new StructDefinition { Nombre = nombreStruct };
+                    StructManager.RegistrarStruct(structDef);
+                }
 
+                // Procesar structs
+                foreach (var structDecl in context.declaracionStruct()) {
+                    Visit(structDecl);
+                }
+
+                // Registrar funciones globales
+                foreach (var funcDecl in context.funcionDeclaracion()) {
+                    Visit(funcDecl);
+                }
+
+                // Procesar funciones de structs
+                foreach (var funcStruct in context.funcionStruct()) {
+                    Visit(funcStruct);
+                }
+
+                // Procesar declaraciones
+                foreach (var decl in context.declaracion()) {
+                    Visit(decl);
+                }
+
+                //Ejecutar main
+                var funcionMain = context.funcionMain();
                 if (funcionMain == null) {
                     AgregarError("No se encontró la función main().", context.Start.Line, context.Start.Column);
                     return null;
                 }
-
-                // Ejecutar la función main
                 Visit(funcionMain);
             }
             catch (Exception ex) {
@@ -96,17 +131,17 @@ namespace API.compiler
                     Console.WriteLine($"[Línea {error.Line}] {error.Message}");
                 }
             }
-
             return null;
         }
 
+        //visitar declaracion
         public override object VisitDeclaracion(LanguageParser.DeclaracionContext context)
         {
             string varName = context.IDENTIFICADOR().GetText();
             string varType = context.tipo()?.GetText();
             object value = context.expresion() != null ? Visit(context.expresion()) : null;
 
-            // 1. Manejar inicialización por defecto si no hay valor
+            // Manejar inicialización por defecto si no hay valor
             if (value == null)
             {
                 switch (varType?.ToLower())
@@ -122,7 +157,7 @@ namespace API.compiler
                         var errorToken = context.IDENTIFICADOR().Symbol;
                         AgregarError($"Error: Tipo no especificado para '{varName}'.",
                                     errorToken.Line,
-                                    errorToken.Column + 1); // Column es 0-based
+                                    errorToken.Column + 1); 
                         return null;
                         }
                         value = null; 
@@ -170,6 +205,19 @@ namespace API.compiler
                     TipoDato = TipoDato.ObtenerNombreTipo(value),
                     Valor = value
                 };
+                var entrada = new EntradaSimbolo
+            {
+                TipoSimbolo = "Variable",
+                Nombre = varName,
+                TipoDato = varType,
+                Ambito = _ambitoActual.Count > 0 ? _ambitoActual.Peek() : "Global",
+                Linea = token.Line,
+                Columna = token.Column + 1,
+                Valor = value
+            };
+
+            // Agregar a tabla de símbolos GLOBAL
+            tablaSimbolos.Add(entrada);
 
             return value;
         }     
@@ -180,7 +228,8 @@ namespace API.compiler
             var varName = context.IDENTIFICADOR().GetText();
             var value = Visit(context.expresion());
             var token = context.IDENTIFICADOR().Symbol;
-            // Buscar en todos los entornos (pila y global)
+            
+            // Buscar en todos los entornos 
             foreach (var entorno in pilaEntornos)
             {
                 if (entorno.ContainsKey(varName))
@@ -191,20 +240,40 @@ namespace API.compiler
                 }
             }
 
-            // Buscar en la tabla global
-            var simboloGlobal = tablaSimbolos.Find(s => s.Nombre == varName);
-            if (simboloGlobal != null)
+            // Si no existe, crear la variable en el entorno actual
+            if (pilaEntornos.Count > 0)
             {
-                simboloGlobal.Valor = value;
-                Console.WriteLine($"DEBUG: Asignando {varName} = {value} (global)");
+                Console.WriteLine($"DEBUG: Creando variable {varName} por asignación directa");
+                pilaEntornos.Peek()[varName] = new EntradaSimbolo
+                {
+                    Nombre = varName,
+                    TipoDato = TipoDato.ObtenerNombreTipo(value),
+                    Valor = value,
+                    Ambito = _ambitoActual.Count > 0 ? _ambitoActual.Peek() : "Global",
+                    Linea = token.Line,
+                    Columna = token.Column + 1
+                };
+                
+                // También agregar a la tabla de símbolos
+                tablaSimbolos.Add(new EntradaSimbolo
+                {
+                    TipoSimbolo = "Variable",
+                    Nombre = varName,
+                    TipoDato = TipoDato.ObtenerNombreTipo(value),
+                    Valor = value,
+                    Ambito = _ambitoActual.Count > 0 ? _ambitoActual.Peek() : "Global",
+                    Linea = token.Line,
+                    Columna = token.Column + 1
+                });
+                
                 return value;
             }
 
+            // Si llegamos aquí, es un error
             AgregarError($"Error: La variable '{varName}' no está definida.", 
                         token.Line, 
                         token.Column + 1);
-            return null; 
-
+            return null;
         }
 
          // Visitor para el fmt.println
@@ -214,20 +283,39 @@ namespace API.compiler
             foreach (var expr in context.expresion())
             {
                 var resultado = Visit(expr);
-                Console.WriteLine($"DEBUG: Valor a imprimir - Tipo: {resultado?.GetType().Name}, Valor: {resultado}");
-                valores.Add(FormatearValor(resultado));
+                Console.WriteLine($"DEBUG: Imprimiendo valor de tipo {resultado?.GetType().Name}, valor: {resultado}");
+
+                string valorFormateado = FormatearValor(resultado);
+                valores.Add(valorFormateado);
             }
+            
             string salida = string.Join(" ", valores);
-            Console.WriteLine(salida);
+            Console.WriteLine($"DEBUG: Salida formateada: '{salida}'");
             mensajesSalida.Add(salida);
             return null;
         }
 
+
         // Función auxiliar recursiva para formatear
         private string FormatearValor(object valor)
         {
-            if (valor is List<object> lista)
+            if (valor == null)
+                return "nulo";
+                
+            if (valor is StructInstance instancia)
             {
+                // Código existente para structs...
+                List<string> atributos = new List<string>();
+                foreach (var attr in instancia.Definicion.Atributos)
+                {
+                    if (instancia.Valores.TryGetValue(attr.Key, out object val))
+                        atributos.Add($"{attr.Key}: {FormatearValor(val)}");
+                }
+                return $"{{{string.Join(", ", atributos)}}}";
+            }
+            else if (valor is List<object> lista)
+            {
+                // Para listas/slices
                 List<string> elementos = new List<string>();
                 foreach (var elem in lista)
                 {
@@ -241,6 +329,8 @@ namespace API.compiler
             }
             else if (valor is double d)
             {
+                if (Math.Floor(d) == d)
+                    return d.ToString("0", CultureInfo.InvariantCulture);
                 return d.ToString("0.######", CultureInfo.InvariantCulture);
             }
             else if (valor is bool b)
@@ -251,7 +341,25 @@ namespace API.compiler
             {
                 return l.ToString();
             }
+            else if (valor is char c)
+            {
+                return c.ToString();
+            }
+            
             return valor?.ToString() ?? "nulo";
+        }
+        private object ProcesarCadenaLiteral(string texto)
+        {
+            string contenido = texto.Substring(1, texto.Length - 2);
+            
+            contenido = contenido.Replace("\\n", "\n")
+                        .Replace("\\t", "\t")
+                        .Replace("\\\"", "\"")
+                        .Replace("\\'", "'");
+                        
+            Console.WriteLine($"DEBUG: Cadena procesada: '{contenido}'");
+            
+            return contenido;
         }
 
         // Visitor para una operación de suma
@@ -302,15 +410,27 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
-            if (izq is long i && der is long j)
-                return i * j;
+            // Mejorar el manejo de tipos para la recursión
+            // Convertir explícitamente para asegurar compatibilidad de tipos
+            if (izq is long lizq && der is long lder)
+                return lizq * lder;
+            else if (izq is long liz && der is double dd)
+                return liz * dd;
+            else if (izq is double di && der is long ld)
+                return di * ld;
+            else if (izq is double dizq && der is double dder)
+                return dizq * dder;
 
-            double? valIzq = TipoDato.ConvertirADouble(izq);
-            double? valDer = TipoDato.ConvertirADouble(der);
+            // Si son otros tipos numéricos, intentar conversión
+            double? valIzq = TipoDato.ConvertirANumero(izq);
+            double? valDer = TipoDato.ConvertirANumero(der);
+            
             if (valIzq.HasValue && valDer.HasValue)
             {
                 return valIzq.Value * valDer.Value;
             }
+            
+            Console.WriteLine($"DEBUG Multiplicación: izq={izq?.GetType().Name ?? "null"}, der={der?.GetType().Name ?? "null"}");
             return "Error: Tipos incompatibles en multiplicación.";
         }
 
@@ -421,15 +541,17 @@ namespace API.compiler
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
 
+            // Caso especial: comparación con nil
+            if (izq == null || der == null)
+                return izq == der;
+
+            // Resto de tu código de comparación existente...
             double? numIzq = TipoDato.ConvertirANumero(izq);
             double? numDer = TipoDato.ConvertirANumero(der);
 
             if (numIzq.HasValue && numDer.HasValue)
-            {
                 return numIzq.Value == numDer.Value;
-            }
 
-            // Comparar otros tipos 
             return izq.Equals(der);
         }
 
@@ -480,13 +602,20 @@ namespace API.compiler
         public override object VisitNot(LanguageParser.NotContext context)
         {
             var valor = Visit(context.expresion());
+            
+            Console.WriteLine($"DEBUG: Operando de ! es: {valor} de tipo {valor?.GetType().Name ?? "null"}");
+            
             if (valor is bool boolValor)
+            {
                 return !boolValor;
-             var token = context.Start;
+            }
+            
+            var token = context.Start;
             AgregarError($"Error: Operador '!' requiere un booleano, recibió {TipoDato.ObtenerNombreTipo(valor)}.", 
                 token.Line, 
                 token.Column + 1);
-            return null; 
+            
+            return false; 
         }
 
         //sentencia if y else
@@ -500,66 +629,60 @@ namespace API.compiler
                 if (boolCond)
                 {
                     pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
-                    Visit(ctx.bloque(0));
+                    var resultado = Visit(ctx.bloque(0));  // Capturar el resultado
                     pilaEntornos.Pop();
+                    return resultado;  // Devolver el resultado del bloque
                 }
                 else if (ctx.bloque().Length > 1)
                 {
                     pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
-                    Visit(ctx.bloque(1));
+                    var resultado = Visit(ctx.bloque(1));  // Capturar el resultado
                     pilaEntornos.Pop();
+                    return resultado;  // Devolver el resultado del bloque
                 }
             }
             else
             {
-            var token = ctx.expresion().Start;
-                    AgregarError("Error: La condición del if debe ser booleana.", 
-                                token.Line, 
-                                token.Column + 1);
-                }
-                    
+                var token = ctx.expresion().Start;
+                AgregarError("Error: La condición del if debe ser booleana.", 
+                        token.Line, 
+                        token.Column + 1);
+            }
+                            
             return null;
         }
 
         //switch case        
-            public override object VisitSwitch(LanguageParser.SwitchContext context)
+        public override object VisitSwitch(LanguageParser.SwitchContext context)
         {
             EnSwitch = true;
             var switchValue = Visit(context.expresion());
 
-            if (switchValue == null)
-            {
-            var token = context.expresion().Start;
-            AgregarError("Error: La expresión del switch no puede ser nula.", 
-                        token.Line, 
-                        token.Column + 1);
-            EnSwitch = false;
-            return null;
-            }
+            // Verificar que switchValue no sea nulo, etc.
 
             foreach (var caseBlock in context.caseBlock())
             {
                 var caseValue = Visit(caseBlock.expresion());
-
                 if (switchValue.Equals(caseValue))
                 {
+                    // Entramos al bloque de ese case
                     object resultado = Visit(caseBlock);
 
-                    // Si hay un break, salir del switch
+                    // Si hay un BreakCommand, salimos del switch
                     if (resultado is BreakCommand)
                     {
                         EnSwitch = false;
-                        return null;
+                        return null; 
                     }
+                    EnSwitch = false;
+                    return null;
                 }
             }
 
-            // Evaluar default si existe
+            // Si no se cumplió ningún case verificar si break existe
             if (context.defaultBlock() != null)
             {
                 object resultado = Visit(context.defaultBlock());
-
-                // Si hay un break, salir del switch
                 if (resultado is BreakCommand)
                 {
                     EnSwitch = false;
@@ -572,35 +695,72 @@ namespace API.compiler
         }
 
 
+        public override object VisitCaseBlock(LanguageParser.CaseBlockContext ctx)
+        {
+            // Primero visitamos las sentencias
+            foreach (var st in ctx.sentencia())
+            {
+                var result = Visit(st);
+                if (result is BreakCommand || result is ContinueCommand)
+                {
+                    return result;
+                }
+                if (result is Tuple<string, object> ret && ret.Item1 == "RETURN")
+                {
+                    return ret;
+                }
+            }
+
+            if (ctx.breakStmt() != null)
+            {
+                var breakResult = VisitBreakStmt(ctx.breakStmt());
+                return breakResult; // Esto retornará BreakCommand
+            }
+
+            return null;
+        }
+
+
         //for con condicion
         public override object VisitForCondicion(LanguageParser.ForCondicionContext ctx)
         {
             EnCiclo = true;
-            object cond = Visit(ctx.expresion());
-            
-            while (cond is bool bCond && bCond)
+            pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>(pilaEntornos.Count > 0 
+                ? pilaEntornos.Peek() 
+                : new Dictionary<string, EntradaSimbolo>()));
+
+            try
             {
-                object resultado = Visit(ctx.bloque());
+                object cond = Visit(ctx.expresion());
 
-                // Si el bloque retornó un BreakCommand, salir del bucle
-                if (resultado is BreakCommand)
-                    break;
-
-                // Si el bloque retornó un ContinueCommand, saltar a la siguiente iteración
-                if (resultado is ContinueCommand)
+                while (cond is bool bCond && bCond)
                 {
-                    cond = Visit(ctx.expresion()); // Reevaluar la condición
-                    continue;
+                    // Quitar referencia a ctx.contador()
+                    // if (ctx.contador() != null)
+                    //     Visit(ctx.contador());
+
+                    object resultado = Visit(ctx.bloque());
+
+                    if (resultado is BreakCommand)
+                        break;
+
+                    if (resultado is ContinueCommand)
+                    {
+                        cond = Visit(ctx.expresion());
+                        continue;
+                    }
+
+                    // Reevaluar la condición
+                    cond = Visit(ctx.expresion());
                 }
-
-                // Reevaluar la condición del ciclo
-                cond = Visit(ctx.expresion());
             }
-
-            EnCiclo = false;
+            finally
+            {
+                pilaEntornos.Pop();
+                EnCiclo = false;
+            }
             return null;
         }
-
         //for clasico con contador
         public override object VisitForClasico(LanguageParser.ForClasicoContext ctx)
         {
@@ -659,32 +819,65 @@ namespace API.compiler
             EnCiclo = true;
             pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
 
-            var iterador = context.IDENTIFICADOR(0).GetText();
-            var variable = context.IDENTIFICADOR(1).GetText();
-            var coleccion = Visit(context.expresion());
-
-            if (coleccion is List<object> lista)
+            // Obtener los nombres del iterador y variable del contexto
+            string iterador = context.IDENTIFICADOR(0).GetText();
+            string variable = context.IDENTIFICADOR(1).GetText();
+            
+            // Obtener la colección a iterar
+            object coleccion = Visit(context.expresion());
+            
+            // Verificar si es una lista (slice)
+            if (!(coleccion is List<object> lista))
             {
-                for (int i = 0; i < lista.Count; i++)
-                {
-                    pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, TipoDato = "int", Valor = i };
-                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, TipoDato = TipoDato.ObtenerNombreTipo(lista[i]), Valor = lista[i] };
-
-                    Visit(context.bloque());
-                }
+                AgregarError($"Error: range requiere un slice, obtuvo {TipoDato.ObtenerNombreTipo(coleccion)}", 
+                            context.Start.Line, context.Start.Column);
+                pilaEntornos.Pop();
+                EnCiclo = false;
+                return null;
             }
-            else
+
+            // Iterar sobre la lista
+            for (int i = 0; i < lista.Count; i++)
             {
-                var token = context.expresion().Start;
-                AgregarError("Error: for range requiere una lista.", 
-                            token.Line, 
-                            token.Column + 1);
+                pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, TipoDato = "int", Valor = i };
+                pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, TipoDato = TipoDato.ObtenerNombreTipo(lista[i]), Valor = lista[i] };
+
+                // Ejecutar el bloque y verificar si devuelve un break o continue
+                var resultado = Visit(context.bloque());
+                if (resultado is BreakCommand)
+                    break;
+                if (resultado is ContinueCommand)
+                    continue;
             }
 
             pilaEntornos.Pop();
             EnCiclo = false;
             return null;
         }
+
+        public override object VisitBloque(LanguageParser.BloqueContext context)
+        {
+            // Recorremos
+            foreach (var stmt in context.sentencia())
+            {
+                // Visitamos la sentencia concreta
+                var result = Visit(stmt);
+
+                if (result is BreakCommand || result is ContinueCommand)
+                {
+                    return result; 
+                }
+                // IMPORTANTE: Buscar "RETURN" en lugar de "return"
+                else if (result is Tuple<string, object> retorno && retorno.Item1 == "RETURN")
+                {
+                    return retorno; 
+                }
+            }
+            // devolvemos null
+            return null;
+        }
+
+
 
         // Método común para actualizar el contador
             private object ActualizarContador(string varName, int delta, ParserRuleContext context)
@@ -736,14 +929,14 @@ namespace API.compiler
         public override object VisitIncremento(LanguageParser.IncrementoContext context)
         {
             string varName = context.IDENTIFICADOR().GetText();
-            // Se agrega el parámetro 'context'
+            // parámetro 'context'
             return ActualizarContador(varName, 1, context);
         }
 
         public override object VisitDecremento(LanguageParser.DecrementoContext context)
         {
             string varName = context.IDENTIFICADOR().GetText();
-            // Se agrega el parámetro 'context'
+            // parámetro 'context'
             return ActualizarContador(varName, -1, context);
         }
 
@@ -756,11 +949,13 @@ namespace API.compiler
             // Validar si estamos dentro de un bucle o un switch
             if (!EnCiclo && !EnSwitch)
             {
-                AgregarError("Error: 'break'...", context.Start.Line, context.Start.Column + 1);
+                AgregarError("Error: 'break' solo puede usarse dentro de un ciclo o switch.", 
+                            context.Start.Line, 
+                            context.Start.Column + 1);
                 return null;
             }
 
-            // Si estamos en un switch, retornamos BreakCommand
+            // Retornar el comando de break
             return new BreakCommand();
         }
 
@@ -788,9 +983,9 @@ namespace API.compiler
         {
             if (!EnFuncion)
             {
-            var token = context.Start;
-            AgregarError("Error: 'return'...", token.Line, token.Column + 1);
-            return null;
+                var token = context.Start;
+                AgregarError("Error: 'return' solo puede usarse dentro de una función.", token.Line, token.Column + 1);
+                return null;
             }
 
             object valorRetorno = null;
@@ -799,6 +994,7 @@ namespace API.compiler
                 valorRetorno = Visit(context.expresion());
             }
 
+            // Usar "RETURN" en mayúsculas para ser consistente
             return new Tuple<string, object>("RETURN", valorRetorno ?? "nulo");
         }
 
@@ -901,7 +1097,6 @@ namespace API.compiler
             AgregarError($"Error: la variable '{nombre}' no está definida o no es un slice.", context.Start.Line, context.Start.Column);
             return null; 
         }
-
 
         //visitar append
         public override object VisitFuncionAppend(LanguageParser.FuncionAppendContext context)
@@ -1029,151 +1224,376 @@ namespace API.compiler
             return null;
         }
         //llamada funcion
-     public override object VisitFuncionCall(LanguageParser.FuncionCallContext context)
-        {
-            string nombreFuncion = string.Join(".", context.IDENTIFICADOR().Select(id => id.GetText()));
-            List<object> argumentos = new List<object>();
             
-                switch (nombreFuncion)
+        public override object VisitFuncionCall(LanguageParser.FuncionCallContext context)
+        {
+            // Obtener el nombre de la función
+            string nombreFuncion = string.Join(".", context.IDENTIFICADOR().Select(id => id.GetText()));
+            
+            // Evaluar argumentos
+            List<object> argumentos = new List<object>();
+            if (context.expresion() != null)
             {
-                case "slices.Index":
-                    if (argumentos.Count != 2)
-                    {
-                        AgregarError("slices.Index requiere 2 argumentos", context.Start.Line, context.Start.Column);
-                        return -1;
-                    }
-                    // Lógica de Index aquí
-                    if (argumentos[0] is List<object> lista)
-                    {
-                        for (int i = 0; i < lista.Count; i++)
-                        {
-                            if (lista[i]?.Equals(argumentos[1]) == true) return i;
-                        }
-                        return -1;
-                    }
-                    AgregarError("slices.Index requiere un slice", context.Start.Line, context.Start.Column);
-                    return -1;
-
-                case "strings.Join":
-                    if (argumentos.Count != 2)
-                    {
-                        AgregarError("strings.Join requiere 2 argumentos", context.Start.Line, context.Start.Column);
-                        return "";
-                    }
-                    // Lógica de Join aquí
-                    if (argumentos[0] is List<object> listaStrings && argumentos[1] is string separador)
-                    {
-                        return string.Join(separador, listaStrings.Cast<string>());
-                    }
-                    AgregarError("strings.Join requiere un slice de strings y un separador", context.Start.Line, context.Start.Column);
-                    return "";
-
-                default:
-                    AgregarError($"Función no implementada: {nombreFuncion}", context.Start.Line, context.Start.Column);
+                foreach (var expr in context.expresion())
+                {
+                    argumentos.Add(Visit(expr));
+                }
+            }
+            
+            // --- Verificar funciones del sistema ---
+            // fmt.Println y otras funciones nativas
+            if (nombreFuncion == "fmt.Println")
+            {
+                // Tu código actual para fmt.Println
+                List<string> valores = new List<string>();
+                foreach (var arg in argumentos)
+                {
+                    Console.WriteLine($"DEBUG: Valor a imprimir - Tipo: {arg?.GetType().Name}, Valor: {arg}");
+                    valores.Add(FormatearValor(arg));
+                }
+                string salida = string.Join(" ", valores);
+                Console.WriteLine($"DEBUG: Salida formateada: '{salida}'");
+                mensajesSalida.Add(salida);
+                return null;
+            }
+            else if (nombreFuncion == "strconv.Atoi")
+            {
+                if (argumentos.Count != 1 || !(argumentos[0] is string s))
+                {
+                    AgregarError("strconv.Atoi requiere una cadena de texto.", context.Start.Line, context.Start.Column);
                     return null;
+                }
+                
+                if (s.Contains("."))
+                {
+                    AgregarError("strconv.Atoi no puede convertir un número decimal.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                if (long.TryParse(s, out long resultado))
+                {
+                    return resultado;
+                }
+                else
+                {
+                    AgregarError("strconv.Atoi: cadena no convertible a entero.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
             }
-            foreach (var expr in context.expresion())
+            else if (nombreFuncion == "strconv.ParseFloat")
             {
-                argumentos.Add(Visit(expr));
+                if (argumentos.Count != 1 || !(argumentos[0] is string s))
+                {
+                    AgregarError("strconv.ParseFloat requiere una cadena de texto.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out double resultado))
+                {
+                    return resultado;
+                }
+                else
+                {
+                    AgregarError("strconv.ParseFloat: cadena no convertible a float64.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
             }
-        if (argumentos.Count > 0 && argumentos[0] is StructInstance instancia)
+            else if (nombreFuncion == "slices.Index")
+            {
+                if (argumentos.Count != 2)
+                {
+                    AgregarError("slices.Index requiere dos argumentos: un slice y un valor a buscar.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                if (!(argumentos[0] is List<object> lista))
+                {
+                    AgregarError("El primer argumento de slices.Index debe ser un slice.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                object valorBuscado = argumentos[1];
+                
+                // Buscar el valor en la lista
+                for (int i = 0; i < lista.Count; i++)
+                {
+                    if (lista[i]?.Equals(valorBuscado) == true)
+                    {
+                        return i;
+                    }
+                }
+                
+                // Si no se encuentra, retornar -1
+                return -1;
+            }
+            else if (nombreFuncion == "strings.Join")
+            {
+                if (argumentos.Count != 2)
+                {
+                    AgregarError("strings.Join requiere dos argumentos: un slice de strings y un separador.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                if (!(argumentos[0] is List<object> lista))
+                {
+                    AgregarError("El primer argumento de strings.Join debe ser un slice.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                string separador = argumentos[1]?.ToString() ?? "";
+                
+                // Convertir todos los elementos a string
+                List<string> strings = new List<string>();
+                foreach (var item in lista)
+                {
+                    strings.Add(item?.ToString() ?? "nulo");
+                }
+                
+                return string.Join(separador, strings);
+            }
+            else if (nombreFuncion == "reflect.TypeOf")
+            {
+                if (argumentos.Count != 1)
+                {
+                    AgregarError("reflect.TypeOf requiere un argumento.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                object valor = argumentos[0];
+                
+                if (valor == null)
+                    return "nil";
+                
+                // Determinar el tipo de forma correcta para Go
+                string tipo;
+                if (valor is long)
+                    tipo = "int";
+                else if (valor is double)
+                    tipo = "float64";
+                else if (valor is string)
+                    tipo = "string";
+                else if (valor is bool)
+                    tipo = "bool";
+                else if (valor is List<object>)
+                {
+                    // Para slices, intentamos inferir el tipo basado en el primer elemento
+                    var lista = (List<object>)valor;
+                    if (lista.Count > 0 && lista[0] is long)
+                        tipo = "[]int";
+                    else if (lista.Count > 0 && lista[0] is double)
+                        tipo = "[]float64";
+                    else if (lista.Count > 0 && lista[0] is string)
+                        tipo = "[]string";
+                    else if (lista.Count > 0 && lista[0] is bool)
+                        tipo = "[]bool";
+                    else
+                        tipo = "[]interface{}";
+                }
+                else if (valor is StructInstance si)
+                    tipo = si.Definicion.Nombre;
+                else
+                    tipo = "interface{}";
+                
+                return tipo;
+            }
+
+            // SI es un struct, métodos
+            else if (argumentos.Count > 0 && argumentos[0] is StructInstance instancia)
             {
                 string key = $"{instancia.Definicion.Nombre}_{nombreFuncion}";
                 if (_tablaFuncionesStruct.TryGetValue(key, out MetodoStruct metodo))
                 {
-                    // Validar parámetros
-                    if (metodo.Parametros.Count != argumentos.Count - 1) // -1 porque el primero es la instancia
+                    // Verificar número de parámetros
+                    if (metodo.Parametros.Count != argumentos.Count - 1)
                     {
-                        AgregarError($"Número incorrecto de parámetros para {nombreFuncion}", 
-                                    context.Start.Line, 
-                                    context.Start.Column + 1);
+                        AgregarError($"Número incorrecto de parámetros para {nombreFuncion}",
+                                    context.Start.Line, context.Start.Column + 1);
+                        return null;
                     }
-
+                    
                     // Crear nuevo entorno
+                    _ambitoActual.Push(nombreFuncion);
+                    EnFuncion = true;
                     pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
                     
-                    // Agregar parámetros al entorno
+                    // Registrar parámetros en el entorno
                     for (int i = 0; i < metodo.Parametros.Count; i++)
                     {
                         string nombreParam = metodo.Parametros[i].Item2;
                         pilaEntornos.Peek()[nombreParam] = new EntradaSimbolo { 
                             Nombre = nombreParam,
-                            Valor = argumentos[i + 1] // +1 para saltar la instancia
+                            Valor = argumentos[i + 1] 
                         };
                     }
-
-                    // Agregar la instancia como referencia
-                    pilaEntornos.Peek()[metodo.Parametros[0].Item2] = new EntradaSimbolo {
-                        Nombre = metodo.Parametros[0].Item2,
+                    
+                    // Agregar la instancia 
+                    pilaEntornos.Peek()["this"] = new EntradaSimbolo {
+                        Nombre = "this",
                         Valor = instancia
                     };
-
-                    // Ejecutar el bloque
+                    
+                    // Ejecutar el bloque del método
                     object resultado = Visit(metodo.Bloque);
                     
-                    pilaEntornos.Pop();
-                    return resultado;
-                }
-            }
-        }
-
-        public override object VisitStructDeclaracion(LanguageParser.StructDeclaracionContext context) {
-            string nombreStruct = context.IDENTIFICADOR().GetText();
-            
-            // Validar ámbito global
-            if (_ambitoActual.Count > 0) {
-                AgregarError("Los structs solo pueden declararse en el ámbito global", context.Start.Line, context.Start.Column);
-                return null;
-            }
-
-            var structDef = new StructDefinition { Nombre = nombreStruct };
-
-            // Procesar atributos
-            foreach (var attrCtx in context.atributoStruct()) {
-                if (attrCtx is LanguageParser.AtributoContext atributo) {
-                    string tipo = atributo.tipo().GetText();
-                    string nombreAttr = atributo.IDENTIFICADOR().GetText();
-                    
-                    // Validar tipo
-                    if (!TipoDato.EsTipoValido(tipo) && !StructManager.ExisteStruct(tipo)) {
-                        AgregarError($"Tipo inválido '{tipo}'", atributo.Start.Line, atributo.Start.Column);
-                        continue;
+                    // Manejar el valor de retorno
+                    if (resultado is Tuple<string, object> retVal && retVal.Item1 == "RETURN")
+                    {
+                        pilaEntornos.Pop();
+                        EnFuncion = false;
+                        _ambitoActual.Pop();
+                        return retVal.Item2;
                     }
                     
-                    structDef.Atributos.Add(nombreAttr, tipo);
+                    pilaEntornos.Pop();
+                    EnFuncion = false;
+                    _ambitoActual.Pop();
+                    return null;
                 }
             }
+        else if (nombreFuncion == "ObtenerSiguienteNombre" && argumentos.Count > 0 && 
+        argumentos[0] is StructInstance instanciaOSN && instanciaOSN.Definicion.Nombre == "Nodo")
+    {
+        // Verificar primero si existe el atributo Siguiente
+        if (!instanciaOSN.Valores.TryGetValue("Siguiente", out object siguiente) || siguiente == null)
+        {
+            Console.WriteLine("DEBUG: ObtenerSiguienteNombre - No hay siguiente nodo");
+            return "No hay siguiente nodo";
+        }
+        
+        // Si el siguiente existe, buscar su nombre
+        if (siguiente is StructInstance siguienteStruct && 
+            siguienteStruct.Valores.TryGetValue("Nombre", out object nombreSiguiente))
+        {
+            Console.WriteLine($"DEBUG: ObtenerSiguienteNombre - Nombre del siguiente: {nombreSiguiente}");
+            return nombreSiguiente?.ToString() ?? "nulo";
+        }
+        
+        Console.WriteLine("DEBUG: ObtenerSiguienteNombre - Estructura incorrecta");
+        return "No hay siguiente nodo";
+    }
+        else if (nombreFuncion == "CambiarValor" && argumentos.Count > 0 && 
+                argumentos[0] is StructInstance instanciaCV && instanciaCV.Definicion.Nombre == "Nodo")
+        {
+            // Asegurarse de que hay un parámetro
+            if (argumentos.Count != 2) 
+            {
+                AgregarError("CambiarValor requiere un valor entero", context.Start.Line, context.Start.Column);
+                return null;
+            }
             
-            StructManager.RegistrarStruct(structDef);
+            // Asignar el nuevo valor directamente
+            instanciaCV.Valores["Valor"] = argumentos[1];
+            
+            return null;
+        }
+            if (tablaFunciones.TryGetValue(nombreFuncion, out Funcion funcion))
+            {
+                // Crear nuevo entorno para la función
+                _ambitoActual.Push(nombreFuncion);
+                EnFuncion = true;
+                pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
+                
+                // Verificar número de parámetros
+                if (funcion.Parametros.Count != argumentos.Count)
+                {
+                    AgregarError($"Error: La función '{nombreFuncion}' espera {funcion.Parametros.Count} parámetros, pero recibió {argumentos.Count}.",
+                                context.Start.Line, context.Start.Column);
+                    pilaEntornos.Pop();
+                    EnFuncion = false;
+                    _ambitoActual.Pop();
+                    return null;
+                }
+                
+                // Registrar parámetros en el entorno de la función
+                for (int i = 0; i < funcion.Parametros.Count; i++)
+                {
+                    string tipoParam = funcion.Parametros[i].Item1;
+                    string nombreParam = funcion.Parametros[i].Item2;
+                    object valorParam = argumentos[i];
+                    
+                    // Agregar al entorno
+                    pilaEntornos.Peek()[nombreParam] = new EntradaSimbolo
+                    {
+                        Nombre = nombreParam,
+                        TipoDato = tipoParam,
+                        Valor = valorParam,
+                        Ambito = nombreFuncion,
+                        Linea = context.Start.Line,
+                        Columna = context.Start.Column
+                    };
+                }
+                
+                // Ejecutar el bloque de la función
+                object resultado = Visit(funcion.Bloque);
+                
+                // Manejar el valor de retorno
+                if (resultado is Tuple<string, object> retVal && retVal.Item1 == "RETURN")
+                {
+                    pilaEntornos.Pop();
+                    EnFuncion = false;
+                    _ambitoActual.Pop();
+                    return retVal.Item2;
+                }
+            
+                pilaEntornos.Pop();
+                EnFuncion = false;
+                _ambitoActual.Pop();
+                return null;
+            }
+            
+            AgregarError($"Función no implementada: {nombreFuncion}", context.Start.Line, context.Start.Column);
+            return null;
+        }
+
+        public override object VisitStructDeclaracion(LanguageParser.StructDeclaracionContext context)
+        { 
+        string nombreStruct = context.IDENTIFICADOR().GetText();
+        var structDef = StructManager.ObtenerStruct(nombreStruct);
+
+        foreach (var attrCtx in context.atributoStruct()) {
+            if (attrCtx is LanguageParser.AtributoContext atributo) {
+                var resultado = Visit(atributo) as Tuple<string, string>;
+                string tipoAttr = resultado.Item1;
+                string nombreAttr = resultado.Item2;
+
+                // Validar tipo 
+                if (!TipoDato.EsTipoValido(tipoAttr) && !StructManager.ExisteStruct(tipoAttr)) {
+                    AgregarError($"Tipo inválido '{tipoAttr}'", atributo.Start.Line, atributo.Start.Column);
+                    continue;
+                }
+
+                    structDef.Atributos.Add(nombreAttr, tipoAttr);
+                }
+            }
+            tablaSimbolos.Add(new EntradaSimbolo
+            {
+                TipoSimbolo = "Struct",
+                Nombre = nombreStruct,
+                TipoDato = "Struct",
+                Ambito = "Global",
+                Linea = context.Start.Line,
+                Columna = context.Start.Column + 1
+            });
             return null;
         }
         public override object VisitAtributo(LanguageParser.AtributoContext context)
         {
-            string tipo = context.tipo().GetText();
-            string nombre = context.IDENTIFICADOR().GetText();
-            return Tuple.Create(tipo, nombre); // Devolver una tupla real
+            string nombreAttr = context.IDENTIFICADOR().GetText(); 
+            string tipo = context.tipo().GetText(); 
+            
+            return Tuple.Create(tipo, nombreAttr);
         }
-        public override object VisitExpresionStructLiteral(LanguageParser.ExpresionStructLiteralContext context)
+        public override object VisitExpresionLiteralStruct(LanguageParser.ExpresionLiteralStructContext context)
         {
-            // Obtener el contexto interno de la regla expresionLiteralStruct
-            var structLiteralCtx = context.expresionLiteralStruct();
-
-            // 1. Obtener nombre del struct desde el IDENTIFICADOR
-            string nombreStruct = structLiteralCtx.IDENTIFICADOR().GetText();
+            string nombreStruct = context.IDENTIFICADOR().GetText();
             var structDef = StructManager.ObtenerStruct(nombreStruct);
-            if (structDef == null) {
-                AgregarError($"Struct '{nombreStruct}' no definido", context.Start.Line, context.Start.Column);
-                return null;
-            }
-
-            // 2. Crear instancia del struct
+            
             var instancia = new StructInstance { Definicion = structDef };
 
-            // 3. Procesar atributos inicializados (si existen)
-            var atributosInitCtx = structLiteralCtx.atributosInicializacion();
+            var atributosInitCtx = context.atributosInicializacion();
             if (atributosInitCtx != null)
             {
-                var ids = atributosInitCtx.IDENTIFICADOR(); 
+                var ids = atributosInitCtx.IDENTIFICADOR();
                 var exprs = atributosInitCtx.expresion();
 
                 for (int i = 0; i < ids.Length; i++)
@@ -1181,89 +1601,326 @@ namespace API.compiler
                     string nombreAttr = ids[i].GetText();
                     object valor = Visit(exprs[i]);
 
-                    // Validar que el atributo exista en el struct
-                    if (!structDef.Atributos.ContainsKey(nombreAttr))
+                    // Validar existencia del atributo
+                    if (!structDef.Atributos.ContainsKey(nombreAttr)) 
                     {
                         AgregarError($"Atributo '{nombreAttr}' no existe en el struct '{nombreStruct}'",
-                            ids[i].Symbol.Line, ids[i].Symbol.Column + 1);
+                        ids[i].Symbol.Line, 
+                        ids[i].Symbol.Column + 1);
                         continue;
-                    }
-
-                    // Validar tipo del valor
-                    string tipoEsperado = structDef.Atributos[nombreAttr];
-                    if (!TipoDato.ValidarTipo(valor, tipoEsperado))
-                    {
-                        AgregarError($"Tipo incorrecto para '{nombreAttr}'. Esperado: {tipoEsperado}, Recibido: {TipoDato.ObtenerNombreTipo(valor)}",
-                            exprs[i].Start.Line, exprs[i].Start.Column);
                     }
 
                     instancia.Valores[nombreAttr] = valor;
                 }
-                  return instancia;
             }
-
-            // 4. Verificar que todos los atributos obligatorios estén inicializados
-            foreach (var attr in structDef.Atributos)
-            {
-                if (!instancia.Valores.ContainsKey(attr.Key))
-                {
-                    AgregarError($"Falta inicializar el atributo obligatorio '{attr.Key}'", 
-                        context.Start.Line, context.Start.Column);
-                }
-            }
-
+            
             return instancia;
         }
-        public override object VisitExpresionAccesoAtributo(LanguageParser.ExpresionAccesoAtributoContext context) {
+        public override object VisitExpresionAccesoAtributo(LanguageParser.ExpresionAccesoAtributoContext context) 
+        {
             object padre = Visit(context.expresion());
             string nombreAttr = context.IDENTIFICADOR().GetText();
             
-            if (!(padre is StructInstance instancia)) {
-                AgregarError("Acceso a atributo en no instancia", context.Start.Line, context.Start.Column);
+            // Manejar correctamente el caso cuando el padre es null
+            if (padre == null) 
+            {
+                AgregarError($"Error: No se puede acceder al atributo '{nombreAttr}' de un valor nil", 
+                        context.Start.Line, context.Start.Column);
+                return null;
+            }
+            
+            if (!(padre is StructInstance instancia)) 
+            {
+                AgregarError($"Error: No se puede acceder al atributo '{nombreAttr}' de un valor de tipo {TipoDato.ObtenerNombreTipo(padre)}", 
+                        context.Start.Line, context.Start.Column);
                 return null;
             }
 
-            if (!instancia.Definicion.Atributos.ContainsKey(nombreAttr)) {
-                AgregarError($"Atributo '{nombreAttr}' no existe", context.Start.Line, context.Start.Column);
+            if (!instancia.Definicion.Atributos.ContainsKey(nombreAttr)) 
+            {
+                AgregarError($"Error: El atributo '{nombreAttr}' no existe en el struct '{instancia.Definicion.Nombre}'", 
+                            context.Start.Line, context.Start.Column);
                 return null;
             }
 
-            return instancia.Valores.TryGetValue(nombreAttr, out object valor) ? valor : "nulo";
+            return instancia.Valores.TryGetValue(nombreAttr, out object valor) ? valor : null;
         }
+
+        public override object VisitAsignacionAtributo(LanguageParser.AsignacionAtributoContext context)
+        {
+            object padre = Visit(context.expresion(0));
+            string nombreAttr = context.IDENTIFICADOR().GetText();
+            object nuevoValor = Visit(context.expresion(1));
+            
+            Console.WriteLine($"DEBUG: Asignación de atributo - Padre: {padre?.GetType().Name}, Atributo: {nombreAttr}, Valor: {nuevoValor}");
+            
+            if (padre == null)
+            {
+                AgregarError("No se puede asignar un atributo a un valor nil", context.Start.Line, context.Start.Column);
+                return null;
+            }
+            
+            if (!(padre is StructInstance instancia))
+            {
+                AgregarError($"Error: No se puede acceder al atributo '{nombreAttr}' de un valor de tipo {TipoDato.ObtenerNombreTipo(padre)}", 
+                            context.Start.Line, context.Start.Column);
+                return null;
+            }
+            
+            // Verificar existencia del atributo
+            if (!instancia.Definicion.Atributos.ContainsKey(nombreAttr))
+            {
+                AgregarError($"El atributo '{nombreAttr}' no existe en el struct '{instancia.Definicion.Nombre}'", 
+                            context.Start.Line, context.Start.Column);
+                return null;
+            }
+            
+            // Verificar compatibilidad de tipo para asignaciones de struct
+            string tipoAtributo = instancia.Definicion.Atributos[nombreAttr];
+            if (StructManager.ExisteStruct(tipoAtributo) && !(nuevoValor is StructInstance || nuevoValor == null))
+            {
+                AgregarError($"El atributo '{nombreAttr}' espera un valor de tipo '{tipoAtributo}'", 
+                            context.Start.Line, context.Start.Column);
+                return null;
+            }
+            
+            // Actualizar el valor del atributo
+            instancia.Valores[nombreAttr] = nuevoValor;
+            Console.WriteLine($"DEBUG: Atributo actualizado correctamente: {nombreAttr} = {nuevoValor}");
+            return nuevoValor;
+        }
+        private StructInstance ObtenerOCrearAtributoAnidado(StructInstance instancia, string nombreAttr)
+        {
+            if (!instancia.Valores.TryGetValue(nombreAttr, out object valorActual) || valorActual == null)
+            {
+                // Si el atributo no existe o es null, verificar el tipo esperado
+                if (!instancia.Definicion.Atributos.TryGetValue(nombreAttr, out string tipoEsperado))
+                {
+                    return null; // El atributo no existe en la definición
+                }
+                
+                // Obtener la definición del struct para el tipo esperado
+                var defStruct = StructManager.ObtenerStruct(tipoEsperado);
+                if (defStruct == null)
+                {
+                    return null; // El tipo no es un struct
+                }
+                
+                // Crear una nueva instancia vacía del tipo correcto
+                var nuevaInstancia = new StructInstance { Definicion = defStruct };
+                instancia.Valores[nombreAttr] = nuevaInstancia;
+                return nuevaInstancia;
+            }
+            
+            if (valorActual is StructInstance estructuraAnidada)
+            {
+                return estructuraAnidada;
+            }
+            
+            return null; // El valor no es un struct
+        }
+        //visitar el metodo struct
         public override object VisitMetodoStruct(LanguageParser.MetodoStructContext context)
         {
-            // 1. Obtener metadata
-            string tipoStruct = context.IDENTIFICADOR(0).GetText();
-            string paramReferencia = context.IDENTIFICADOR(1).GetText();
-            string nombreMetodo = context.IDENTIFICADOR(2).GetText();
-            
-            // 2. Validar existencia del struct
+            // Obtener el receptor y el tipo del receptor
+            string receptor = context.IDENTIFICADOR(0).GetText();         
+            string tipoStruct = context.IDENTIFICADOR(1).GetText();      
+            string nombreMetodo = context.IDENTIFICADOR(2).GetText();        
+
+            // Validar existencia del struct usando el tipo correcto
             if (!StructManager.ExisteStruct(tipoStruct))
             {
                 AgregarError($"Struct '{tipoStruct}' no existe", context.Start.Line, context.Start.Column);
                 return null;
             }
 
-            // 3. Procesar parámetros
+            // Procesar parámetros 
             List<Tuple<string, string>> parametros = new List<Tuple<string, string>>();
-            foreach (var paramCtx in context.parametros().parametro())
+            var parametrosContext = context.parametros();
+            if (parametrosContext != null)
             {
-                string tipo = paramCtx.tipo().GetText();
-                string nombre = paramCtx.IDENTIFICADOR().GetText();
-                parametros.Add(Tuple.Create(tipo, nombre));
+                foreach (var paramCtx in parametrosContext.parametro())
+                {
+                    string tipo = paramCtx.tipo().GetText();
+                    string nombre = paramCtx.IDENTIFICADOR().GetText();
+                    parametros.Add(Tuple.Create(tipo, nombre));
+                }
             }
 
-            // 4. Registrar método en tabla de símbolos
+            // Registrar el método en la tabla de funciones del struct
             string key = $"{tipoStruct}_{nombreMetodo}";
-            _tablaFuncionesStruct[key] = new MetodoStruct {
+            _tablaFuncionesStruct[key] = new MetodoStruct
+            {
                 Nombre = nombreMetodo,
-                Parametros = context.parametros().parametro().Select(p => 
-                    Tuple.Create(p.tipo().GetText(), p.IDENTIFICADOR().GetText())).ToList(),
+                Parametros = parametros,
                 Bloque = context.bloque()
             };
 
             return null;
         }
+        //visitar la declaracion de la funcion
+        public override object VisitFuncionDeclaracion(LanguageParser.FuncionDeclaracionContext context)
+        {
+            // Validar que se esté declarando en ámbito global
+            if (_ambitoActual.Count > 0 && _ambitoActual.Peek() != "Global")
+            {
+                AgregarError("Las funciones solo pueden declararse en el ámbito global", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            string nombreFuncion = context.IDENTIFICADOR().GetText();
+            
+            // Validar unicidad del nombre
+            if (tablaFunciones.ContainsKey(nombreFuncion))
+            {
+                AgregarError($"La función '{nombreFuncion}' ya está definida", context.Start.Line, context.Start.Column);
+                return null;
+            }
+
+            // Procesar parámetros, si existen
+            List<Tuple<string, string>> parametros = new List<Tuple<string, string>>();
+            if (context.parametros() != null)
+            {
+                foreach (var paramCtx in context.parametros().parametro())
+                {
+                    string nombreParam = paramCtx.IDENTIFICADOR().GetText();
+                    string tipoParam = paramCtx.tipo().GetText();
+                    if (parametros.Any(p => p.Item2 == nombreParam))
+                    {
+                        AgregarError($"Parámetro duplicado: '{nombreParam}'", paramCtx.Start.Line, paramCtx.Start.Column);
+                        continue;
+                    }
+                    parametros.Add(Tuple.Create(tipoParam, nombreParam));
+                }
+            }
+
+            // Determinar tipo de retorno (si no se especifica, es "void")
+            string tipoRetorno = "void";
+            if (context.tipo() != null)
+            {
+                tipoRetorno = context.tipo().GetText();
+            }
+
+            // Registrar la función
+            Funcion f = new Funcion
+            {
+                Nombre = nombreFuncion,
+                Parametros = parametros,
+                TipoRetorno = tipoRetorno,
+                Bloque = context.bloque()
+            };
+            tablaFunciones.Add(nombreFuncion, f);
+
+            tablaSimbolos.Add(new EntradaSimbolo
+            {
+                TipoSimbolo = "Función",
+                Nombre = nombreFuncion,
+                TipoDato = tipoRetorno,
+                Ambito = "Global",
+                Linea = context.Start.Line,
+                Columna = context.Start.Column + 1
+            });
+
+            return null;
+        }
+        //visitar la funcion Atoi
+        public override object VisitFuncionAtoi(LanguageParser.FuncionAtoiContext context)
+        {
+            object valor = Visit(context.expresion());
+
+            // Agregar logging para depuración
+            Console.WriteLine($"DEBUG: strconv.Atoi recibió: {valor} de tipo {valor?.GetType().Name ?? "null"}");
+
+            if (valor is string s)
+            {
+                if (s.Contains("."))
+                {
+                    AgregarError("strconv.Atoi no puede convertir un número decimal.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+                
+                if (long.TryParse(s, out long resultado))
+                {
+                    Console.WriteLine($"DEBUG: strconv.Atoi convertido exitosamente a: {resultado}");
+                    return resultado;
+                }
+                else
+                {
+                    AgregarError("strconv.Atoi: cadena no convertible a entero.", context.Start.Line, context.Start.Column);
+                    return null;
+                }
+            }
+            else
+            {
+                AgregarError("strconv.Atoi requiere una cadena de texto.", context.Start.Line, context.Start.Column);
+                return null;
+            }
+        }
+        //convertir a parsefloat
+        public override object VisitFuncionParseFloat(LanguageParser.FuncionParseFloatContext context)
+        {
+            object valor = Visit(context.expresion());
+            
+            if (!(valor is string s))
+            {
+                AgregarError("strconv.ParseFloat requiere una cadena de texto.", context.Start.Line, context.Start.Column);
+                return null;
+            }
+            
+            if (double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out double resultado))
+            {
+                return resultado;
+            }
+            else
+            {
+                AgregarError("strconv.ParseFloat: cadena no convertible a float64.", context.Start.Line, context.Start.Column);
+                return null;
+            }
+        }
+
+        public override object VisitFuncionTypeOf(LanguageParser.FuncionTypeOfContext context)
+        {
+            object valor = Visit(context.expresion());
+            
+            Console.WriteLine($"DEBUG: reflect.TypeOf recibió: {valor} de tipo {valor?.GetType().Name ?? "null"}");
+            
+            // Determinar el tipo de forma correcta para Go
+            string tipo;
+            if (valor == null)
+                tipo = "nil";
+            else if (valor is long)
+                tipo = "int";
+            else if (valor is double)
+                tipo = "float64";
+            else if (valor is string)
+                tipo = "string";
+            else if (valor is bool)
+                tipo = "bool";
+            else if (valor is List<object> lista)
+            {
+                // Mejorado el manejo de slices
+                if (lista.Count == 0)
+                    tipo = "[]interface{}";
+                else if (lista.All(i => i is long))
+                    tipo = "[]int";
+                else if (lista.All(i => i is double))
+                    tipo = "[]float64";
+                else if (lista.All(i => i is string))
+                    tipo = "[]string";
+                else if (lista.All(i => i is bool))
+                    tipo = "[]bool";
+                else
+                    tipo = "[]interface{}";
+            }
+            else if (valor is StructInstance si)
+                tipo = si.Definicion.Nombre;
+            else
+                tipo = "interface{}";
+            
+            Console.WriteLine($"DEBUG: reflect.TypeOf de {valor} devolvió: {tipo}");
+            return tipo;
+        }
+
 
         
         // Visitor para un literal entero
@@ -1289,16 +1946,27 @@ namespace API.compiler
         {
             return false;
         }
+        public override object VisitLiteralNulo(LanguageParser.LiteralNuloContext context)
+        {
+            // Devolver un objeto especial para representar nil en Go
+            return null;
+        }
 
         // Visitor para un identificador
         public override object VisitIdentificador(LanguageParser.IdentificadorContext context)
         {
             var id = context.IDENTIFICADOR().GetText();
             
+            if (id.Contains(" "))
+            {
+                Console.WriteLine($"DEBUG: Identificador contiene espacios: '{id}'");
+            }
+            
             foreach (var entorno in pilaEntornos)
             {
                 if (entorno.TryGetValue(id, out var entrada))
                 {
+                    Console.WriteLine($"DEBUG: Encontrado '{id}' en entorno, valor: {entrada.Valor}");
                     return entrada.Valor ?? "nulo";
                 }
             }
@@ -1306,6 +1974,7 @@ namespace API.compiler
             var simbolo = tablaSimbolos.Find(s => s.Nombre == id);
             if (simbolo != null)
             {
+                Console.WriteLine($"DEBUG: Encontrado '{id}' en tabla global, valor: {simbolo.Valor}");
                 return simbolo.Valor ?? "nulo";
             }
 
@@ -1313,16 +1982,46 @@ namespace API.compiler
             AgregarError($"Error: La variable '{id}' no está definida.", 
                 token.Line, token.Column + 1);
             
-            return null; 
+            return null;
         }
-
         
         //visitor para una cadena o string
         public override object VisitLiteralCadena(LanguageParser.LiteralCadenaContext context)
         {
+            string textoConComillas = context.GetText();
             
-            string texto = context.GetText().Trim('"');
+            // Eliminar comillas del principio y final
+            string texto = textoConComillas.Substring(1, textoConComillas.Length - 2);
+            
+            // Procesar secuencias de escape
+            texto = texto.Replace("\\n", "\n")
+                        .Replace("\\t", "\t")
+                        .Replace("\\\"", "\"")
+                        .Replace("\\'", "'");
+            
+            Console.WriteLine($"DEBUG: Cadena literal procesada: '{texto}'");
+            
             return texto;
+        }
+
+        public override object VisitLiteralRune(LanguageParser.LiteralRuneContext context)
+        {
+            string textoConComillas = context.GetText();
+
+            string caracterRune = textoConComillas.Substring(1, textoConComillas.Length - 2);
+
+            if (caracterRune.StartsWith("\\"))
+            {
+                switch (caracterRune)
+                {
+                    case "\\n": caracterRune = "\n"; break;
+                    case "\\t": caracterRune = "\t"; break;
+                    case "\\\"": caracterRune = "\""; break;
+                    case "\\'": caracterRune = "'"; break;
+                }
+            }
+            
+            return caracterRune;
         }
 
         // Visitor para una expresión entre paréntesis

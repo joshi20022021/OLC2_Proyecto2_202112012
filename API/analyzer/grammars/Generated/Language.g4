@@ -33,6 +33,11 @@ LONGITUD: 'len';
 INDICE: 'slice.Index';
 UNIR: 'strings.Join';
 
+//CONVERSION DE TIPOS
+STRCONV_ATOI      : 'strconv.Atoi';
+STRCONV_PARSEFLOAT: 'strconv.ParseFloat';
+REFLECT_TYPEOF    : 'reflect.TypeOf';
+
 //sintaxis y tipos de datos
 LIT_STRING : '"' (~["])* '"';  
 LIT_RUNE   : '\'' ~['\n\r] '\''; 
@@ -48,9 +53,7 @@ COMENTARIO_MULTILINEA : '/*' .*? '*/' -> skip;
 // ** Reglas Sintácticas **
 
 //inicio de mi programa
-programa : funcionMain 
-         | (declaracionStruct | funcionStruct | declaracion)+ funcionMain
-          ;
+programa : (declaracionStruct | funcionStruct | funcionDeclaracion | declaracion)* funcionMain ;
 
 //funcion main para ejecutar el archivo
 funcionMain : 'func' 'main' '(' ')' bloque ;
@@ -64,7 +67,7 @@ continueStmt : 'continue' ;
 returnStmt : 'return' expresion? ; 
 
 //condiciones
-bloque : '{' sentencia* '}' ;
+bloque : '{' (sentencia)* '}';
 
 //sentencias
 sentencia
@@ -161,8 +164,9 @@ parametros
     : parametro (',' parametro)*
     ;
 
+//para
 parametro
-    : tipo IDENTIFICADOR
+    : IDENTIFICADOR tipo
     ;
 
 //imprimir argumentos
@@ -175,21 +179,37 @@ declaracionStruct
     : 'type' IDENTIFICADOR 'struct' '{' (atributoStruct)* '}' #StructDeclaracion 
     ;
 
+//asignacion de atributos
+asignacionAtributo
+    : expresion '.' IDENTIFICADOR IGUAL expresion
+    ;
+
+//atributos de los structs
 atributoStruct
-    : tipo IDENTIFICADOR #Atributo
+    : IDENTIFICADOR tipo  # Atributo 
     ;
 
+//declaracion de funciones struct
 funcionStruct
-    : 'func' '(' IDENTIFICADOR IDENTIFICADOR ')' IDENTIFICADOR '(' parametros? ')' tipo? bloque #MetodoStruct // ✅ Nombre único
+    : 'func' '(' IDENTIFICADOR IDENTIFICADOR ')' IDENTIFICADOR '(' parametros? ')' tipo? bloque #MetodoStruct
     ;
 
+//declaracion de funciones 
+funcionDeclaracion
+    : 'func' IDENTIFICADOR PARENTESIS_IZQ (parametros)? PARENTESIS_DER (tipo)? bloque
+    ;
+
+//expresiones de los structs
 expresionLiteralStruct
     : IDENTIFICADOR '{' (atributosInicializacion)? '}'  
     ;
     
+//atributos de inicializacion
 atributosInicializacion
     : IDENTIFICADOR ':' expresion (',' IDENTIFICADOR ':' expresion)*
     ;
+
+
 
 //expresion aritmeticas,logicas, relacionales, tipos de datos
 expresion
@@ -218,6 +238,9 @@ expresion
     | funcionCall                          # FuncionLlamada
     | expresionLiteralStruct               #ExpresionStructLiteral
     | expresion '.' IDENTIFICADOR #ExpresionAccesoAtributo
+    | STRCONV_ATOI PARENTESIS_IZQ expresion PARENTESIS_DER       # FuncionAtoi
+    | STRCONV_PARSEFLOAT PARENTESIS_IZQ expresion PARENTESIS_DER   # FuncionParseFloat
+    | REFLECT_TYPEOF PARENTESIS_IZQ expresion PARENTESIS_DER         # FuncionTypeOf
     | LIT_ENTERO                           # LiteralEntero
     | LIT_FLOAT                            # LiteralFlotante
     | LIT_RUNE                             # LiteralRune
@@ -227,5 +250,4 @@ expresion
     | NULO                                 # LiteralNulo
     | IDENTIFICADOR                        # Identificador
     ;
-
 

@@ -1,19 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Viz from '@aduh95/viz.js';
 import axios from 'axios';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
+// Función para convertir AST a DOT 
+function astToDot(ast) {
+  let dot = "digraph AST {\n";
+  let id = 0;
+  function traverse(node) {
+    const currentId = id++;
+    let label = node.Tipo;
+    if (node.Valor) {
+      label += "\\n" + node.Valor;
+    }
+    dot += `  node${currentId} [label="${label}"];\n`;
+    if (node.Hijos && node.Hijos.length) {
+      for (let child of node.Hijos) {
+        const childId = id;
+        traverse(child);
+        dot += `  node${currentId} -> node${childId};\n`;
+      }
+    }
+  }
+  traverse(ast);
+  dot += "}";
+  return dot;
+}
+
+async function generateASTSVG(ast) {
+  const dot = astToDot(ast);
+  console.log("DOT generado para Viz.js:", dot);
+  try {
+    const viz = new Viz();
+    const svg = await viz.renderString(dot, { format: 'svg', engine: 'dot' });
+    return svg;
+  } catch (error) {
+    console.error("Error rendering AST:", error);
+    return "<p>Error generando el AST</p>";
+  }
+}
+
 function App() {
+  // Estados
+  const [consoleHeight, setConsoleHeight] = useState(200);
+  const [isResizing, setIsResizing] = useState(false);
+  const [startY, setStartY] = useState(0);
   const [files, setFiles] = useState([{ name: 'Untitled.glt', content: '', saved: false }]);
   const [activeFileIndex, setActiveFileIndex] = useState(0);
   const [consoleOutput, setConsoleOutput] = useState('');
   const [reportErrors, setReportErrors] = useState([]);
   const [symbolTable, setSymbolTable] = useState([]);
   const [ast, setAst] = useState(null);
+  const [arm64Code, setArm64Code] = useState('');
   const [visibleReport, setVisibleReport] = useState(null);
+  const [astSVG, setAstSVG] = useState(""); 
 
   const API_URL = "http://localhost:5089/compile";
 
+  // Función arrastre
+  const handleMouseDown = useCallback((e) => {
+    setIsResizing(true);
+    setStartY(e.clientY);
+  }, []);
+
+  // Función movimiento mouse
+  const handleMouseMove = useCallback((e) => {
+    if (!isResizing) return;
+    const dy = e.clientY - startY;
+    setStartY(e.clientY);
+    setConsoleHeight((prevHeight) => {
+      const newHeight = prevHeight - dy;
+      return Math.max(50, Math.min(newHeight, 600));
+    });
+  }, [isResizing, startY]);
+
+  // Función fin del arrastre
+  const handleMouseUp = useCallback(() => {
+    if (isResizing) setIsResizing(false);
+  }, [isResizing]);
+
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
+
+
+  useEffect(() => {
+    if (visibleReport === 'ast' && ast) {
+      console.log("AST recibido en el frontend:", ast);
+      generateASTSVG(ast).then(svg => setAstSVG(svg));
+    }
+  }, [visibleReport, ast]);
+
+  // Función para cerrar pestañas
+  const closeTab = (indexToClose) => {
+    setFiles((prevFiles) => {
+      const newFiles = prevFiles.filter((_, i) => i !== indexToClose);
+      if (newFiles.length === 0) {
+        setActiveFileIndex(0);
+        return [{ name: 'Untitled.glt', content: '', saved: false }];
+      }
+      setActiveFileIndex((prevActiveIndex) => {
+        if (indexToClose === prevActiveIndex) {
+          if (indexToClose === prevFiles.length - 1) {
+            return indexToClose - 1 >= 0 ? indexToClose - 1 : 0;
+          } else {
+            return indexToClose;
+          }
+        } else if (indexToClose < prevActiveIndex) {
+          return prevActiveIndex - 1;
+        }
+        return prevActiveIndex;
+      });
+      return newFiles;
+    });
+  };
+
+  // Función para crear archivo nuevo
   const createNewFile = () => {
     const newFile = {
       name: `Untitled-${files.length + 1}.glt`,
@@ -24,19 +133,17 @@ function App() {
     setActiveFileIndex(files.length);
   };
 
+  // Abrir archivo local
   const openFile = async (e) => {
     const file = e.target.files[0];
     if (file?.name.endsWith('.glt')) {
       const content = await file.text();
-      setFiles([...files, {
-        name: file.name,
-        content,
-        saved: true
-      }]);
+      setFiles([...files, { name: file.name, content, saved: true }]);
       setActiveFileIndex(files.length);
     }
   };
 
+  // Guardar archivo
   const saveFile = () => {
     const blob = new Blob([files[activeFileIndex].content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -47,27 +154,31 @@ function App() {
     URL.revokeObjectURL(url);
   };
 
+  // Ejecutar (llamada a la API)
   const handleExecute = async () => {
     const codeToSend = files[activeFileIndex].content.trim();
-
     if (!codeToSend) {
       setConsoleOutput("El código no puede estar vacío.");
       return;
     }
-
     try {
       const response = await axios.post(API_URL, { Code: codeToSend });
+      console.log("Respuesta del backend:", response.data);
       setConsoleOutput(response.data.output || "Ejecución completada.");
       setReportErrors(response.data.errors || []);
       setSymbolTable(response.data.symbolTable || []);
       setAst(response.data.ast || null);
+      setArm64Code(response.data.arm64Code || '');
     } catch (error) {
+      console.error("Error al ejecutar:", error);
       const errorMessage = error.response?.data?.output || error.message;
       setConsoleOutput(`Error: ${errorMessage}`);
       setReportErrors(error.response?.data?.errors || [errorMessage]);
+      
     }
   };
 
+  // Renderizado condicional de reportes
   const renderReportContent = () => {
     switch (visibleReport) {
       case 'errors':
@@ -95,48 +206,82 @@ function App() {
             </table>
           </div>
         );
-        case 'symbols':
-            return (
-                <div className="table-responsive">
-                    <table className="table table-dark table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Tipo símbolo</th>
-                                <th>Tipo dato</th>
-                                <th>Ámbito</th>
-                                <th>Línea</th>
-                                <th>Columna</th>
-                                <th>Valor</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {symbolTable.map((symbol, idx) => (
-                                <tr key={idx}>
-                                    <td>{symbol.id}</td>
-                                    <td>{symbol.tipoSimbolo}</td>
-                                    <td>{symbol.tipoDato}</td>
-                                    <td>{symbol.ambito}</td>
-                                    <td>{symbol.linea}</td>
-                                    <td>{symbol.columna}</td>
-                                    <td>{symbol.valor?.toString()}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            );
+      case 'symbols':
+        return (
+          <div className="table-responsive">
+            <table className="table table-dark table-hover">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Tipo símbolo</th>
+                  <th>Tipo dato</th>
+                  <th>Ámbito</th>
+                  <th>Línea</th>
+                  <th>Columna</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {symbolTable.map((symbol, idx) => (
+                  <tr key={idx}>
+                    <td>{symbol.id}</td>
+                    <td>{symbol.tipoSimbolo}</td>
+                    <td>{symbol.tipoDato}</td>
+                    <td>{symbol.ambito}</td>
+                    <td>{symbol.linea}</td>
+                    <td>{symbol.columna}</td>
+                    <td>{symbol.valor?.toString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
       case 'ast':
         return (
-          <pre className="p-2 bg-dark text-light rounded border">
-            {ast ? JSON.stringify(ast, null, 2) : 'AST no generado'}
-          </pre>
+          <div className="p-2 bg-dark text-light rounded border">
+            {astSVG ? (
+              <div dangerouslySetInnerHTML={{ __html: astSVG }} />
+            ) : (
+              "Generando AST..."
+            )}
+          </div>
         );
+        case 'arm64':
+          return (
+            <div className="h-100 position-relative overflow-hidden bg-dark">
+              <div className="position-absolute line-numbers bg-secondary text-white pe-2"
+                   style={{
+                     zIndex: 1,
+                     left: 1,
+                     top: 0,
+                     bottom: 0,
+                     width: '35px',
+                     overflow: 'hidden',
+                     textAlign: 'right',
+                   }}>
+                {arm64Code.split('\n').map((_, i) => (
+                  <div key={i} style={{ paddingLeft: '8px' }}>{i + 1}</div>
+                ))}
+              </div>
+              <pre
+                className="w-100 h-100 border-0 bg-dark text-light m-0 p-2"
+                style={{
+                  paddingLeft: '45px',
+                  fontFamily: "'Fira Code', monospace",
+                  whiteSpace: 'pre-wrap',
+                  overflowX: 'auto'
+                }}>
+                {arm64Code}
+              </pre>
+            </div>
+          );
       default:
         return <div className="text-muted p-3">Selecciona un reporte para visualizarlo</div>;
     }
   };
 
+  // Botón de toolbar reutilizable
   const ToolbarButton = ({ children, icon, onClick, isFileInput = false, variant = "primary" }) => (
     <div className="toolbar-button-wrapper">
       {isFileInput ? (
@@ -154,6 +299,7 @@ function App() {
 
   return (
     <div className="container-fluid vh-100 d-flex flex-column bg-dark text-light">
+      {/* Barra de herramientas */}
       <div className="d-flex align-items-center p-2 bg-black-50 border-bottom border-primary">
         <div className="d-flex gap-2">
           <ToolbarButton icon="file-earmark-plus" onClick={createNewFile}>
@@ -171,50 +317,61 @@ function App() {
         </div>
       </div>
 
+      {/* Pestañas */}
       <div className="d-flex border-bottom border-secondary">
         {files.map((file, index) => (
-          <div key={index}
-            className={`d-flex align-items-center px-3 py-2 border-end border-secondary cursor-pointer ${index === activeFileIndex ? 'bg-primary text-white' : 'bg-secondary'}`}
+          <div
+            key={index}
+            className={`d-flex align-items-center px-3 py-2 border-end border-secondary cursor-pointer ${
+              index === activeFileIndex ? 'bg-primary text-white' : 'bg-secondary'
+            }`}
             onClick={() => setActiveFileIndex(index)}
           >
             <span className="me-2">{file.name}</span>
-            <i className="bi bi-x" onClick={(e) => {
-              e.stopPropagation();
-              setFiles(files.filter((_, i) => i !== index));
-              if (index === activeFileIndex) setActiveFileIndex(Math.max(0, index - 1));
-            }}></i>
+            <i
+              className="bi bi-x"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeTab(index);
+              }}
+            ></i>
           </div>
         ))}
       </div>
 
-      <div className="row flex-grow-1 m-0">
+      {/* Contenedor principal*/}
+      <div className="row flex-grow-1 m-0" style={{ minHeight: 0 }}>
+        {/* Editor y Consola*/}
         <div className="col-md-8 d-flex flex-column p-0" style={{ height: 'calc(100vh - 96px)' }}>
-          <div className="flex-grow-1 border-end border-secondary" style={{ height: '70%' }}>
+          {/* Editor */}
+          <div style={{ flex: '1 1 auto', position: 'relative', minHeight: 0 }}>
             <div className="h-100 position-relative overflow-hidden">
-              <div className="position-absolute line-numbers bg-secondary text-white pe-2" 
-                   style={{ 
-                     zIndex: 1,
-                     left: 1,
-                     top: 0,
-                     bottom: 0,
-                     width: '55px',
-                     overflow: 'hidden',
-                     textAlign: 'right' 
-                   }}>
+              <div
+                className="position-absolute line-numbers bg-secondary text-white pe-2"
+                style={{
+                  zIndex: 1,
+                  left: 1,
+                  top: 0,
+                  bottom: 0,
+                  width: '35px',
+                  overflow: 'hidden',
+                  textAlign: 'right',
+                }}
+              >
                 {files[activeFileIndex].content.split('\n').map((_, i) => (
                   <div key={i} style={{ paddingLeft: '8px' }}>{i + 1}</div>
                 ))}
               </div>
               <textarea
                 className="w-100 h-100 border-0 bg-dark text-light"
-                style={{ 
-                  padding: '10px 25px 10px 55px !important',
+                style={{
+                  padding: '10px 15px 10px 45px',
                   fontFamily: "'Fira Code', monospace",
                   outline: 'none',
                   resize: 'none',
                   tabSize: 4,
                   lineHeight: '1.5',
-                  whiteSpace: 'pre-wrap'
+                  whiteSpace: 'pre-wrap',
                 }}
                 value={files[activeFileIndex].content}
                 onChange={(e) => {
@@ -230,14 +387,40 @@ function App() {
               />
             </div>
           </div>
-          <div className="border-top border-secondary" style={{ height: '30%', minHeight: '120px' }}>
+
+          {/* Barra para redimensionar la consola */}
+          <div
+            style={{
+              height: '5px',
+              background: '#333',
+              cursor: 'row-resize',
+            }}
+            onMouseDown={handleMouseDown}
+          ></div>
+
+          {/* Consola */}
+          <div
+            style={{
+              flex: '0 0 auto',
+              height: consoleHeight,
+              overflow: 'hidden',
+              borderTop: '1px solid #444',
+            }}
+          >
             <div className="p-2 bg-secondary border-bottom border-secondary">Consola</div>
-            <pre className="m-0 p-2 bg-dark text-light" style={{ height: 'calc(200px - 38px)', overflowY: 'auto' }}>
+            <pre
+              className="m-0 p-2 bg-dark text-light"
+              style={{
+                height: 'calc(100% - 38px)',
+                overflowY: 'auto',
+              }}
+            >
               {consoleOutput}
             </pre>
           </div>
         </div>
 
+        {/* Panel de Reportes (col-md-4) */}
         <div className="col-md-4 p-0 bg-dark" style={{ height: 'calc(100vh - 96px)' }}>
           <div className="h-100 d-flex flex-column">
             <div className="d-flex justify-content-around p-2 border-bottom border-secondary">
@@ -259,6 +442,12 @@ function App() {
               >
                 AST
               </button>
+              <button
+              className={`btn btn-sm ${visibleReport === 'arm64' ? 'btn-primary' : 'btn-outline-primary'}`}
+              onClick={() => setVisibleReport(visibleReport === 'arm64' ? null : 'arm64')}
+             >
+              ARM64
+            </button>
             </div>
             <div className="flex-grow-1 overflow-auto">
               {renderReportContent()}
@@ -267,6 +456,7 @@ function App() {
         </div>
       </div>
 
+      {/* Indicador de guardado */}
       <div className="position-fixed bottom-0 end-0 m-3">
         <span className="badge bg-secondary">
           {files[activeFileIndex]?.saved ? 'Guardado' : 'No guardado'}
@@ -279,6 +469,57 @@ function App() {
 export default App;
 
 const styles = `
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container-fluid {
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .row {
+    flex: 1;
+    min-height: 0; /* Permite que los elementos hijos colapsen */
+  }
+
+  .col-md-8 {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .col-md-4 {
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Ajustar el editor */
+  .position-relative {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Consola */
+  .border-top {
+    flex: 0 0 30%;
+    min-height: 120px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Panel de reportes */
+  .report-panel {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    background: #1a1a1a; /* Fondo oscuro */
+  }
   .toolbar-button-wrapper .btn {
     transition: all 0.3s ease;
     border-width: 2px;
@@ -314,6 +555,9 @@ const styles = `
   .line-numbers {
     font-family: 'Fira Code', monospace;
     font-size: 13px;
+    width: 40px; /* Reducido de 55px */
+    background: #1a1a1a;
+    padding-right: 5px;
     color: #6c757d;
     background: #1a1a1a;
     pointer-events: none;
@@ -360,6 +604,42 @@ const styles = `
     min-height: 200px;
     overflow-y: auto;
   }
+
+  body, .bg-dark, .table-dark {
+    background: #1a1a1a !important;
+    color: #fff;
+  }
+
+  .table-responsive {
+    max-height: 70vh;
+    overflow: auto;
+  }
+
+  .table-dark th {
+    position: sticky;
+    top: 0;
+    background: #2d2d2d;
+    z-index: 2;
+  }
+    re {
+  background-color: #1a1a1a;
+  color: #f8f9fa;
+  border-radius: 4px;
+  tab-size: 4;
+  overflow: auto;
+}
+
+pre code {
+  display: block;
+  padding: 1rem;
+  line-height: 1.5;
+}
+
+.arm64-code {
+  font-family: 'Fira Code', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
 `;
 
 const styleSheet = document.createElement('style');

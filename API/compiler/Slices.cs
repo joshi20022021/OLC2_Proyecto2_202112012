@@ -1,18 +1,17 @@
 public static class SliceHelper
 {
+    //acceso a un slice
     public static object AccesoSlice(List<object> slice, long index)
     {
         if (index < 0 || index >= slice.Count)
             throw new IndexOutOfRangeException($"Índice fuera de rango: {index}");
         return slice[(int)index];
     }
-
     public static List<object> Append(List<object> slice, object nuevo)
     {
         var nuevaLista = new List<object>(slice) { nuevo };
         return nuevaLista;
     }
-
     public static int Len(List<object> slice) => slice.Count;
 
     public static int Index(List<object> slice, object valor)
@@ -22,13 +21,14 @@ public static class SliceHelper
         return -1;
     }
 
+    //unir un elemento
     public static string Join(List<object> slice, string separador)
     {
         if (!slice.All(e => e is string))
             throw new InvalidOperationException("Todos los elementos deben ser strings.");
         return string.Join(separador, slice.Cast<string>());
     }
-
+    //Accesos de slice 2 dimensiones
     public static object AccesoSlice2D(List<object> matriz, long fila, long columna)
     {
         if (fila < 0 || fila >= matriz.Count)
@@ -45,6 +45,7 @@ public static class SliceHelper
         throw new Exception("La fila especificada no es un slice.");
     }
 
+    //Modificar un slice 2D
     public static void ModificarSlice2D(List<object> matriz, long fila, long columna, object nuevoValor)
     {
         if (fila < 0 || columna < 0)
