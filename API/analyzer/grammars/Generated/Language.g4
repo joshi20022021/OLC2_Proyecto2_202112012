@@ -250,4 +250,3 @@ expresion
     | NULO                                 # LiteralNulo
     | IDENTIFICADOR                        # Identificador
     ;
-
