@@ -62,7 +62,7 @@ public IActionResult Post([FromBody] CompileRequest request)
     var visitor = new CompilerVisitor();
     visitor.Visit(tree);
     var astEstructurado = visitor.ObtenerAST(); // Mantén solo esta declaración
-
+    string arm64Code = visitor.GenerateARM64Code();
     var todosErrores = erroresLexicos
         .Concat(erroresSintacticos)
         .Concat(visitor.ErroresSemanticos)
@@ -118,7 +118,8 @@ public IActionResult Post([FromBody] CompileRequest request)
             s.Columna,
             s.Valor
         }),
-        ast = astEstructurado
+        ast = astEstructurado,
+        arm64Code = arm64Code
     });
 }
 }

@@ -247,31 +247,42 @@ function App() {
             )}
           </div>
         );
-        case 'arm64':
+      case 'arm64':
           return (
-            <div className="h-100 position-relative overflow-hidden bg-dark">
-              <div className="position-absolute line-numbers bg-secondary text-white pe-2"
-                   style={{
-                     zIndex: 1,
-                     left: 1,
-                     top: 0,
-                     bottom: 0,
-                     width: '35px',
-                     overflow: 'hidden',
-                     textAlign: 'right',
-                   }}>
+            <div className="h-100 d-flex bg-dark text-light">
+              {/* Columna de líneas, ancho fijo */}
+              <div
+                style={{
+                  width: '35px',
+                  background: '#2d2d2d',
+                  textAlign: 'right',
+                  overflow: 'hidden',
+                  fontFamily: "'Fira Code', monospace",
+                  fontSize: '13px',
+                  color: '#6c757d',
+                  userSelect: 'none',
+                  pointerEvents: 'none',
+                }}
+              >
                 {arm64Code.split('\n').map((_, i) => (
-                  <div key={i} style={{ paddingLeft: '8px' }}>{i + 1}</div>
+                  <div key={i} style={{ padding: '0 4px' }}>
+                    {i + 1}
+                  </div>
                 ))}
               </div>
+        
+              {/* Panel de código, ocupa el resto */}
               <pre
-                className="w-100 h-100 border-0 bg-dark text-light m-0 p-2"
                 style={{
-                  paddingLeft: '45px',
+                  flex: 1,
+                  margin: 0,
+                  padding: '8px',
                   fontFamily: "'Fira Code', monospace",
+                  fontSize: '13px',
                   whiteSpace: 'pre-wrap',
-                  overflowX: 'auto'
-                }}>
+                  overflowX: 'auto',
+                }}
+              >
                 {arm64Code}
               </pre>
             </div>
@@ -555,14 +566,14 @@ const styles = `
   .line-numbers {
     font-family: 'Fira Code', monospace;
     font-size: 13px;
-    width: 40px; /* Reducido de 55px */
+    width: 35px;
     background: #1a1a1a;
-    padding-right: 5px;
     color: #6c757d;
-    background: #1a1a1a;
     pointer-events: none;
     user-select: none;
+    text-align: right;
   }
+
 
   textarea {
     font-family: 'Fira Code', monospace;

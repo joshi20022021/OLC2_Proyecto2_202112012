@@ -5,6 +5,7 @@ using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using Antlr4.Runtime;
 using API.compiler;
+using API.compiler.ARM64;
 
 namespace API.compiler
 {
@@ -277,20 +278,40 @@ namespace API.compiler
         }
 
          // Visitor para el fmt.println
+        // Actualizar VisitImprime para guardar información en el AST
         public override object VisitImprime(LanguageParser.ImprimeContext context)
         {
             List<string> valores = new List<string>();
+            List<NodoAST> argumentos = new List<NodoAST>();
+            
             foreach (var expr in context.expresion())
             {
                 var resultado = Visit(expr);
-                Console.WriteLine($"DEBUG: Imprimiendo valor de tipo {resultado?.GetType().Name}, valor: {resultado}");
-
                 string valorFormateado = FormatearValor(resultado);
                 valores.Add(valorFormateado);
+                
+                // Guardar información para el AST
+                string nombreVar = null;
+                if (expr is LanguageParser.IdentificadorContext idCtx)
+                {
+                    nombreVar = idCtx.IDENTIFICADOR().GetText();
+                }
+                
+                argumentos.Add(new NodoAST 
+                { 
+                    Tipo = "Argumento", 
+                    Valor = nombreVar ?? valorFormateado
+                });
             }
             
+            // Crear nodo AST para la llamada a fmt.Println
+            nodosAST.Add(new NodoAST
+            {
+                Tipo = "fmt.Println",
+                Hijos = argumentos
+            });
+            
             string salida = string.Join(" ", valores);
-            Console.WriteLine($"DEBUG: Salida formateada: '{salida}'");
             mensajesSalida.Add(salida);
             return null;
         }
@@ -726,6 +747,19 @@ namespace API.compiler
         {
             return Visit(context.expresion());
         }
+         // Método para generar código ARM64
+        public string GenerateARM64Code()
+        {
+            var generator = new ARM64Generator();
+            return generator.Generate(tablaSimbolos, ObtenerAST());
+        }
 
+        public void SaveARM64CodeToFile(string filePath)
+        {
+            var generator = new ARM64Generator();
+            string code = generator.Generate(tablaSimbolos, ObtenerAST());  // Pasar también los nodos AST
+            generator.SaveToFile(filePath);
+        }
+            
     }
 }
