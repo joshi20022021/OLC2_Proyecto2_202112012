@@ -43,9 +43,6 @@ namespace API.compiler.ARM64
             _code.AppendLine("\n    // Procesando instrucciones");
             ProcessInstructions(nodos, tablaSimbolos);
             
-            // Incluir funciones auxiliares
-            GenerateHelperFunctions();
-            
             return BuildFinalCode();
         }
 
@@ -53,35 +50,92 @@ namespace API.compiler.ARM64
         {
             foreach (var nodo in nodos)
             {
+                // Depuración - ver la estructura del nodo
+                _code.AppendLine($"\n    // Procesando nodo tipo: {nodo.Tipo}");
+                
                 // Buscar nodos de tipo "fmt.Println"
                 if (nodo.Tipo == "fmt.Println")
                 {
                     _code.AppendLine("\n    // fmt.Println detectado");
                     
                     // Procesar los argumentos de la llamada
-                    var args = nodo.Hijos?.Where(h => h.Tipo == "Argumento").ToList();
+                    var args = nodo.Hijos?.Where(h => h.Tipo == "Argumento" || h.Tipo == "string").ToList();
                     if (args != null && args.Count > 0)
                     {
                         List<string> varNames = new List<string>();
+                        
+                        // Debug - imprimir todos los argumentos
                         foreach (var arg in args)
                         {
-                            // Extraer el nombre de la variable o el valor literal
+                            _code.AppendLine($"    // Argumento: tipo={arg.Tipo}, valor={arg.Valor}");
+                            
+                            // Si es un literal directo
                             if (arg.Valor != null)
                             {
-                                varNames.Add(arg.Valor.ToString());
+                                string valor = arg.Valor.ToString();
+                                
+                                // Asegurar que los literales de string tienen comillas
+                                if (arg.Tipo == "string" && !valor.StartsWith("\""))
+                                {
+                                    varNames.Add($"\"{valor}\"");
+                                }
+                                else
+                                {
+                                    varNames.Add(valor);
+                                }
+                            }
+                            
+                            // Procesar hijos recursivamente
+                            if (arg.Hijos != null && arg.Hijos.Count > 0)
+                            {
+                                RecursiveProcessArguments(arg.Hijos, varNames);
                             }
                         }
                         
                         // Generar código para imprimir estas variables
                         if (varNames.Count > 0)
                         {
+                            _code.AppendLine($"    // Generando código para imprimir: {string.Join(", ", varNames)}");
                             GeneratePrintln(varNames, tablaSimbolos);
                         }
+                    }
+                    else
+                    {
+                        // fmt.Println sin argumentos - solo imprime salto de línea
+                        GenerateNewLine();
                     }
                 }
             }
         }
 
+        // Método auxiliar para procesar argumentos recursivamente
+        private void RecursiveProcessArguments(List<NodoAST> nodos, List<string> varNames)
+        {
+            foreach (var nodo in nodos)
+            {
+                if (nodo.Valor != null)
+                {
+                    string valor = nodo.Valor.ToString();
+                    
+                    // String literal
+                    if (nodo.Tipo == "string" && !valor.StartsWith("\""))
+                    {
+                        varNames.Add($"\"{valor}\"");
+                    }
+                    else
+                    {
+                        varNames.Add(valor);
+                    }
+                }
+                
+                if (nodo.Hijos != null && nodo.Hijos.Count > 0)
+                {
+                    RecursiveProcessArguments(nodo.Hijos, varNames);
+                }
+            }
+        }
+
+       
         private void GenerateVariableDeclaration(EntradaSimbolo simbolo)
         {
             string varName = !string.IsNullOrEmpty(simbolo.Nombre) ? simbolo.Nombre : simbolo.Id.ToString();
@@ -134,6 +188,30 @@ namespace API.compiler.ARM64
                 _code.AppendLine($"    str x9, [sp, #{offsetStr}]");
                 _variables[varName] = $"[sp, #{offsetStr}]";
             }
+            else if (simbolo.TipoDato == "rune")
+            {
+                int offset = GetVariableOffset(varName);
+                string offsetStr = offset.ToString();
+                
+                // Tratar de convertir el valor a char
+                char ch = '\0';
+                if (simbolo.Valor != null)
+                {
+                    string valorStr = simbolo.Valor.ToString();
+                    if (valorStr.StartsWith("'") && valorStr.EndsWith("'") && valorStr.Length >= 3)
+                    {
+                        ch = valorStr[1]; // Extraer el carácter entre comillas simples
+                    }
+                    else
+                    {
+                        ch = Convert.ToChar(simbolo.Valor);
+                    }
+                }
+                
+                _code.AppendLine($"    mov w9, #{(int)ch}");   // código ASCII/Unicode
+                _code.AppendLine($"    str w9, [sp, #{offsetStr}]");
+                _variables[varName] = $"[sp, #{offsetStr}]";
+            }
         }
         
         public void GeneratePrintln(List<string> varNames, List<EntradaSimbolo> tablaSimbolos)
@@ -143,14 +221,26 @@ namespace API.compiler.ARM64
             // Imprimir cada variable o literal
             foreach (var varName in varNames)
             {
-                // Si es un literal de cadena (comienza y termina con comillas)
+                // Primero ver si es una variable conocida
+                if (!_variables.ContainsKey(varName))
+                {
+                // No es una variable - trata como literal de texto, con o sin comillas
+                string cleanText = varName;
                 if (varName.StartsWith("\"") && varName.EndsWith("\""))
                 {
-                    string label = GenerateLabel("str");
-                    string cleanText = varName.Substring(1, varName.Length - 2); // Quitar comillas
+                    cleanText = varName.Substring(1, varName.Length - 2); // Quitar comillas
+                }
+
+                // Escapar adecuadamente los caracteres especiales para el ensamblador
+                cleanText = cleanText
+                    .Replace("\n", "\\n")     // Reemplazar saltos de línea
+                    .Replace("\r", "\\r")     // Retorno de carro
+                    .Replace("\t", "\\t")     // Tabulación
+                    .Replace("\"", "\\\"");   // Comillas dobles
+
+                    string label = GenerateLabel("lit");
                     _dataSection.Add($"{label}: .asciz \"{cleanText}\"");
                     
-                    // Imprimir el literal directamente
                     _code.AppendLine($"    // Imprimir literal: {cleanText}");
                     _code.AppendLine($"    mov x0, #1");
                     _code.AppendLine($"    adr x1, {label}");
@@ -158,21 +248,24 @@ namespace API.compiler.ARM64
                     _code.AppendLine($"    mov x8, #64");
                     _code.AppendLine($"    svc #0");
                     
-                    // Imprimir un espacio después del literal si no es el último elemento
+                    // espacio entre argumentos (si no es el último)
                     if (varName != varNames.Last())
                     {
-                        string spaceLabel = GenerateLabel("space");
-                        _dataSection.Add($"{spaceLabel}: .asciz \" \"");
-                        
+                        string space = GenerateLabel("space");
+                        _dataSection.Add($"{space}: .asciz \" \"");
                         _code.AppendLine($"    mov x0, #1");
-                        _code.AppendLine($"    adr x1, {spaceLabel}");
+                        _code.AppendLine($"    adr x1, {space}");
                         _code.AppendLine($"    mov x2, #1");
                         _code.AppendLine($"    mov x8, #64");
                         _code.AppendLine($"    svc #0");
                     }
+                    continue;   // Ya lo imprimimos, pasar al siguiente
                 }
-                else if (_variables.TryGetValue(varName, out string memoryLocation))
+                else
                 {
+                    // Es una variable que conocemos - obtener su ubicación en memoria
+                    string memoryLocation = _variables[varName];
+                    
                     // Determinar el tipo de la variable
                     var variable = tablaSimbolos.FirstOrDefault(s => s.Nombre == varName);
                     if (variable == null) continue;
@@ -190,6 +283,9 @@ namespace API.compiler.ARM64
                             break;
                         case "bool":
                             GeneratePrintBool(memoryLocation, varName);
+                            break;
+                        case "rune":
+                            GeneratePrintRune(memoryLocation, varName);
                             break;
                         default:
                             _code.AppendLine($"    // No se puede imprimir variable de tipo {variable.TipoDato}");
@@ -291,6 +387,23 @@ namespace API.compiler.ARM64
             
             _code.AppendLine($"end_print_bool_{labelId}:");
         }
+        
+
+        private void GeneratePrintRune(string memoryLocation, string varName)
+        {
+            _code.AppendLine($"    // Imprimir rune: {varName}");
+            _code.AppendLine($"    mov x0, #1");                 // stdout
+            _code.AppendLine($"    sub sp, sp, #1");              // reservar 1 byte
+            _code.AppendLine($"    ldr w1, {memoryLocation}");    // cargar carácter
+            _code.AppendLine($"    strb w1, [sp]");               // escribirlo en el stack
+            _code.AppendLine($"    mov x1, sp");                  // puntero al byte
+            _code.AppendLine($"    mov x2, #1");                  // longitud
+            _code.AppendLine($"    mov x8, #64");                 // write syscall
+            _code.AppendLine($"    svc #0");
+            _code.AppendLine($"    add sp, sp, #1");              // limpiar stack
+        }
+
+
         private void GenerateNewLine()
         {
             string newlineLabel = $"newline_{_labelCounter++}";
@@ -323,6 +436,7 @@ namespace API.compiler.ARM64
             sb.AppendLine("    mov x10, x1       // Guardar dirección original del buffer");
             sb.AppendLine("    mov x11, #0       // Contador de dígitos");
             sb.AppendLine("    mov x12, #0       // Para contar dígitos totales");
+            sb.AppendLine("    mov x14, #0       // Flag para indicar si es negativo");
 
             // Caso especial para el cero
             sb.AppendLine("    cmp x9, #0");
@@ -333,6 +447,16 @@ namespace API.compiler.ARM64
             sb.AppendLine("    strb w2, [x10, #1]");
             sb.AppendLine("    mov x0, #1");
             sb.AppendLine("    ret");
+
+            sb.AppendLine("    // Verificar si es negativo");
+            sb.AppendLine("    cmp x9, #0");
+            sb.AppendLine("    bge positive_number");
+            sb.AppendLine("    // Es negativo, imprimir '-'");
+            sb.AppendLine("    neg x9, x9     // Convertir a positivo");
+            sb.AppendLine("    mov w2, #45    // '-' en ASCII");
+            sb.AppendLine("    strb w2, [x10], #1");
+            sb.AppendLine("    mov x14, #1    // Flag para indicar que es negativo (afectará a la longitud final)");
+            sb.AppendLine("positive_number:");
 
             // Primero contar dígitos
             sb.AppendLine("count_digits:");
@@ -374,6 +498,10 @@ namespace API.compiler.ARM64
             sb.AppendLine("finish_str:");
             sb.AppendLine("    mov w2, #0        // Null-terminator");
             sb.AppendLine("    strb w2, [x10]");
+            sb.AppendLine("    // Si era negativo, incrementar longitud por el signo");
+            sb.AppendLine("    cbz x14, return_length");
+            sb.AppendLine("    add x11, x11, #1  // Ajustar longitud por el signo '-'");
+            sb.AppendLine("return_length:");
             sb.AppendLine("    mov x0, x11       // Retornar longitud");
             sb.AppendLine("    ret");
             
@@ -391,37 +519,58 @@ namespace API.compiler.ARM64
 
             // Función para convertir float a string
             sb.AppendLine("\nfloat_to_string:");
-            sb.AppendLine("    // Implementación simplificada pero funcional");
+            sb.AppendLine("    // Implementación mejorada");
             sb.AppendLine("    stp x29, x30, [sp, #-16]!");
             sb.AppendLine("    mov x29, sp");
             sb.AppendLine("    stp x19, x20, [sp, #-16]!");
             sb.AppendLine("    mov x19, x0                // Buffer address");
-            sb.AppendLine("    ");
-            sb.AppendLine("    // Convertir parte entera");
-            sb.AppendLine("    fcvtzs x0, d0                // Convertir a entero");
-            sb.AppendLine("    mov x1, x19");
-            sb.AppendLine("    bl int_to_string             // Convertir la parte entera");
-            sb.AppendLine("    mov x20, x0                  // Guardar longitud");
-            sb.AppendLine("    add x19, x19, x0            // Avanzar buffer");
             sb.AppendLine("");
-            sb.AppendLine("    // Añadir punto decimal");
+            sb.AppendLine("    // Extraer signo");
+            sb.AppendLine("    mov x21, #0               // Flag para negativo");
+            sb.AppendLine("    fcmpe d0, #0.0");
+            sb.AppendLine("    bpl convert_integer");
+            sb.AppendLine("    mov x21, #1               // Es negativo");
+            sb.AppendLine("    fneg d0, d0               // Convertir a positivo");
+            sb.AppendLine("    mov w1, #45               // '-'");
+            sb.AppendLine("    strb w1, [x19], #1");
+            sb.AppendLine("convert_integer:");
+            sb.AppendLine("    // Convertir parte entera");
+            sb.AppendLine("    fcvtzs x0, d0             // Convertir a entero");
+            sb.AppendLine("    mov x1, x19               // Buffer para la parte entera");
+            sb.AppendLine("    bl int_to_string          // Convertir entero");
+            sb.AppendLine("    mov x20, x0               // Guardar longitud");
+            sb.AppendLine("    cmp x21, #1               // Si era negativo");
+            sb.AppendLine("    beq was_negative");
+            sb.AppendLine("    add x19, x19, x0          // Avanzar buffer");
+            sb.AppendLine("    b add_decimal");
+            sb.AppendLine("was_negative:");
+            sb.AppendLine("    add x19, x19, x0          // Avanzar buffer");
+            sb.AppendLine("    add x20, x20, #1          // +1 por el signo");
+            sb.AppendLine("add_decimal:");
+            sb.AppendLine("    // Añadir punto");
             sb.AppendLine("    mov w1, #'.'");
             sb.AppendLine("    strb w1, [x19], #1");
             sb.AppendLine("    add x20, x20, #1");
             sb.AppendLine("");
-            sb.AppendLine("    // Añadir parte decimal simplificada (para 3.14159)");
-            sb.AppendLine("    mov w1, #'1'");
-            sb.AppendLine("    strb w1, [x19], #1");
-            sb.AppendLine("    mov w1, #'4'");
-            sb.AppendLine("    strb w1, [x19], #1");
-            sb.AppendLine("    mov w1, #'1'");
-            sb.AppendLine("    strb w1, [x19], #1");
-            sb.AppendLine("    mov w1, #'5'");
-            sb.AppendLine("    strb w1, [x19], #1");
-            sb.AppendLine("    mov w1, #'9'");
-            sb.AppendLine("    strb w1, [x19], #1");
-            sb.AppendLine("    add x20, x20, #5");
-            sb.AppendLine("");
+            sb.AppendLine("    // Convertir 6 dígitos decimales");
+            sb.AppendLine("    fcvtzs x0, d0             // Volver a convertir a entero");
+            sb.AppendLine("    scvtf d1, x0              // Convertir entero a float");
+            sb.AppendLine("    fsub d1, d0, d1           // Parte decimal = float - entero");
+            sb.AppendLine("    mov x22, #6               // 6 dígitos decimales");
+            sb.AppendLine("    fmov d2, #10.0            // Constante 10.0");
+            sb.AppendLine("decimal_loop:");
+            sb.AppendLine("    fmul d1, d1, d2           // d1 = d1 * 10");
+            sb.AppendLine("    fcvtzs x0, d1             // Entero = int(d1)");
+            sb.AppendLine("    add w0, w0, #48           // Convertir a ASCII");
+            sb.AppendLine("    strb w0, [x19], #1        // Guardar y avanzar");
+            sb.AppendLine("    add x20, x20, #1          // Incrementar longitud");
+            sb.AppendLine("    scvtf d3, x0              // Convertir dígito a flotante");
+            sb.AppendLine("    mov x0, #48               // Valor ASCII '0'");
+            sb.AppendLine("    scvtf d4, x0              // Convertir 48 a float");
+            sb.AppendLine("    fsub d3, d3, d4           // Restar ASCII offset");
+            sb.AppendLine("    fsub d1, d1, d3           // Restar dígito");
+            sb.AppendLine("    subs x22, x22, #1         // Decrementar contador");
+            sb.AppendLine("    bne decimal_loop          // Continuar si no hemos terminado");
             sb.AppendLine("    // Terminar cadena");
             sb.AppendLine("    mov w1, #0");
             sb.AppendLine("    strb w1, [x19]");
@@ -455,23 +604,16 @@ namespace API.compiler.ARM64
                 fullCode.AppendLine();
             }
             
-            //código principal 
-            string mainCode = _code.ToString();
-            int auxiliaryIndex = mainCode.IndexOf("\n// Rutinas auxiliares");
-            if (auxiliaryIndex > 0)
-            {
-                fullCode.Append(mainCode.Substring(0, auxiliaryIndex));
-            }
+            // Código principal completo 
+            fullCode.Append(_code.ToString());
             
             // Saltar al final del programa antes de las rutinas auxiliares
             fullCode.AppendLine("\n    // Saltar directamente al final del programa");
             fullCode.AppendLine("    b program_exit");
             
-            //Generar las rutinas auxiliares en el código final
-            StringBuilder auxiliaryCode = new StringBuilder();
+            // Añadir rutinas auxiliares
             fullCode.AppendLine("\n// Rutinas auxiliares");
-            
-            //StringBuilder para las rutinas auxiliares
+            StringBuilder auxiliaryCode = new StringBuilder();
             GenerateHelperFunctions(auxiliaryCode);
             fullCode.Append(auxiliaryCode.ToString());
             
@@ -486,7 +628,6 @@ namespace API.compiler.ARM64
             
             return fullCode.ToString();
         }
-
         public void SaveToFile(string path)
         {
             File.WriteAllText(path, BuildFinalCode());
