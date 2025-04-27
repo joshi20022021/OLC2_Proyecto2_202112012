@@ -1,37 +1,86 @@
 .data
-float_0: .double 3.14
-str_1: .asciz "Hola!"
-lit_3: .asciz "=== Archivo de prueba básico ==="
-newline_3: .asciz "\n"
-lit_5: .asciz "Validaciones manuales esperadas: 4"
+float_0: .double 0
+str_1: .asciz ""
+float_2: .double 2.71
+str_3: .asciz "Adios!"
+lit_5: .asciz "\=\=\= Prueba de Características Avanzadas \=\=\="
 newline_5: .asciz "\n"
-lit_7: .asciz "==== Declaración de variables ===="
+lit_7: .asciz "\=\=\=\= Declaración sin valor inicial \=\=\=\="
 newline_7: .asciz "\n"
-lit_9: .asciz "Declaración explícita con tipo y valor"
-newline_9: .asciz "\n"
-lit_11: .asciz "\n\n###Validacion Manual"
+lit_9: .asciz "enteroSinValor:"
+space_10: .asciz " "
+int_buffer_10: .space 20
 newline_11: .asciz "\n"
-lit_13: .asciz "entero:"
+lit_13: .asciz "decimalSinValor:"
 space_14: .asciz " "
-int_buffer_14: .space 20
+float_buffer_14: .space 30
 newline_15: .asciz "\n"
-lit_17: .asciz "decimal:"
+lit_17: .asciz "textoSinValor:"
 space_18: .asciz " "
-float_buffer_18: .space 30
-newline_19: .asciz "\n"
-lit_21: .asciz "texto:"
-space_22: .asciz " "
-newline_22: .asciz "\n"
-lit_24: .asciz "booleano:"
-space_25: .asciz " "
-true_str_26: .asciz "true"
-false_str_27: .asciz "false"
-newline_27: .asciz "\n"
-lit_29: .asciz "caracter:"
-space_30: .asciz " "
-newline_30: .asciz "\n"
-lit_32: .asciz ""
-newline_32: .asciz "\n"
+newline_18: .asciz "\n"
+lit_20: .asciz "booleanoSinValor:"
+space_21: .asciz " "
+true_str_22: .asciz "true"
+false_str_23: .asciz "false"
+newline_23: .asciz "\n"
+lit_25: .asciz "\n\=\=\=\= Declaración con inferencia de tipo \=\=\=\="
+newline_25: .asciz "\n"
+lit_27: .asciz "enteroInferido:"
+space_28: .asciz " "
+int_buffer_28: .space 20
+newline_29: .asciz "\n"
+lit_31: .asciz "decimalInferido:"
+space_32: .asciz " "
+float_buffer_32: .space 30
+newline_33: .asciz "\n"
+lit_35: .asciz "textoInferido:"
+space_36: .asciz " "
+newline_36: .asciz "\n"
+lit_38: .asciz "booleanoInferido:"
+space_39: .asciz " "
+true_str_40: .asciz "true"
+false_str_41: .asciz "false"
+newline_41: .asciz "\n"
+lit_43: .asciz "\n\=\=\=\= Asignación de variables \=\=\=\="
+newline_43: .asciz "\n"
+lit_45: .asciz "Después de asignación simple:"
+newline_45: .asciz "\n"
+lit_47: .asciz "enteroInferido:"
+space_48: .asciz " "
+int_buffer_48: .space 20
+newline_49: .asciz "\n"
+lit_51: .asciz "decimalInferido:"
+space_52: .asciz " "
+float_buffer_52: .space 30
+newline_53: .asciz "\n"
+lit_55: .asciz "textoInferido:"
+space_56: .asciz " "
+newline_56: .asciz "\n"
+lit_58: .asciz "booleanoInferido:"
+space_59: .asciz " "
+true_str_60: .asciz "true"
+false_str_61: .asciz "false"
+newline_61: .asciz "\n"
+lit_63: .asciz "\n\=\=\=\= Operaciones con variables \=\=\=\="
+newline_63: .asciz "\n"
+lit_65: .asciz "Después de operaciones:"
+newline_65: .asciz "\n"
+lit_67: .asciz "enteroInferido + 50:"
+space_68: .asciz " "
+int_buffer_68: .space 20
+newline_69: .asciz "\n"
+lit_71: .asciz "decimalInferido * 2:"
+space_72: .asciz " "
+float_buffer_72: .space 30
+newline_73: .asciz "\n"
+lit_75: .asciz "textoInferido + '!':"
+space_76: .asciz " "
+newline_76: .asciz "\n"
+lit_78: .asciz "!booleanoInferido:"
+space_79: .asciz " "
+true_str_80: .asciz "true"
+false_str_81: .asciz "false"
+newline_81: .asciz "\n"
 
 // ARM64 Assembly
 .text
@@ -42,80 +91,66 @@ _start:
     sub sp, sp, #128
 
     // Declaraciones de variables
-    // Debug: Símbolos en tabla: 8
+    // Debug: Símbolos en tabla: 9
     // Símbolo: '1', Tipo: 'Función', Dato: 'void'
 
     // Declaración de variable: main
     // Símbolo: '4', Tipo: 'Variable', Dato: 'int'
 
-    // Declaración de variable: puntos
+    // Declaración de variable: enteroSinValor
     mov x9, #0
     str x9, [sp, #16]
-    // Símbolo: '7', Tipo: 'Variable', Dato: 'int'
+    // Símbolo: '7', Tipo: 'Variable', Dato: 'float64'
 
-    // Declaración de variable: puntosDeclaracion
-    mov x9, #0
-    str x9, [sp, #24]
-    // Símbolo: '10', Tipo: 'Variable', Dato: 'int'
-
-    // Declaración de variable: entero
-    mov x9, #42
-    str x9, [sp, #32]
-    // Símbolo: '13', Tipo: 'Variable', Dato: 'float64'
-
-    // Declaración de variable: decimal
+    // Declaración de variable: decimalSinValor
     adr x9, float_0
     ldr d0, [x9]
-    str d0, [sp, #40]
-    // Símbolo: '16', Tipo: 'Variable', Dato: 'string'
+    str d0, [sp, #24]
+    // Símbolo: '10', Tipo: 'Variable', Dato: 'string'
 
-    // Declaración de variable: texto
+    // Declaración de variable: textoSinValor
     adr x9, str_1
+    str x9, [sp, #32]
+    // Símbolo: '13', Tipo: 'Variable', Dato: 'bool'
+
+    // Declaración de variable: booleanoSinValor
+    mov x9, #0
+    str x9, [sp, #40]
+    // Símbolo: '16', Tipo: 'Variable', Dato: 'int'
+
+    // Declaración de variable: enteroInferido
+    mov x9, #100
     str x9, [sp, #48]
-    // Símbolo: '19', Tipo: 'Variable', Dato: 'bool'
+    // Símbolo: '19', Tipo: 'Variable', Dato: 'float64'
 
-    // Declaración de variable: booleano
-    mov x9, #1
-    str x9, [sp, #56]
-    // Símbolo: '22', Tipo: 'Variable', Dato: 'rune'
+    // Declaración de variable: decimalInferido
+    adr x9, float_2
+    ldr d0, [x9]
+    str d0, [sp, #56]
+    // Símbolo: '22', Tipo: 'Variable', Dato: 'string'
 
-    // Declaración de variable: caracter
-    mov w9, #65
-    str w9, [sp, #64]
+    // Declaración de variable: textoInferido
+    adr x9, str_3
+    str x9, [sp, #64]
+    // Símbolo: '25', Tipo: 'Variable', Dato: 'bool'
+
+    // Declaración de variable: booleanoInferido
+    mov x9, #0
+    str x9, [sp, #72]
 
     // Procesando instrucciones
 
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor==== Archivo de prueba básico ===
-    // Generando código para imprimir: === Archivo de prueba básico ===
+    // Argumento: tipo=Argumento, valor==== Prueba de Características Avanzadas ===
+    // Generando código para imprimir: === Prueba de Características Avanzadas ===
 
     // fmt.Println
-    // Imprimir literal: === Archivo de prueba básico ===
-    mov x0, #1
-    adr x1, lit_3
-    mov x2, #32
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    mov x0, #1
-    adr x1, newline_3
-    mov x2, #1
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo tipo: fmt.Println
-
-    // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=Validaciones manuales esperadas: 4
-    // Generando código para imprimir: Validaciones manuales esperadas: 4
-
-    // fmt.Println
-    // Imprimir literal: Validaciones manuales esperadas: 4
+    // Imprimir literal: \=\=\= Prueba de Características Avanzadas \=\=\=
     mov x0, #1
     adr x1, lit_5
-    mov x2, #34
+    mov x2, #49
     mov x8, #64
     svc #0
     // Imprimir salto de línea
@@ -128,14 +163,14 @@ _start:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor===== Declaración de variables ====
-    // Generando código para imprimir: ==== Declaración de variables ====
+    // Argumento: tipo=Argumento, valor===== Declaración sin valor inicial ====
+    // Generando código para imprimir: ==== Declaración sin valor inicial ====
 
     // fmt.Println
-    // Imprimir literal: ==== Declaración de variables ====
+    // Imprimir literal: \=\=\=\= Declaración sin valor inicial \=\=\=\=
     mov x0, #1
     adr x1, lit_7
-    mov x2, #34
+    mov x2, #47
     mov x8, #64
     svc #0
     // Imprimir salto de línea
@@ -148,38 +183,29 @@ _start:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=Declaración explícita con tipo y valor
-    // Generando código para imprimir: Declaración explícita con tipo y valor
+    // Argumento: tipo=Argumento, valor=enteroSinValor:
+    // Argumento: tipo=Argumento, valor=enteroSinValor
+    // Generando código para imprimir: enteroSinValor:, enteroSinValor
 
     // fmt.Println
-    // Imprimir literal: Declaración explícita con tipo y valor
+    // Imprimir literal: enteroSinValor:
     mov x0, #1
     adr x1, lit_9
-    mov x2, #38
+    mov x2, #15
     mov x8, #64
     svc #0
-    // Imprimir salto de línea
     mov x0, #1
-    adr x1, newline_9
+    adr x1, space_10
     mov x2, #1
     mov x8, #64
     svc #0
-
-    // Procesando nodo tipo: fmt.Println
-
-    // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=
-
-###Validacion Manual
-    // Generando código para imprimir: 
-
-###Validacion Manual
-
-    // fmt.Println
-    // Imprimir literal: \n\n###Validacion Manual
+    // Imprimir entero: enteroSinValor
+    ldr x0, [sp, #16]
+    adr x1, int_buffer_10
+    bl int_to_string
+    mov x2, x0
     mov x0, #1
-    adr x1, lit_11
-    mov x2, #24
+    adr x1, int_buffer_10
     mov x8, #64
     svc #0
     // Imprimir salto de línea
@@ -192,15 +218,15 @@ _start:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=entero:
-    // Argumento: tipo=Argumento, valor=entero
-    // Generando código para imprimir: entero:, entero
+    // Argumento: tipo=Argumento, valor=decimalSinValor:
+    // Argumento: tipo=Argumento, valor=decimalSinValor
+    // Generando código para imprimir: decimalSinValor:, decimalSinValor
 
     // fmt.Println
-    // Imprimir literal: entero:
+    // Imprimir literal: decimalSinValor:
     mov x0, #1
     adr x1, lit_13
-    mov x2, #7
+    mov x2, #16
     mov x8, #64
     svc #0
     mov x0, #1
@@ -208,13 +234,13 @@ _start:
     mov x2, #1
     mov x8, #64
     svc #0
-    // Imprimir entero: entero
-    ldr x0, [sp, #32]
-    adr x1, int_buffer_14
-    bl int_to_string
+    // Imprimir flotante: decimalSinValor
+    ldr d0, [sp, #24]
+    adr x0, float_buffer_14
+    bl float_to_string
     mov x2, x0
     mov x0, #1
-    adr x1, int_buffer_14
+    adr x1, float_buffer_14
     mov x8, #64
     svc #0
     // Imprimir salto de línea
@@ -227,15 +253,15 @@ _start:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=decimal:
-    // Argumento: tipo=Argumento, valor=decimal
-    // Generando código para imprimir: decimal:, decimal
+    // Argumento: tipo=Argumento, valor=textoSinValor:
+    // Argumento: tipo=Argumento, valor=textoSinValor
+    // Generando código para imprimir: textoSinValor:, textoSinValor
 
     // fmt.Println
-    // Imprimir literal: decimal:
+    // Imprimir literal: textoSinValor:
     mov x0, #1
     adr x1, lit_17
-    mov x2, #8
+    mov x2, #14
     mov x8, #64
     svc #0
     mov x0, #1
@@ -243,52 +269,17 @@ _start:
     mov x2, #1
     mov x8, #64
     svc #0
-    // Imprimir flotante: decimal
-    ldr d0, [sp, #40]
-    adr x0, float_buffer_18
-    bl float_to_string
-    mov x2, x0
-    mov x0, #1
-    adr x1, float_buffer_18
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    mov x0, #1
-    adr x1, newline_19
-    mov x2, #1
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo tipo: fmt.Println
-
-    // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=texto:
-    // Argumento: tipo=Argumento, valor=texto
-    // Generando código para imprimir: texto:, texto
-
-    // fmt.Println
-    // Imprimir literal: texto:
-    mov x0, #1
-    adr x1, lit_21
-    mov x2, #6
-    mov x8, #64
-    svc #0
-    mov x0, #1
-    adr x1, space_22
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    // Imprimir string: texto
-    ldr x0, [sp, #48]
+    // Imprimir string: textoSinValor
+    ldr x0, [sp, #32]
     bl string_length
     mov x2, x0
     mov x0, #1
-    ldr x1, [sp, #48]
+    ldr x1, [sp, #32]
     mov x8, #64
     svc #0
     // Imprimir salto de línea
     mov x0, #1
-    adr x1, newline_22
+    adr x1, newline_18
     mov x2, #1
     mov x8, #64
     svc #0
@@ -296,42 +287,42 @@ _start:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=booleano:
-    // Argumento: tipo=Argumento, valor=booleano
-    // Generando código para imprimir: booleano:, booleano
+    // Argumento: tipo=Argumento, valor=booleanoSinValor:
+    // Argumento: tipo=Argumento, valor=booleanoSinValor
+    // Generando código para imprimir: booleanoSinValor:, booleanoSinValor
 
     // fmt.Println
-    // Imprimir literal: booleano:
+    // Imprimir literal: booleanoSinValor:
     mov x0, #1
-    adr x1, lit_24
-    mov x2, #9
+    adr x1, lit_20
+    mov x2, #17
     mov x8, #64
     svc #0
     mov x0, #1
-    adr x1, space_25
+    adr x1, space_21
     mov x2, #1
     mov x8, #64
     svc #0
-    // Imprimir booleano: booleano
-    ldr x0, [sp, #56]
+    // Imprimir booleano: booleanoSinValor
+    ldr x0, [sp, #40]
     cmp x0, #0
-    beq print_false_27
+    beq print_false_23
     mov x0, #1
-    adr x1, true_str_26
+    adr x1, true_str_22
     mov x2, #4
     mov x8, #64
     svc #0
-    b end_print_bool_27
-print_false_27:
+    b end_print_bool_23
+print_false_23:
     mov x0, #1
-    adr x1, false_str_27
+    adr x1, false_str_23
     mov x2, #5
     mov x8, #64
     svc #0
-end_print_bool_27:
+end_print_bool_23:
     // Imprimir salto de línea
     mov x0, #1
-    adr x1, newline_27
+    adr x1, newline_23
     mov x2, #1
     mov x8, #64
     svc #0
@@ -339,35 +330,19 @@ end_print_bool_27:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=caracter:
-    // Argumento: tipo=Argumento, valor=caracter
-    // Generando código para imprimir: caracter:, caracter
+    // Argumento: tipo=Argumento, valor=\n==== Declaración con inferencia de tipo ====
+    // Generando código para imprimir: \n==== Declaración con inferencia de tipo ====
 
     // fmt.Println
-    // Imprimir literal: caracter:
+    // Imprimir literal: \n\=\=\=\= Declaración con inferencia de tipo \=\=\=\=
     mov x0, #1
-    adr x1, lit_29
-    mov x2, #9
+    adr x1, lit_25
+    mov x2, #53
     mov x8, #64
     svc #0
-    mov x0, #1
-    adr x1, space_30
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    // Imprimir rune: caracter
-    mov x0, #1
-    sub sp, sp, #1
-    ldr w1, [sp, #64]
-    strb w1, [sp]
-    mov x1, sp
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    add sp, sp, #1
     // Imprimir salto de línea
     mov x0, #1
-    adr x1, newline_30
+    adr x1, newline_25
     mov x2, #1
     mov x8, #64
     svc #0
@@ -375,19 +350,520 @@ end_print_bool_27:
     // Procesando nodo tipo: fmt.Println
 
     // fmt.Println detectado
-    // Argumento: tipo=Argumento, valor=
-    // Generando código para imprimir: 
+    // Argumento: tipo=Argumento, valor=enteroInferido:
+    // Argumento: tipo=Argumento, valor=enteroInferido
+    // Generando código para imprimir: enteroInferido:, enteroInferido
 
     // fmt.Println
-    // Imprimir literal: 
+    // Imprimir literal: enteroInferido:
     mov x0, #1
-    adr x1, lit_32
-    mov x2, #0
+    adr x1, lit_27
+    mov x2, #15
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_28
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir entero: enteroInferido
+    ldr x0, [sp, #48]
+    adr x1, int_buffer_28
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_28
     mov x8, #64
     svc #0
     // Imprimir salto de línea
     mov x0, #1
-    adr x1, newline_32
+    adr x1, newline_29
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=decimalInferido:
+    // Argumento: tipo=Argumento, valor=decimalInferido
+    // Generando código para imprimir: decimalInferido:, decimalInferido
+
+    // fmt.Println
+    // Imprimir literal: decimalInferido:
+    mov x0, #1
+    adr x1, lit_31
+    mov x2, #16
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_32
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir flotante: decimalInferido
+    ldr d0, [sp, #56]
+    adr x0, float_buffer_32
+    bl float_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, float_buffer_32
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_33
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=textoInferido:
+    // Argumento: tipo=Argumento, valor=textoInferido
+    // Generando código para imprimir: textoInferido:, textoInferido
+
+    // fmt.Println
+    // Imprimir literal: textoInferido:
+    mov x0, #1
+    adr x1, lit_35
+    mov x2, #14
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_36
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir string: textoInferido
+    ldr x0, [sp, #64]
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #64]
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_36
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=booleanoInferido:
+    // Argumento: tipo=Argumento, valor=booleanoInferido
+    // Generando código para imprimir: booleanoInferido:, booleanoInferido
+
+    // fmt.Println
+    // Imprimir literal: booleanoInferido:
+    mov x0, #1
+    adr x1, lit_38
+    mov x2, #17
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_39
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir booleano: booleanoInferido
+    ldr x0, [sp, #72]
+    cmp x0, #0
+    beq print_false_41
+    mov x0, #1
+    adr x1, true_str_40
+    mov x2, #4
+    mov x8, #64
+    svc #0
+    b end_print_bool_41
+print_false_41:
+    mov x0, #1
+    adr x1, false_str_41
+    mov x2, #5
+    mov x8, #64
+    svc #0
+end_print_bool_41:
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_41
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=\n==== Asignación de variables ====
+    // Generando código para imprimir: \n==== Asignación de variables ====
+
+    // fmt.Println
+    // Imprimir literal: \n\=\=\=\= Asignación de variables \=\=\=\=
+    mov x0, #1
+    adr x1, lit_43
+    mov x2, #42
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_43
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=Después de asignación simple:
+    // Generando código para imprimir: Después de asignación simple:
+
+    // fmt.Println
+    // Imprimir literal: Después de asignación simple:
+    mov x0, #1
+    adr x1, lit_45
+    mov x2, #29
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_45
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=enteroInferido:
+    // Argumento: tipo=Argumento, valor=enteroInferido
+    // Generando código para imprimir: enteroInferido:, enteroInferido
+
+    // fmt.Println
+    // Imprimir literal: enteroInferido:
+    mov x0, #1
+    adr x1, lit_47
+    mov x2, #15
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_48
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir entero: enteroInferido
+    ldr x0, [sp, #48]
+    adr x1, int_buffer_48
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_48
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_49
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=decimalInferido:
+    // Argumento: tipo=Argumento, valor=decimalInferido
+    // Generando código para imprimir: decimalInferido:, decimalInferido
+
+    // fmt.Println
+    // Imprimir literal: decimalInferido:
+    mov x0, #1
+    adr x1, lit_51
+    mov x2, #16
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_52
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir flotante: decimalInferido
+    ldr d0, [sp, #56]
+    adr x0, float_buffer_52
+    bl float_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, float_buffer_52
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_53
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=textoInferido:
+    // Argumento: tipo=Argumento, valor=textoInferido
+    // Generando código para imprimir: textoInferido:, textoInferido
+
+    // fmt.Println
+    // Imprimir literal: textoInferido:
+    mov x0, #1
+    adr x1, lit_55
+    mov x2, #14
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_56
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir string: textoInferido
+    ldr x0, [sp, #64]
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #64]
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_56
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=booleanoInferido:
+    // Argumento: tipo=Argumento, valor=booleanoInferido
+    // Generando código para imprimir: booleanoInferido:, booleanoInferido
+
+    // fmt.Println
+    // Imprimir literal: booleanoInferido:
+    mov x0, #1
+    adr x1, lit_58
+    mov x2, #17
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_59
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir booleano: booleanoInferido
+    ldr x0, [sp, #72]
+    cmp x0, #0
+    beq print_false_61
+    mov x0, #1
+    adr x1, true_str_60
+    mov x2, #4
+    mov x8, #64
+    svc #0
+    b end_print_bool_61
+print_false_61:
+    mov x0, #1
+    adr x1, false_str_61
+    mov x2, #5
+    mov x8, #64
+    svc #0
+end_print_bool_61:
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_61
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=\n==== Operaciones con variables ====
+    // Generando código para imprimir: \n==== Operaciones con variables ====
+
+    // fmt.Println
+    // Imprimir literal: \n\=\=\=\= Operaciones con variables \=\=\=\=
+    mov x0, #1
+    adr x1, lit_63
+    mov x2, #44
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_63
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=Después de operaciones:
+    // Generando código para imprimir: Después de operaciones:
+
+    // fmt.Println
+    // Imprimir literal: Después de operaciones:
+    mov x0, #1
+    adr x1, lit_65
+    mov x2, #23
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_65
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=enteroInferido + 50:
+    // Argumento: tipo=Argumento, valor=enteroInferido
+    // Generando código para imprimir: enteroInferido + 50:, enteroInferido
+
+    // fmt.Println
+    // Imprimir literal: enteroInferido + 50:
+    mov x0, #1
+    adr x1, lit_67
+    mov x2, #20
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_68
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir entero: enteroInferido
+    ldr x0, [sp, #48]
+    adr x1, int_buffer_68
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_68
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_69
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=decimalInferido * 2:
+    // Argumento: tipo=Argumento, valor=decimalInferido
+    // Generando código para imprimir: decimalInferido * 2:, decimalInferido
+
+    // fmt.Println
+    // Imprimir literal: decimalInferido * 2:
+    mov x0, #1
+    adr x1, lit_71
+    mov x2, #20
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_72
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir flotante: decimalInferido
+    ldr d0, [sp, #56]
+    adr x0, float_buffer_72
+    bl float_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, float_buffer_72
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_73
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=textoInferido + '!':
+    // Argumento: tipo=Argumento, valor=textoInferido
+    // Generando código para imprimir: textoInferido + '!':, textoInferido
+
+    // fmt.Println
+    // Imprimir literal: textoInferido + '!':
+    mov x0, #1
+    adr x1, lit_75
+    mov x2, #20
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_76
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir string: textoInferido
+    ldr x0, [sp, #64]
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #64]
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_76
+    mov x2, #1
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo tipo: fmt.Println
+
+    // fmt.Println detectado
+    // Argumento: tipo=Argumento, valor=!booleanoInferido:
+    // Argumento: tipo=Argumento, valor=booleanoInferido
+    // Generando código para imprimir: !booleanoInferido:, booleanoInferido
+
+    // fmt.Println
+    // Imprimir literal: !booleanoInferido:
+    mov x0, #1
+    adr x1, lit_78
+    mov x2, #18
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_79
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir booleano: booleanoInferido
+    ldr x0, [sp, #72]
+    cmp x0, #0
+    beq print_false_81
+    mov x0, #1
+    adr x1, true_str_80
+    mov x2, #4
+    mov x8, #64
+    svc #0
+    b end_print_bool_81
+print_false_81:
+    mov x0, #1
+    adr x1, false_str_81
+    mov x2, #5
+    mov x8, #64
+    svc #0
+end_print_bool_81:
+    // Imprimir salto de línea
+    mov x0, #1
+    adr x1, newline_81
     mov x2, #1
     mov x8, #64
     svc #0

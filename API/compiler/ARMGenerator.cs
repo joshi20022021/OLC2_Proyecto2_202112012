@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-
+using System.Text.RegularExpressions;
 namespace API.compiler.ARM64
 {
     public class ARM64Generator
@@ -12,6 +12,9 @@ namespace API.compiler.ARM64
         private Dictionary<string, string> _variables = new Dictionary<string, string>();
         private List<string> _dataSection = new List<string>();
 
+        private string Sanitize(string s) =>
+        s?.Replace("\r", "\\r")
+        .Replace("\n", "\\n");
         public ARM64Generator()
         {
             _code.AppendLine("// ARM64 Assembly");
@@ -65,9 +68,11 @@ namespace API.compiler.ARM64
                         List<string> varNames = new List<string>();
                         
                         // Debug - imprimir todos los argumentos
+                        // Debug - imprimir todos los argumentos
                         foreach (var arg in args)
                         {
-                            _code.AppendLine($"    // Argumento: tipo={arg.Tipo}, valor={arg.Valor}");
+                            // Usar Sanitize para evitar que los saltos de línea rompan los comentarios
+                            _code.AppendLine($"    // Argumento: tipo={arg.Tipo}, valor={Sanitize(arg.Valor?.ToString())}");
                             
                             // Si es un literal directo
                             if (arg.Valor != null)
@@ -84,7 +89,7 @@ namespace API.compiler.ARM64
                                     varNames.Add(valor);
                                 }
                             }
-                            
+                        
                             // Procesar hijos recursivamente
                             if (arg.Hijos != null && arg.Hijos.Count > 0)
                             {
@@ -95,7 +100,7 @@ namespace API.compiler.ARM64
                         // Generar código para imprimir estas variables
                         if (varNames.Count > 0)
                         {
-                            _code.AppendLine($"    // Generando código para imprimir: {string.Join(", ", varNames)}");
+                            _code.AppendLine($"    // Generando código para imprimir: {Sanitize(string.Join(", ", varNames))}");
                             GeneratePrintln(varNames, tablaSimbolos);
                         }
                     }
@@ -105,6 +110,342 @@ namespace API.compiler.ARM64
                         GenerateNewLine();
                     }
                 }
+                // Manejar asignaciones
+                else if (nodo.Tipo == "Asignacion")
+                {
+                    _code.AppendLine($"\n    // Debug: Procesando asignación: {nodo.Hijos[0]?.Valor} = {nodo.Hijos[1]?.Valor}");
+                    string destino = nodo.Hijos?[0]?.Valor?.ToString();
+                    
+                    if (destino != null && _variables.ContainsKey(destino))
+                    {
+                        var variable = tablaSimbolos.FirstOrDefault(s => s.Nombre == destino);
+                        if (variable != null)
+                        {
+                            string destinoMem = _variables[destino];
+                            
+                            // Asignación simple: var = valor
+                            if (nodo.Hijos.Count == 2 && nodo.Hijos[1]?.Valor != null)
+                            {
+                                string valor = nodo.Hijos[1].Valor.ToString();
+                                GenerateSimpleAssignment(destino, variable.TipoDato, valor, destinoMem);
+                            }
+                            // Asignación con operación: var = expr
+                            else if (nodo.Hijos.Count == 2 && nodo.Hijos[1]?.Tipo == "Expresion")
+                            {
+                                ProcessExpression(destino, variable.TipoDato, nodo.Hijos[1], destinoMem);
+                            }
+                        }
+                    }
+                }
+                // Manejar operaciones booleanas (negaciones)
+                else if (nodo.Tipo == "Negacion")
+                {
+                    string destino = nodo.Hijos?[0]?.Valor?.ToString();
+                    
+                    if (destino != null && _variables.ContainsKey(destino))
+                    {
+                        var variable = tablaSimbolos.FirstOrDefault(s => s.Nombre == destino);
+                        if (variable != null && variable.TipoDato == "bool")
+                        {
+                            string destinoMem = _variables[destino];
+                            GenerateBoolNegation(destinoMem);
+                        }
+                    }
+                }
+                // Manejar operaciones aritméticas o de cadenas
+                else if (nodo.Tipo == "Operacion")
+                {
+                    string destino = nodo.Hijos?[0]?.Valor?.ToString();
+                    
+                    if (destino != null && _variables.ContainsKey(destino))
+                    {
+                        var variable = tablaSimbolos.FirstOrDefault(s => s.Nombre == destino);
+                        if (variable != null)
+                        {
+                            string destinoMem = _variables[destino];
+                            string operador = nodo.Valor?.ToString();
+                            string operando1 = nodo.Hijos?[1]?.Valor?.ToString();
+                            string operando2 = nodo.Hijos?[2]?.Valor?.ToString();
+                            
+                            GenerateOperation(destino, variable.TipoDato, operador, operando1, operando2, destinoMem);
+                        }
+                    }
+                }
+                
+                // Procesar recursivamente los hijos si hay más instrucciones anidadas
+                if (nodo.Hijos != null && nodo.Hijos.Count > 0 && nodo.Tipo != "fmt.Println" 
+                    && nodo.Tipo != "Asignacion" && nodo.Tipo != "Negacion" && nodo.Tipo != "Operacion")
+                {
+                    ProcessInstructions(nodo.Hijos, tablaSimbolos);
+                }
+            }
+        }
+
+        // Métodos auxiliares nuevos
+
+        private void GenerateSimpleAssignment(string destino, string tipo, string valor, string destinoMem)
+        {
+            _code.AppendLine($"    // Asignación simple: {destino} = {valor}");
+            
+            switch (tipo)
+            {
+                case "int":
+                    // Si el valor es una variable, cargar su valor
+                    if (_variables.TryGetValue(valor, out string intMem))
+                    {
+                        _code.AppendLine($"    ldr x0, {intMem}");
+                        _code.AppendLine($"    str x0, {destinoMem}");
+                    }
+                    // Si es un literal numérico
+                    else if (int.TryParse(valor, out _))
+                    {
+                        _code.AppendLine($"    mov x0, #{valor}");
+                        _code.AppendLine($"    str x0, {destinoMem}");
+                    }
+                    break;
+                    
+                case "float64":
+                    // Si el valor es una variable, cargar su valor
+                    if (_variables.TryGetValue(valor, out string floatMem))
+                    {
+                        _code.AppendLine($"    ldr d0, {floatMem}");
+                        _code.AppendLine($"    str d0, {destinoMem}");
+                    }
+                    // Si es un literal de punto flotante
+                    else if (double.TryParse(valor, out double floatVal))
+                    {
+                        string literalLabel = $"float_{_labelCounter++}";
+                        _dataSection.Add($"{literalLabel}: .double {valor}");
+                        _code.AppendLine($"    adr x0, {literalLabel}");
+                        _code.AppendLine($"    ldr d0, [x0]");
+                        _code.AppendLine($"    str d0, {destinoMem}");
+                    }
+                    break;
+                    
+                case "string":
+                    // Si el valor es una variable, cargar su dirección
+                    if (_variables.TryGetValue(valor, out string strMem))
+                    {
+                        _code.AppendLine($"    ldr x0, {strMem}");
+                        _code.AppendLine($"    str x0, {destinoMem}");
+                    }
+                    // Si es un literal de string
+                    else if ((valor.StartsWith("\"") && valor.EndsWith("\"")) || !valor.Contains("\""))
+                    {
+                        string cleanText = valor;
+                        if (valor.StartsWith("\"") && valor.EndsWith("\""))
+                        {
+                            cleanText = valor.Substring(1, valor.Length - 2); // Quitar comillas
+                        }
+                        
+                        // AÑADIR ESTA SECCIÓN: Escapar caracteres especiales
+                        cleanText = cleanText
+                            .Replace("=", "\\=")     // Escapar símbolo igual
+                            .Replace("\n", "\\n")    // Saltos de línea
+                            .Replace("\r", "\\r")    // Retorno de carro
+                            .Replace("\t", "\\t")    // Tabulación
+                            .Replace("\"", "\\\"");  // Comillas dobles
+                        
+                        string stringLabel = $"str_{_labelCounter++}";
+                        _dataSection.Add($"{stringLabel}: .asciz \"{cleanText}\"");
+                        _code.AppendLine($"    adr x0, {stringLabel}");
+                        _code.AppendLine($"    str x0, {destinoMem}");
+                    }
+                    break;
+                                    
+                case "bool":
+                    // Si el valor es una variable, cargar su valor
+                    if (_variables.TryGetValue(valor, out string boolMem))
+                    {
+                        _code.AppendLine($"    ldr x0, {boolMem}");
+                        _code.AppendLine($"    str x0, {destinoMem}");
+                    }
+                    // Si es true/false literal
+                    else
+                    {
+                        bool boolValue = valor.ToLower() == "true";
+                        _code.AppendLine($"    mov x0, #{(boolValue ? "1" : "0")}");
+                        _code.AppendLine($"    str x0, {destinoMem}");
+                    }
+                    break;
+            }
+        }
+
+        private void ProcessExpression(string destino, string tipo, NodoAST expresion, string destinoMem)
+        {
+            // Aquí implementar la lógica para evaluar expresiones complejas
+            // Para este ejemplo básico, solo manejamos variables o literales simples
+            if (expresion.Valor != null)
+            {
+                GenerateSimpleAssignment(destino, tipo, expresion.Valor.ToString(), destinoMem);
+            }
+        }
+
+        private void GenerateBoolNegation(string destinoMem)
+        {
+            _code.AppendLine($"    // Negación booleana");
+            _code.AppendLine($"    ldr x0, {destinoMem}");
+            _code.AppendLine($"    eor x0, x0, #1");  // XOR con 1 para invertir (0->1, 1->0)
+            _code.AppendLine($"    str x0, {destinoMem}");
+        }
+
+        private void GenerateOperation(string destino, string tipo, string operador, string operando1, string operando2, string destinoMem)
+        {
+            _code.AppendLine($"    // Operación: {destino} = {operando1} {operador} {operando2}");
+            
+            switch (tipo)
+            {
+                case "int":
+                    GenerateIntOperation(operando1, operando2, operador, destinoMem);
+                    break;
+                    
+                case "float64":
+                    GenerateFloatOperation(operando1, operando2, operador, destinoMem);
+                    break;
+                    
+                case "string":
+                    if (operador == "+") // Concatenación
+                    {
+                        GenerateStringConcatenation(operando1, operando2, destinoMem);
+                    }
+                    break;
+                    
+                case "bool":
+                    if (operador == "!")  // Negación
+                    {
+                        GenerateBoolNegation(destinoMem);
+                    }
+                    break;
+            }
+        }
+
+        private void GenerateIntOperation(string operando1, string operando2, string operador, string destinoMem)
+        {
+            // Cargar operando1 en x0
+            if (_variables.TryGetValue(operando1, out string op1Mem))
+            {
+                _code.AppendLine($"    ldr x0, {op1Mem}");
+            }
+            else if (int.TryParse(operando1, out _))
+            {
+                _code.AppendLine($"    mov x0, #{operando1}");
+            }
+            
+            // Cargar operando2 en x1
+            if (_variables.TryGetValue(operando2, out string op2Mem))
+            {
+                _code.AppendLine($"    ldr x1, {op2Mem}");
+            }
+            else if (int.TryParse(operando2, out _))
+            {
+                _code.AppendLine($"    mov x1, #{operando2}");
+            }
+            
+            // Realizar operación
+            switch (operador)
+            {
+                case "+":
+                    _code.AppendLine($"    add x0, x0, x1");
+                    break;
+                case "-":
+                    _code.AppendLine($"    sub x0, x0, x1");
+                    break;
+                case "*":
+                    _code.AppendLine($"    mul x0, x0, x1");
+                    break;
+                case "/":
+                    _code.AppendLine($"    udiv x0, x0, x1");
+                    break;
+            }
+            
+            // Guardar resultado
+            _code.AppendLine($"    str x0, {destinoMem}");
+        }
+
+        private void GenerateFloatOperation(string operando1, string operando2, string operador, string destinoMem)
+        {
+            // Cargar operando1 en d0
+            if (_variables.TryGetValue(operando1, out string op1Mem))
+            {
+                _code.AppendLine($"    ldr d0, {op1Mem}");
+            }
+            else if (double.TryParse(operando1, out double floatVal1))
+            {
+                string litLabel1 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel1}: .double {operando1}");
+                _code.AppendLine($"    adr x0, {litLabel1}");
+                _code.AppendLine($"    ldr d0, [x0]");
+            }
+            
+            // Cargar operando2 en d1
+            if (_variables.TryGetValue(operando2, out string op2Mem))
+            {
+                _code.AppendLine($"    ldr d1, {op2Mem}");
+            }
+            else if (double.TryParse(operando2, out double floatVal2))
+            {
+                string litLabel2 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel2}: .double {operando2}");
+                _code.AppendLine($"    adr x0, {litLabel2}");
+                _code.AppendLine($"    ldr d1, [x0]");
+            }
+            
+            // Realizar operación
+            switch (operador)
+            {
+                case "+":
+                    _code.AppendLine($"    fadd d0, d0, d1");
+                    break;
+                case "-":
+                    _code.AppendLine($"    fsub d0, d0, d1");
+                    break;
+                case "*":
+                    _code.AppendLine($"    fmul d0, d0, d1");
+                    break;
+                case "/":
+                    _code.AppendLine($"    fdiv d0, d0, d1");
+                    break;
+            }
+            
+            // Guardar resultado
+            _code.AppendLine($"    str d0, {destinoMem}");
+        }
+
+        private void GenerateStringConcatenation(string operando1, string operando2, string destinoMem)
+        {
+            // NOTA: Esta es una implementación muy básica y limitada.
+            // Para una implementación real, necesitarías asignar memoria dinámicamente
+            // para la nueva cadena concatenada.
+            
+            _code.AppendLine($"    // ADVERTENCIA: Concatenación de cadenas no implementada completamente");
+            _code.AppendLine($"    // Se asigna solo la primera cadena como ejemplo");
+            
+            // Como una solución básica, simplemente cargamos la primera cadena
+            if (_variables.TryGetValue(operando1, out string strMem))
+            {
+                _code.AppendLine($"    ldr x0, {strMem}");
+                _code.AppendLine($"    str x0, {destinoMem}");
+            }
+            else
+            {
+                string cleanText = operando1;
+                if (operando1.StartsWith("\"") && operando1.EndsWith("\""))
+                {
+                    cleanText = operando1.Substring(1, operando1.Length - 2);
+                }
+                
+                // Escapar caracteres especiales para ensamblador
+                cleanText = cleanText
+                    .Replace("=", "\\=")     // Escapar símbolo igual (CRÍTICO)
+                    .Replace("\n", "\\n")    // Saltos de línea
+                    .Replace("\r", "\\r")    // Retorno de carro
+                    .Replace("\t", "\\t")    // Tabulación
+                    .Replace("\"", "\\\"");  // Comillas dobles
+                
+                string stringLabel = $"str_{_labelCounter++}";
+                _dataSection.Add($"{stringLabel}: .asciz \"{cleanText}\"");
+                _code.AppendLine($"    adr x0, {stringLabel}");
+                _code.AppendLine($"    str x0, {destinoMem}");
             }
         }
 
@@ -145,7 +486,7 @@ namespace API.compiler.ARM64
             {
                 int offset = GetVariableOffset(varName);
                 string offsetStr = offset.ToString();
-                string valorStr = simbolo.Valor != null ? simbolo.Valor.ToString() : "0";
+                string valorStr = simbolo.Valor != null ? simbolo.Valor.ToString() : "0"; // Valor por defecto: 0
 
                 _code.AppendLine($"    mov x9, #{valorStr}");
                 _code.AppendLine($"    str x9, [sp, #{offsetStr}]");
@@ -224,19 +565,20 @@ namespace API.compiler.ARM64
                 // Primero ver si es una variable conocida
                 if (!_variables.ContainsKey(varName))
                 {
-                // No es una variable - trata como literal de texto, con o sin comillas
-                string cleanText = varName;
-                if (varName.StartsWith("\"") && varName.EndsWith("\""))
-                {
-                    cleanText = varName.Substring(1, varName.Length - 2); // Quitar comillas
-                }
+                    // No es una variable - trata como literal de texto, con o sin comillas
+                    string cleanText = varName;
+                    if (varName.StartsWith("\"") && varName.EndsWith("\""))
+                    {
+                        cleanText = varName.Substring(1, varName.Length - 2); // Quitar comillas
+                    }
 
-                // Escapar adecuadamente los caracteres especiales para el ensamblador
-                cleanText = cleanText
-                    .Replace("\n", "\\n")     // Reemplazar saltos de línea
-                    .Replace("\r", "\\r")     // Retorno de carro
-                    .Replace("\t", "\\t")     // Tabulación
-                    .Replace("\"", "\\\"");   // Comillas dobles
+                    // Escapar adecuadamente los caracteres especiales para el ensamblador
+                    cleanText = cleanText
+                        .Replace("=", "\\=")     // Escapar símbolo igual (CRÍTICO para resolver el error)
+                        .Replace("\n", "\\n")     // Reemplazar saltos de línea
+                        .Replace("\r", "\\r")     // Retorno de carro
+                        .Replace("\t", "\\t")     // Tabulación
+                        .Replace("\"", "\\\"");   // Comillas dobles
 
                     string label = GenerateLabel("lit");
                     _dataSection.Add($"{label}: .asciz \"{cleanText}\"");
@@ -244,7 +586,9 @@ namespace API.compiler.ARM64
                     _code.AppendLine($"    // Imprimir literal: {cleanText}");
                     _code.AppendLine($"    mov x0, #1");
                     _code.AppendLine($"    adr x1, {label}");
-                    _code.AppendLine($"    mov x2, #{cleanText.Length}");
+                    int effectiveLength = Regex.Matches(cleanText, @"\\[nrt]").Count;
+                    int rawLength = cleanText.Length - effectiveLength;
+                    _code.AppendLine($"    mov x2, #{rawLength}");
                     _code.AppendLine($"    mov x8, #64");
                     _code.AppendLine($"    svc #0");
                     
@@ -598,12 +942,31 @@ namespace API.compiler.ARM64
                 fullCode.AppendLine(".data");
                 foreach (var dataLine in _dataSection)
                 {
-                    string formattedLine = dataLine.Replace(",", ".");
+                    // Escapar todos los caracteres = que no estén ya escapados
+                    string formattedLine = dataLine;
+                    if (formattedLine.Contains(": .asciz \"") && formattedLine.Contains("="))
+                    {
+                        int startIdx = formattedLine.IndexOf(": .asciz \"") + 10;
+                        int endIdx = formattedLine.LastIndexOf("\"");
+                        if (startIdx < endIdx)
+                        {
+                            string prefix = formattedLine.Substring(0, startIdx);
+                            string content = formattedLine.Substring(startIdx, endIdx - startIdx);
+                            string suffix = formattedLine.Substring(endIdx);
+                            
+                            // Escapar = que no estén precedidos por \
+                            content = Regex.Replace(content, "(?<!\\\\)=", "\\\\=");
+                            
+                            formattedLine = prefix + content + suffix;
+                        }
+                    }
+                    
+                    formattedLine = formattedLine.Replace(",", ".");
                     fullCode.AppendLine(formattedLine);
                 }
                 fullCode.AppendLine();
             }
-            
+                
             // Código principal completo 
             fullCode.Append(_code.ToString());
             
