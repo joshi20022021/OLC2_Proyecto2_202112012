@@ -684,7 +684,11 @@ namespace API.compiler
         public override object VisitIdentificador(LanguageParser.IdentificadorContext context)
         {
             var id = context.IDENTIFICADOR().GetText();
-            
+            if (id.StartsWith("\"") && id.EndsWith("\"")) {
+                Console.WriteLine($"DEBUG: Se está tratando un literal de cadena '{id}' como identificador");
+                // Procesar como cadena literal
+                return ProcesarCadenaLiteral(id);
+            }
             if (id.Contains(" "))
             {
                 Console.WriteLine($"DEBUG: Identificador contiene espacios: '{id}'");

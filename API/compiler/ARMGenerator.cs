@@ -166,6 +166,10 @@ namespace API.compiler.ARM64
                         }
                     }
                 }
+                else if (nodo.Tipo == "IfStatement")
+                {
+                    GenerateIfStatement(nodo, tablaSimbolos);
+                }
                 // Procesar hijos anidados, excepto los ya manejados
                 if (nodo.Hijos != null && nodo.Hijos.Count > 0 &&
                     nodo.Tipo != "fmt.Println" && nodo.Tipo != "Asignacion"
@@ -802,8 +806,271 @@ namespace API.compiler.ARM64
             
             _code.AppendLine($"end_print_bool_{labelId}:");
         }
-        
 
+        //metodo if else
+        private void GenerateIfStatement(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            _code.AppendLine("\n    // If Statement");
+            
+            // Obtener nodo de condición
+            var condNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Condicion");
+            string condExpr = condNodo?.Valor?.ToString() ?? "false";
+            
+            // Generar etiquetas únicas para saltos
+            string elseLabel = $"else_{_labelCounter}";
+            string endLabel = $"endif_{_labelCounter}";
+            _labelCounter++;
+            
+            // Evaluar condición
+            _code.AppendLine($"    // Evaluar condición: {condExpr}");
+            GenerateConditionCheck(condNodo, elseLabel);
+            
+            // Bloque 'then'
+            var bloqueIf = nodo.Hijos.FirstOrDefault(h => h.Tipo == "BloqueIf");
+            if (bloqueIf?.Hijos != null)
+            {
+                _code.AppendLine("    // Bloque if (then)");
+                ProcessInstructions(bloqueIf.Hijos, tablaSimbolos);
+            }
+            
+            // Saltar al final después del bloque 'then'
+            _code.AppendLine($"    b {endLabel}");
+            
+            // Bloque 'else'
+            _code.AppendLine($"{elseLabel}:");
+            var bloqueElse = nodo.Hijos.FirstOrDefault(h => h.Tipo == "BloqueElse");
+            if (bloqueElse?.Hijos != null)
+            {
+                _code.AppendLine("    // Bloque else");
+                ProcessInstructions(bloqueElse.Hijos, tablaSimbolos);
+            }
+            
+            // Etiqueta de fin del if
+            _code.AppendLine($"{endLabel}:");
+        }
+
+        private void GenerateConditionCheck(NodoAST condNodo, string falseLabel)
+        {
+            if (condNodo?.Hijos == null || condNodo.Hijos.Count == 0) 
+            {
+                _code.AppendLine($"    // Condición vacía, salto incondicional");
+                _code.AppendLine($"    b {falseLabel}");
+                return;
+            }
+            
+            // Extraer expresión
+            var expr = condNodo.Hijos[0];
+            
+            // Manejar operación de comparación de igualdad
+            if (expr.Tipo == "Operacion" && expr.Valor?.ToString() == "==")
+            {
+                _code.AppendLine($"    // Comparación de igualdad");
+                if (expr.Hijos != null && expr.Hijos.Count >= 2)
+                {
+                    var izq = expr.Hijos[0];
+                    var der = expr.Hijos[1];
+                    string izqVal = izq.Valor?.ToString();
+                    string derVal = der.Valor?.ToString();
+                    
+                    // Determinar el tipo de comparación
+                    bool esInt = int.TryParse(izqVal, out _) || int.TryParse(derVal, out _);
+                    bool esFloat = izqVal.Contains(".") || derVal.Contains(".");
+                    bool esBool = izqVal == "true" || izqVal == "false" || derVal == "true" || derVal == "false";
+                    bool esString = izqVal?.StartsWith("\"") == true || derVal?.StartsWith("\"") == true;
+                    
+                    if (esInt || esBool)
+                    {
+                        // Comparación entera o booleana
+                        GenerateIntComparison(izqVal, derVal, falseLabel);
+                    }
+                    else if (esFloat)
+                    {
+                        // Comparación de punto flotante
+                        GenerateFloatComparison(izqVal, derVal, falseLabel);
+                    }
+                    else if (esString)
+                    {
+                        // Comparación de cadenas
+                        GenerateStringComparison(izqVal, derVal, falseLabel);
+                    }
+                    else
+                    {
+                        // Variables cuyo tipo no se puede determinar estáticamente
+                        GenerateGenericComparison(izqVal, derVal, falseLabel);
+                    }
+                    return;
+                }
+            }
+            
+            // Código existente para otros tipos de condiciones
+            string exprValue = expr.Valor?.ToString() ?? "false";
+            
+            if (exprValue == "true")
+            {
+                _code.AppendLine($"    // Condición siempre verdadera, no se salta");
+                return;
+            }
+            else if (exprValue == "false")
+            {
+                _code.AppendLine($"    // Condición siempre falsa, salto incondicional");
+                _code.AppendLine($"    b {falseLabel}");
+                return;
+            }
+            
+            // Variable booleana
+            if (_variables.TryGetValue(exprValue, out string memLoc))
+            {
+                _code.AppendLine($"    // Cargar variable booleana {exprValue}");
+                _code.AppendLine($"    ldr x0, {memLoc}");
+                _code.AppendLine($"    cmp x0, #0");
+                _code.AppendLine($"    beq {falseLabel}");
+            }
+            else
+            {
+                _code.AppendLine($"    // ADVERTENCIA: No se pudo evaluar condición '{exprValue}'");
+                _code.AppendLine($"    mov x0, #0");
+                _code.AppendLine($"    cmp x0, #0");
+                _code.AppendLine($"    beq {falseLabel}");
+            }
+        }
+
+        // Método auxiliar para comparación de enteros o booleanos
+        private void GenerateIntComparison(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else
+            {
+                int valor = izqVal == "true" ? 1 : (izqVal == "false" ? 0 : int.Parse(izqVal));
+                _code.AppendLine($"    mov x0, #{valor}");
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else
+            {
+                int valor = derVal == "true" ? 1 : (derVal == "false" ? 0 : int.Parse(derVal));
+                _code.AppendLine($"    mov x1, #{valor}");
+            }
+            
+            // Comparar y saltar si no son iguales
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    bne {falseLabel}");
+        }
+
+        // Método auxiliar para comparación de flotantes
+        private void GenerateFloatComparison(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr d0, {izqMem}");
+            }
+            else if (double.TryParse(izqVal, out double floatVal1))
+            {
+                string litLabel1 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel1}: .double {izqVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel1}");
+                _code.AppendLine($"    ldr d0, [x0]");
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr d1, {derMem}");
+            }
+            else if (double.TryParse(derVal, out double floatVal2))
+            {
+                string litLabel2 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel2}: .double {derVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel2}");
+                _code.AppendLine($"    ldr d1, [x0]");
+            }
+            
+            // Comparar flotantes y saltar si no son iguales
+            _code.AppendLine($"    fcmp d0, d1");
+            _code.AppendLine($"    bne {falseLabel}");
+        }
+
+        private void GenerateStringComparison(string izqVal, string derVal, string falseLabel)
+        {
+            _code.AppendLine($"    // Comparación de cadenas: {izqVal} == {derVal}");
+            
+            // Cargar dirección de la primera cadena
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else if (izqVal?.StartsWith("\"") == true && izqVal?.EndsWith("\"") == true)
+            {
+                // Es un literal de cadena
+                string cleanText = izqVal.Substring(1, izqVal.Length - 2);
+                string litLabel = $"strlit_{_labelCounter++}";
+                _dataSection.Add($"{litLabel}: .asciz \"{cleanText}\"");
+                _code.AppendLine($"    adr x0, {litLabel}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x0, #0  // NULL si no hay valor");
+            }
+            
+            // Cargar dirección de la segunda cadena
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else if (derVal?.StartsWith("\"") == true && derVal?.EndsWith("\"") == true)
+            {
+                // Es un literal de cadena
+                string cleanText = derVal.Substring(1, derVal.Length - 2);
+                string litLabel = $"strlit_{_labelCounter++}";
+                _dataSection.Add($"{litLabel}: .asciz \"{cleanText}\"");
+                _code.AppendLine($"    adr x1, {litLabel}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x1, #0  // NULL si no hay valor");
+            }
+            
+            // Llamar a función auxiliar para comparar cadenas
+            _code.AppendLine($"    bl string_compare");
+            
+            // Si el resultado es 0, las cadenas son iguales
+            _code.AppendLine($"    cmp x0, #0");
+            _code.AppendLine($"    bne {falseLabel}");
+        }
+
+        // Método auxiliar para comparación genérica (variables cuyo tipo no se conoce estáticamente)
+        private void GenerateGenericComparison(string izqVal, string derVal, string falseLabel)
+        {
+            // Aproximación simplificada - asumimos que son enteros
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x0, #0  // Valor por defecto");
+            }
+            
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x1, #0  // Valor por defecto");
+            }
+            
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    bne {falseLabel}");
+        }
         private void GeneratePrintRune(string memoryLocation, string varName)
         {
             _code.AppendLine($"    // Imprimir rune: {varName}");
@@ -941,6 +1208,33 @@ namespace API.compiler.ARM64
             sb.AppendLine("    mov x0, x11       // Retornar longitud");
             sb.AppendLine("    ret");
             
+            // Función para comparar cadenas (añadir en GenerateHelperFunctions)
+            sb.AppendLine("\nstring_compare:");
+            sb.AppendLine("    // x0 = primera cadena, x1 = segunda cadena");
+            sb.AppendLine("    // Devuelve 0 si son iguales, no-0 si son diferentes");
+            sb.AppendLine("    // Verificar si alguna es NULL");
+            sb.AppendLine("    cmp x0, #0");
+            sb.AppendLine("    beq check_second_null");
+            sb.AppendLine("    cmp x1, #0");
+            sb.AppendLine("    beq strings_not_equal");
+            sb.AppendLine("    // Ambas no son NULL, comparar");
+            sb.AppendLine("compare_loop:");
+            sb.AppendLine("    ldrb w2, [x0], #1");
+            sb.AppendLine("    ldrb w3, [x1], #1");
+            sb.AppendLine("    cmp w2, w3");
+            sb.AppendLine("    bne strings_not_equal");
+            sb.AppendLine("    cbz w2, strings_equal"); // Si llegamos al terminador nulo y son iguales
+            sb.AppendLine("    b compare_loop");
+            sb.AppendLine("check_second_null:");
+            sb.AppendLine("    cmp x1, #0");
+            sb.AppendLine("    beq strings_equal");     // Si ambas son NULL son iguales
+            sb.AppendLine("strings_not_equal:");
+            sb.AppendLine("    mov x0, #1");           // No son iguales
+            sb.AppendLine("    ret");
+            sb.AppendLine("strings_equal:");
+            sb.AppendLine("    mov x0, #0");           // Son iguales
+            sb.AppendLine("    ret");
+
             // Función para obtener la longitud de una cadena
             // Función para obtener la longitud de una cadena
             sb.AppendLine("\nstring_length:");

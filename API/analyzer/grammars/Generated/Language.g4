@@ -39,7 +39,8 @@ STRCONV_PARSEFLOAT: 'strconv.ParseFloat';
 REFLECT_TYPEOF    : 'reflect.TypeOf';
 
 //sintaxis y tipos de datos
-LIT_STRING : '"' (~["])* '"';  
+LIT_STRING: '"' (ESCAPE_SEQUENCE | ~["\\\r\n])* '"';
+fragment ESCAPE_SEQUENCE: '\\' [btnfr"'\\];
 LIT_RUNE   : '\'' ~['\n\r] '\''; 
 LIT_FLOAT  : [0-9]+ '.' [0-9]+;
 LIT_ENTERO : [0-9]+;

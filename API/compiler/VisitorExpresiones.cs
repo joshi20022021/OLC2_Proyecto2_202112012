@@ -253,14 +253,44 @@ namespace API.compiler
         // visitor para una comparación de igualdad
         public override object VisitComparacionIgual(LanguageParser.ComparacionIgualContext context)
         {
+            // Primero, detectar si ambos operandos son literales de cadena directamente desde el texto
+            string izqText = context.expresion(0).GetText();
+            string derText = context.expresion(1).GetText();
+            
+            bool esIzqStringLiteral = izqText.StartsWith("\"") && izqText.EndsWith("\"");
+            bool esDerStringLiteral = derText.StartsWith("\"") && derText.EndsWith("\"");
+            
+            // Si ambos son literales de cadena, comparar directamente
+            if (esIzqStringLiteral && esDerStringLiteral)
+            {
+                // Eliminar comillas y procesar secuencias de escape
+                string izqCadena = izqText.Substring(1, izqText.Length - 2);
+                string derCadena = derText.Substring(1, derText.Length - 2);
+                
+                // Procesar escapes como \n, \t, etc.
+                izqCadena = izqCadena.Replace("\\n", "\n")
+                                    .Replace("\\t", "\t")
+                                    .Replace("\\\"", "\"")
+                                    .Replace("\\'", "'");
+                
+                derCadena = derCadena.Replace("\\n", "\n")
+                                    .Replace("\\t", "\t")
+                                    .Replace("\\\"", "\"")
+                                    .Replace("\\'", "'");
+                                    
+                Console.WriteLine($"DEBUG: Comparando literales de cadena: '{izqCadena}' == '{derCadena}'");
+                return izqCadena == derCadena;
+            }
+            
+            // Si no son ambos literales de cadena, seguir con la lógica normal
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
-
+            
             // Caso especial: comparación con nil
             if (izq == null || der == null)
                 return izq == der;
             
-            // Caso especial: comparación de cadenas literales
+            // Caso especial: comparación de cadenas
             if (izq is string strIzq && der is string strDer)
                 return strIzq == strDer;
 
@@ -274,7 +304,6 @@ namespace API.compiler
             // Caso general
             return izq.Equals(der);
         }
-
         public override object VisitComparacionDiferente(LanguageParser.ComparacionDiferenteContext context)
         {
             var izq = Visit(context.expresion(0));

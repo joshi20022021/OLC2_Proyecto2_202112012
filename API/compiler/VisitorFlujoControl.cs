@@ -14,8 +14,39 @@ namespace API.compiler
         public override object VisitIfElse(LanguageParser.IfElseContext ctx)
         {
             // Evaluar la condición principal
+    // Evaluar la condición principal
             object cond = Visit(ctx.expresion());
             
+            // Crear nodo AST para la estructura if/else
+            var nodoIf = new NodoAST {
+                Tipo = "IfStatement",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { 
+                        Tipo = "Condicion", 
+                        Valor = ctx.expresion().GetText(),
+                        Hijos = new List<NodoAST> { 
+                            // AQUÍ ESTÁ EL ERROR - Cambia esto:
+                            // new NodoAST { Tipo = "Expresion", Valor = cond }
+                            // Por esto:
+                            new NodoAST { Tipo = "Expresion", Valor = cond?.ToString() }
+                        }
+                    }
+                }
+            };
+            // Bloque if (then)
+            var bloqueIfNodo = new NodoAST { Tipo = "BloqueIf", Hijos = new List<NodoAST>() };
+            nodoIf.Hijos.Add(bloqueIfNodo);
+            
+            // Bloque else (si existe)
+            if (ctx.bloque().Length > 1 || ctx.ifStmt() != null) {
+                var bloqueElseNodo = new NodoAST { Tipo = "BloqueElse", Hijos = new List<NodoAST>() };
+                nodoIf.Hijos.Add(bloqueElseNodo);
+            }
+            
+            // Añadir a la lista de nodos AST
+            nodosAST.Add(nodoIf);
+            
+            // Lógica de ejecución (tu código existente)
             if (cond is bool boolCond)
             {
                 // Caso 1: La condición principal es verdadera
@@ -52,7 +83,6 @@ namespace API.compiler
             
             return null;
         }
-
         //switch case        
         public override object VisitSwitch(LanguageParser.SwitchContext context)
         {
