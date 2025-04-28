@@ -861,48 +861,104 @@ namespace API.compiler.ARM64
             // Extraer expresión
             var expr = condNodo.Hijos[0];
             
-            // Manejar operación de comparación de igualdad
-            if (expr.Tipo == "Operacion" && expr.Valor?.ToString() == "==")
+            // Manejar diferentes operaciones de comparación
+            if (expr.Tipo == "Operacion")
             {
-                _code.AppendLine($"    // Comparación de igualdad");
-                if (expr.Hijos != null && expr.Hijos.Count >= 2)
+                string operador = expr.Valor?.ToString();
+                if (expr.Hijos != null && expr.Hijos.Count >= 2 && !string.IsNullOrEmpty(operador))
                 {
                     var izq = expr.Hijos[0];
                     var der = expr.Hijos[1];
                     string izqVal = izq.Valor?.ToString();
                     string derVal = der.Valor?.ToString();
                     
-                    // Determinar el tipo de comparación
                     bool esInt = int.TryParse(izqVal, out _) || int.TryParse(derVal, out _);
-                    bool esFloat = izqVal.Contains(".") || derVal.Contains(".");
+                    bool esFloat = izqVal?.Contains(".") == true || derVal?.Contains(".") == true;
                     bool esBool = izqVal == "true" || izqVal == "false" || derVal == "true" || derVal == "false";
                     bool esString = izqVal?.StartsWith("\"") == true || derVal?.StartsWith("\"") == true;
-                    
-                    if (esInt || esBool)
+
+                    switch (operador)
                     {
-                        // Comparación entera o booleana
-                        GenerateIntComparison(izqVal, derVal, falseLabel);
+                        case "==":
+                            _code.AppendLine($"    // Comparación de igualdad");
+                            if (esInt || esBool)
+                                GenerateIntComparison(izqVal, derVal, falseLabel);
+                            else if (esFloat)
+                                GenerateFloatComparison(izqVal, derVal, falseLabel);
+                            else if (esString)
+                                GenerateStringComparison(izqVal, derVal, falseLabel);
+                            else
+                                GenerateGenericComparison(izqVal, derVal, falseLabel);
+                            return;
+                            
+                        case ">":
+                            _code.AppendLine($"    // Comparación mayor que");
+                            if (esInt)
+                                GenerateIntGreaterThan(izqVal, derVal, falseLabel);
+                            else if (esFloat)
+                                GenerateFloatGreaterThan(izqVal, derVal, falseLabel);
+                            else
+                                GenerateGenericComparison(izqVal, derVal, falseLabel);
+                            return;
+                            
+                        case "<":
+                            _code.AppendLine($"    // Comparación menor que");
+                            if (esInt)
+                                GenerateIntLessThan(izqVal, derVal, falseLabel);
+                            else if (esFloat)
+                                GenerateFloatLessThan(izqVal, derVal, falseLabel);
+                            else
+                                GenerateGenericComparison(izqVal, derVal, falseLabel);
+                            return;
+                        case ">=":
+                            _code.AppendLine($"    // Comparación mayor o igual que");
+                            if (esInt)
+                                GenerateIntGreaterOrEqual(izqVal, derVal, falseLabel);
+                            else if (esFloat)
+                                GenerateFloatGreaterOrEqual(izqVal, derVal, falseLabel);
+                            else
+                                GenerateGenericComparison(izqVal, derVal, falseLabel);
+                            return;
+                        
+                        case "<=":
+                            _code.AppendLine($"    // Comparación menor o igual que");
+                            if (esInt)
+                                GenerateIntLessOrEqual(izqVal, derVal, falseLabel);
+                            else if (esFloat)
+                                GenerateFloatLessOrEqual(izqVal, derVal, falseLabel);
+                            else
+                                GenerateGenericComparison(izqVal, derVal, falseLabel);
+                            return;
+                        case "&&":
+                            _code.AppendLine($"    // Operación AND lógica");
+                            GenerateLogicalAnd(izq, der, falseLabel);
+                            return;
+                        case "||":
+                            _code.AppendLine($"    // Operación OR lógica");
+                            GenerateLogicalOr(izq, der, falseLabel);
+                            return;
                     }
-                    else if (esFloat)
-                    {
-                        // Comparación de punto flotante
-                        GenerateFloatComparison(izqVal, derVal, falseLabel);
-                    }
-                    else if (esString)
-                    {
-                        // Comparación de cadenas
-                        GenerateStringComparison(izqVal, derVal, falseLabel);
-                    }
-                    else
-                    {
-                        // Variables cuyo tipo no se puede determinar estáticamente
-                        GenerateGenericComparison(izqVal, derVal, falseLabel);
-                    }
-                    return;
                 }
+            }else if (expr.Tipo == "Operacion" && expr.Valor?.ToString() == "!")
+            {
+                _code.AppendLine($"    // Operación NOT");
+                if (expr.Hijos != null && expr.Hijos.Count >= 1)
+                {
+                    // Para operación NOT, invertimos el sentido del salto
+                    var operandoNot = expr.Hijos[0];
+                    var subCondicion = new NodoAST
+                    {
+                        Tipo = "Condicion",
+                        Hijos = new List<NodoAST> { operandoNot }
+                    };
+                    
+                    // Invertimos la lógica: si operandoNot es verdadero, saltamos al falseLabel
+                    GenerateModifiedCondCheck(subCondicion, falseLabel, true);
+                }
+                return;
             }
             
-            // Código existente para otros tipos de condiciones
+            // Resto del código original para otros tipos de condiciones
             string exprValue = expr.Valor?.ToString() ?? "false";
             
             if (exprValue == "true")
@@ -931,6 +987,38 @@ namespace API.compiler.ARM64
                 _code.AppendLine($"    mov x0, #0");
                 _code.AppendLine($"    cmp x0, #0");
                 _code.AppendLine($"    beq {falseLabel}");
+            }
+        }
+
+        private void GenerateModifiedCondCheck(NodoAST condNodo, string targetLabel, bool invertResult)
+        {
+            if (condNodo?.Hijos == null || condNodo.Hijos.Count == 0) return;
+            
+            var expr = condNodo.Hijos[0];
+            string exprValue = expr.Valor?.ToString() ?? "false";
+            
+            if (exprValue == "true")
+            {
+                if (invertResult)
+                    _code.AppendLine($"    b {targetLabel}");
+                return;
+            }
+            else if (exprValue == "false")
+            {
+                if (!invertResult)
+                    _code.AppendLine($"    b {targetLabel}");
+                return;
+            }
+            
+            // Variable booleana
+            if (_variables.TryGetValue(exprValue, out string memLoc))
+            {
+                _code.AppendLine($"    ldr x0, {memLoc}");
+                _code.AppendLine($"    cmp x0, #0");
+                if (invertResult)
+                    _code.AppendLine($"    bne {targetLabel}"); // Saltar si NO es cero (es verdadero)
+                else
+                    _code.AppendLine($"    beq {targetLabel}"); // Saltar si es cero (es falso)
             }
         }
 
@@ -1071,6 +1159,390 @@ namespace API.compiler.ARM64
             _code.AppendLine($"    cmp x0, x1");
             _code.AppendLine($"    bne {falseLabel}");
         }
+
+        //operacion de mayor y menor que
+        private void GenerateIntGreaterThan(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else if (int.TryParse(izqVal, out int i))
+            {
+                _code.AppendLine($"    mov x0, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x0, #0");  // Valor por defecto
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else if (int.TryParse(derVal, out int i))
+            {
+                _code.AppendLine($"    mov x1, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x1, #0");  // Valor por defecto
+            }
+            
+            // Comparar: saltar si izq <= der (inverso de >)
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    ble {falseLabel}");
+        }
+
+        private void GenerateIntLessThan(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else if (int.TryParse(izqVal, out int i))
+            {
+                _code.AppendLine($"    mov x0, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x0, #0");  // Valor por defecto
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else if (int.TryParse(derVal, out int i))
+            {
+                _code.AppendLine($"    mov x1, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x1, #0");  // Valor por defecto
+            }
+            
+            // Comparar: saltar si izq >= der (inverso de <)
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    bge {falseLabel}");
+        }
+
+        private void GenerateFloatGreaterThan(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr d0, {izqMem}");
+            }
+            else if (double.TryParse(izqVal, out double floatVal1))
+            {
+                string litLabel1 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel1}: .double {izqVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel1}");
+                _code.AppendLine($"    ldr d0, [x0]");
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr d1, {derMem}");
+            }
+            else if (double.TryParse(derVal, out double floatVal2))
+            {
+                string litLabel2 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel2}: .double {derVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel2}");
+                _code.AppendLine($"    ldr d1, [x0]");
+            }
+            
+            // Comparar flotantes: saltar si NO cumple la condición
+            _code.AppendLine($"    fcmp d0, d1");
+            _code.AppendLine($"    ble {falseLabel}");  // Si es menor o igual, saltar (no es mayor)
+        }
+
+        private void GenerateFloatLessThan(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr d0, {izqMem}");
+            }
+            else if (double.TryParse(izqVal, out double floatVal1))
+            {
+                string litLabel1 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel1}: .double {izqVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel1}");
+                _code.AppendLine($"    ldr d0, [x0]");
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr d1, {derMem}");
+            }
+            else if (double.TryParse(derVal, out double floatVal2))
+            {
+                string litLabel2 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel2}: .double {derVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel2}");
+                _code.AppendLine($"    ldr d1, [x0]");
+            }
+            
+            // Comparar flotantes
+            _code.AppendLine($"    fcmp d0, d1");
+            _code.AppendLine($"    bge {falseLabel}");  // Si es mayor o igual, saltar (no es menor)
+        }
+
+        private void GenerateIntGreaterOrEqual(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else if (int.TryParse(izqVal, out int i))
+            {
+                _code.AppendLine($"    mov x0, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x0, #0");  // Valor por defecto
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else if (int.TryParse(derVal, out int i))
+            {
+                _code.AppendLine($"    mov x1, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x1, #0");  // Valor por defecto
+            }
+            
+            // Comparar: saltar si izq < der (inverso de >=)
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    blt {falseLabel}");
+        }
+
+        private void GenerateIntLessOrEqual(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr x0, {izqMem}");
+            }
+            else if (int.TryParse(izqVal, out int i))
+            {
+                _code.AppendLine($"    mov x0, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x0, #0");  // Valor por defecto
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr x1, {derMem}");
+            }
+            else if (int.TryParse(derVal, out int i))
+            {
+                _code.AppendLine($"    mov x1, #{i}");
+            }
+            else
+            {
+                _code.AppendLine($"    mov x1, #0");  // Valor por defecto
+            }
+            
+            // Comparar: saltar si izq > der (inverso de <=)
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    bgt {falseLabel}");
+        }
+
+        private void GenerateFloatGreaterOrEqual(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr d0, {izqMem}");
+            }
+            else if (double.TryParse(izqVal, out double floatVal1))
+            {
+                string litLabel1 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel1}: .double {izqVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel1}");
+                _code.AppendLine($"    ldr d0, [x0]");
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr d1, {derMem}");
+            }
+            else if (double.TryParse(derVal, out double floatVal2))
+            {
+                string litLabel2 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel2}: .double {derVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel2}");
+                _code.AppendLine($"    ldr d1, [x0]");
+            }
+            
+            // Comparar flotantes: saltar si no cumple la condición
+            _code.AppendLine($"    fcmp d0, d1");
+            _code.AppendLine($"    blt {falseLabel}");  // Si es menor, saltar (no es mayor o igual)
+        }
+
+        private void GenerateFloatLessOrEqual(string izqVal, string derVal, string falseLabel)
+        {
+            // Cargar primer operando
+            if (_variables.TryGetValue(izqVal, out string izqMem))
+            {
+                _code.AppendLine($"    ldr d0, {izqMem}");
+            }
+            else if (double.TryParse(izqVal, out double floatVal1))
+            {
+                string litLabel1 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel1}: .double {izqVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel1}");
+                _code.AppendLine($"    ldr d0, [x0]");
+            }
+            
+            // Cargar segundo operando
+            if (_variables.TryGetValue(derVal, out string derMem))
+            {
+                _code.AppendLine($"    ldr d1, {derMem}");
+            }
+            else if (double.TryParse(derVal, out double floatVal2))
+            {
+                string litLabel2 = $"float_{_labelCounter++}";
+                _dataSection.Add($"{litLabel2}: .double {derVal.Replace(',', '.')}");
+                _code.AppendLine($"    adr x0, {litLabel2}");
+                _code.AppendLine($"    ldr d1, [x0]");
+            }
+            
+            // Comparar flotantes
+            _code.AppendLine($"    fcmp d0, d1");
+            _code.AppendLine($"    bgt {falseLabel}");  // Si es mayor, saltar (no es menor o igual)
+        
+        }
+
+        private void GenerateLogicalOr(NodoAST izqNodo, NodoAST derNodo, string falseLabel)
+        {
+            string trueLabel = $"true_or_{_labelCounter++}";
+            _code.AppendLine($"    // Evaluar primer operando del OR");
+            
+            // Si el primer operando es un valor directo como true/false
+            if (izqNodo.Valor?.ToString() == "true")
+            {
+                // Si es true, cortocircuito - resultado es true
+                _code.AppendLine($"    // Primer operando es true, resultado es true (cortocircuito)");
+                return; // No saltamos al falseLabel, significa que la condición se cumplió
+            }
+            else if (izqNodo.Valor?.ToString() == "false")
+            {
+                // Si es false, evaluar segundo operando
+                _code.AppendLine($"    // Primer operando es false, evaluar segundo operando");
+                var subCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(subCondicion, falseLabel);
+            }
+            else if (izqNodo.Tipo == "Operacion")
+            {
+                // Si el primer operando es una operación, evaluarla
+                
+                // Crear un nodo condición temporal para el operando izquierdo
+                var izqCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { izqNodo }
+                };
+                
+                // Crear una etiqueta para saltar si el primer operando es verdadero
+                _code.AppendLine($"    // Evaluando primer operando del OR");
+                
+                // Evaluar izquierdo invertido: saltamos a la etiqueta true si es verdadero
+                string skipRightOperand = $"skip_right_{_labelCounter++}";
+                
+                // Para operaciones, generamos código específico
+                _code.AppendLine($"    // Evaluando operación izquierda del OR");
+                
+                // Aquí invertimos la lógica: saltamos a skipRightOperand si es verdadero
+                GenerateModifiedCondCheck(izqCondicion, skipRightOperand, true);
+                
+                // Si llegamos aquí, el primer operando es falso, evaluar el segundo
+                _code.AppendLine($"    // Primer operando es falso, evaluar segundo operando");
+                var derCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(derCondicion, falseLabel);
+                
+                // Saltamos aquí si el primer operando es verdadero
+                _code.AppendLine($"{skipRightOperand}:");
+            }
+            else if (_variables.TryGetValue(izqNodo.Valor?.ToString(), out string izqMem))
+            {
+                // Si es una variable, cargar su valor y comprobar
+                _code.AppendLine($"    // Cargar y comprobar variable booleana {izqNodo.Valor}");
+                _code.AppendLine($"    ldr x0, {izqMem}");
+                _code.AppendLine($"    cmp x0, #0");
+                
+                // Si la variable es verdadera (no es 0), saltar a la etiqueta de verdadero
+                string skipRightOperand = $"skip_right_{_labelCounter++}";
+                _code.AppendLine($"    bne {skipRightOperand}");
+                
+                // Si llegamos aquí, el primer operando es falso, evaluar el segundo
+                _code.AppendLine($"    // Primer operando es falso, evaluar segundo operando");
+                var derCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(derCondicion, falseLabel);
+                
+                // Etiqueta para saltar si el primer operando es verdadero
+                _code.AppendLine($"{skipRightOperand}:");
+            }
+            else
+            {
+                // Caso genérico - intentamos evaluar ambos operandos
+                _code.AppendLine($"    // Evaluando operación OR genérica");
+                
+                // Crear etiqueta para saltar si primer operando es verdadero
+                string skipRightOperand = $"skip_right_{_labelCounter++}";
+                
+                // Evaluar primer operando - si es verdadero, saltamos a skipRightOperand
+                var izqCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { izqNodo }
+                };
+                GenerateModifiedCondCheck(izqCondicion, skipRightOperand, true);
+                
+                // Si llegamos aquí, el primer operando es falso, evaluar segundo operando
+                var derCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(derCondicion, falseLabel);
+                
+                // Etiqueta donde saltamos si primer operando es verdadero
+                _code.AppendLine($"{skipRightOperand}:");
+            }
+        }
         private void GeneratePrintRune(string memoryLocation, string varName)
         {
             _code.AppendLine($"    // Imprimir rune: {varName}");
@@ -1085,6 +1557,92 @@ namespace API.compiler.ARM64
             _code.AppendLine($"    add sp, sp, #1");              // limpiar stack
         }
 
+        private void GenerateLogicalAnd(NodoAST izqNodo, NodoAST derNodo, string falseLabel)
+        {
+            _code.AppendLine($"    // Evaluar primer operando del AND");
+            
+            // Si el primer operando es un valor directo como true/false
+            if (izqNodo.Valor?.ToString() == "true")
+            {
+                // Si es true, evaluar el segundo operando
+                _code.AppendLine($"    // Primer operando es true, evaluar segundo operando");
+                var subCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(subCondicion, falseLabel);
+            }
+            else if (izqNodo.Valor?.ToString() == "false")
+            {
+                // Si es false, corto circuito directo a falseLabel
+                _code.AppendLine($"    // Primer operando es false, resultado es false");
+                _code.AppendLine($"    b {falseLabel}");
+            }
+            else if (izqNodo.Tipo == "Operacion")
+            {
+                // Si el primer operando es una operación, evaluarla
+                string evalLabel = $"eval_right_{_labelCounter++}";
+                
+                // Crear un nodo condición temporal para el operando izquierdo
+                var izqCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { izqNodo }
+                };
+                
+                // Evaluar izquierdo - si es falso, saltar a falseLabel
+                GenerateConditionCheck(izqCondicion, falseLabel);
+                
+                // Si llegamos aquí, es verdadero. Evaluar derecho
+                _code.AppendLine($"    // Primer operando es true, evaluar segundo operando");
+                var derCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(derCondicion, falseLabel);
+            }
+            else if (_variables.TryGetValue(izqNodo.Valor?.ToString(), out string izqMem))
+            {
+                // Si es una variable, cargar su valor y comprobar
+                _code.AppendLine($"    // Cargar y comprobar variable booleana {izqNodo.Valor}");
+                _code.AppendLine($"    ldr x0, {izqMem}");
+                _code.AppendLine($"    cmp x0, #0");
+                _code.AppendLine($"    beq {falseLabel}");
+                
+                // Si primer operando es true, evaluar el segundo
+                var derCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                GenerateConditionCheck(derCondicion, falseLabel);
+            }
+            else
+            {
+                // Caso genérico - siempre realizar ambas evaluaciones
+                _code.AppendLine($"    // Evaluando operación AND compleja");
+                
+                // Crear condiciones temporales
+                var izqCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { izqNodo }
+                };
+                var derCondicion = new NodoAST
+                {
+                    Tipo = "Condicion",
+                    Hijos = new List<NodoAST> { derNodo }
+                };
+                
+                // Evaluar izquierda - si es falso, saltar a falseLabel
+                GenerateConditionCheck(izqCondicion, falseLabel);
+                
+                // Evaluar derecha
+                GenerateConditionCheck(derCondicion, falseLabel);
+            }
+        }
 
         private void GenerateNewLine()
         {
