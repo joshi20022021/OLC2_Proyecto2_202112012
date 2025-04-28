@@ -230,13 +230,23 @@ namespace API.compiler
             var value = Visit(context.expresion());
             var token = context.IDENTIFICADOR().Symbol;
             
-            // Buscar en todos los entornos 
+            // Buscar en todos los entornos (código existente)
             foreach (var entorno in pilaEntornos)
             {
                 if (entorno.ContainsKey(varName))
                 {
                     entorno[varName].Valor = value;
                     Console.WriteLine($"DEBUG: Asignando {varName} = {value}");
+                    
+                    // AÑADIR: Crear nodo AST para la asignación
+                    nodosAST.Add(new NodoAST {
+                        Tipo = "Asignacion",
+                        Hijos = new List<NodoAST> {
+                            new NodoAST { Tipo = "Identificador", Valor = varName },
+                            new NodoAST { Tipo = "Literal", Valor = value?.ToString() }
+                        }
+                    });
+                    
                     return value;
                 }
             }

@@ -133,6 +133,21 @@ function App() {
     setActiveFileIndex(files.length);
   };
 
+  //boton copiar
+  const copyArm64ToClipboard = () => {
+    if (!arm64Code.trim()) {
+      console.warn("No hay código ARM64 para copiar.");
+      return;
+    }
+    navigator.clipboard.writeText(arm64Code)
+      .then(() => {
+        console.log("Código ARM64 copiado al portapapeles.");
+      })
+      .catch((err) => {
+        console.error("Error al copiar el código ARM64:", err);
+      });
+  };
+
   // Abrir archivo local
   const openFile = async (e) => {
     const file = e.target.files[0];
@@ -325,6 +340,9 @@ function App() {
           <ToolbarButton icon="play-circle" onClick={handleExecute} variant="success">
             Ejecutar
           </ToolbarButton>
+          <ToolbarButton icon="clipboard" onClick={copyArm64ToClipboard} variant="warning">
+          Copiar ARM64
+         </ToolbarButton>
         </div>
       </div>
 

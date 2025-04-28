@@ -11,22 +11,39 @@ namespace API.compiler
         {
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
+            object result;
 
             // Si alguno es cadena, realizar concatenación
             if (izq is string || der is string)
             {
-                return (izq?.ToString() ?? "") + (der?.ToString() ?? "");
+                result = (izq?.ToString() ?? "") + (der?.ToString() ?? "");
             }
-
-            double? valIzq = TipoDato.ConvertirANumero(izq);
-            double? valDer = TipoDato.ConvertirANumero(der);
-
-            if (valIzq.HasValue && valDer.HasValue)
+            else
             {
-                return valIzq.Value + valDer.Value;
+                double? valIzq = TipoDato.ConvertirANumero(izq);
+                double? valDer = TipoDato.ConvertirANumero(der);
+
+                if (valIzq.HasValue && valDer.HasValue)
+                {
+                    result = valIzq.Value + valDer.Value;
+                }
+                else
+                {
+                    result = "Error: Tipos incompatibles en suma.";
+                }
             }
 
-            return "Error: Tipos incompatibles en suma.";
+            // Añadir nodo AST ANTES del return
+            nodosAST.Add(new NodoAST {
+                Tipo = "Operacion",
+                Valor = "+",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { Tipo = "Identificador", Valor = context.expresion(0).GetText() },
+                    new NodoAST { Tipo = "Literal", Valor = context.expresion(1).GetText() }
+                }
+            });
+            
+            return result;
         }
 
         // Visitor para una operación de resta
@@ -34,16 +51,30 @@ namespace API.compiler
         {
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
+            object result;
 
             double? valIzq = TipoDato.ConvertirANumero(izq);
             double? valDer = TipoDato.ConvertirANumero(der);
 
             if (valIzq.HasValue && valDer.HasValue)
             {
-                return valIzq.Value - valDer.Value;
+                result = valIzq.Value - valDer.Value;
             }
-
-            return "Error: Tipos incompatibles en resta.";
+            else
+            {
+                result = "Error: Tipos incompatibles en resta.";
+            }
+            
+            nodosAST.Add(new NodoAST {
+                Tipo = "Operacion",
+                Valor = "-",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { Tipo = "Identificador", Valor = context.expresion(0).GetText() },
+                    new NodoAST { Tipo = "Literal", Valor = context.expresion(1).GetText() }
+                }
+            });
+            
+            return result;
         }
 
                 // Visitor para una operación de multiplicación
@@ -51,29 +82,45 @@ namespace API.compiler
         {
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
+            object result;
 
             // Mejorar el manejo de tipos para la recursión
             // Convertir explícitamente para asegurar compatibilidad de tipos
             if (izq is long lizq && der is long lder)
-                return lizq * lder;
+                result = lizq * lder;
             else if (izq is long liz && der is double dd)
-                return liz * dd;
+                result = liz * dd;
             else if (izq is double di && der is long ld)
-                return di * ld;
+                result = di * ld;
             else if (izq is double dizq && der is double dder)
-                return dizq * dder;
-
-            // Si son otros tipos numéricos, intentar conversión
-            double? valIzq = TipoDato.ConvertirANumero(izq);
-            double? valDer = TipoDato.ConvertirANumero(der);
-            
-            if (valIzq.HasValue && valDer.HasValue)
+                result = dizq * dder;
+            else 
             {
-                return valIzq.Value * valDer.Value;
+                // Si son otros tipos numéricos, intentar conversión
+                double? valIzq = TipoDato.ConvertirANumero(izq);
+                double? valDer = TipoDato.ConvertirANumero(der);
+                
+                if (valIzq.HasValue && valDer.HasValue)
+                {
+                    result = valIzq.Value * valDer.Value;
+                }
+                else
+                {
+                    Console.WriteLine($"DEBUG Multiplicación: izq={izq?.GetType().Name ?? "null"}, der={der?.GetType().Name ?? "null"}");
+                    result = "Error: Tipos incompatibles en multiplicación.";
+                }
             }
             
-            Console.WriteLine($"DEBUG Multiplicación: izq={izq?.GetType().Name ?? "null"}, der={der?.GetType().Name ?? "null"}");
-            return "Error: Tipos incompatibles en multiplicación.";
+            nodosAST.Add(new NodoAST {
+                Tipo = "Operacion",
+                Valor = "*",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { Tipo = "Identificador", Valor = context.expresion(0).GetText() },
+                    new NodoAST { Tipo = "Literal", Valor = context.expresion(1).GetText() }
+                }
+            });
+            
+            return result;
         }
 
         // Visitor para una operación de división
@@ -81,32 +128,48 @@ namespace API.compiler
         {
             var izq = Visit(context.expresion(0));
             var der = Visit(context.expresion(1));
+            object result;
 
             // Verificar división por cero
             if ((der is long dl && dl == 0) || (der is double dd && dd == 0))
-                return "Error: División por 0.";
-            
-            // Manejar todos los casos posibles de tipos
-            if (izq is long lizq1 && der is long lder1)
-                return (double)lizq1 / lder1;
+                result = "Error: División por 0.";
+            else if (izq is long lizq1 && der is long lder1)
+                result = (double)lizq1 / lder1;
             else if (izq is long lizq2 && der is double dder1)
-                return lizq2 / dder1;  // Conversión implícita a double
+                result = lizq2 / dder1;  // Conversión implícita a double
             else if (izq is double dizq1 && der is long lder2)
-                return dizq1 / lder2;  // Conversión implícita a double
+                result = dizq1 / lder2;  // Conversión implícita a double
             else if (izq is double dizq2 && der is double dder2)
-                return dizq2 / dder2;
-            
-            // Si llegamos aquí, intentar convertir de forma genérica
-            double? valIzq = TipoDato.ConvertirADouble(izq);
-            double? valDer = TipoDato.ConvertirADouble(der);
-            
-            if (valIzq.HasValue && valDer.HasValue)
+                result = dizq2 / dder2;
+            else
             {
-                if (valDer.Value == 0) return "Error: División por 0.";
-                return valIzq.Value / valDer.Value;
+                // Si llegamos aquí, intentar convertir de forma genérica
+                double? valIzq = TipoDato.ConvertirADouble(izq);
+                double? valDer = TipoDato.ConvertirADouble(der);
+                
+                if (valIzq.HasValue && valDer.HasValue)
+                {
+                    if (valDer.Value == 0) 
+                        result = "Error: División por 0.";
+                    else
+                        result = valIzq.Value / valDer.Value;
+                }
+                else
+                {
+                    result = "Error: Tipos incompatibles en división.";
+                }
             }
             
-            return "Error: Tipos incompatibles en división.";
+            nodosAST.Add(new NodoAST {
+                Tipo = "Operacion",
+                Valor = "/",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { Tipo = "Identificador", Valor = context.expresion(0).GetText() },
+                    new NodoAST { Tipo = "Literal", Valor = context.expresion(1).GetText() }
+                }
+            });
+            
+            return result;
         }
 
             // Visitor para una operación de módulo
@@ -259,20 +322,32 @@ namespace API.compiler
         public override object VisitNot(LanguageParser.NotContext context)
         {
             var valor = Visit(context.expresion());
+            object result;
             
             Console.WriteLine($"DEBUG: Operando de ! es: {valor} de tipo {valor?.GetType().Name ?? "null"}");
             
             if (valor is bool boolValor)
             {
-                return !boolValor;
+                result = !boolValor;
+            }
+            else
+            { 
+                var token = context.Start;
+                AgregarError($"Error: Operador '!' requiere un booleano, recibió {TipoDato.ObtenerNombreTipo(valor)}.", 
+                    token.Line, 
+                    token.Column + 1);
+                result = false; 
             }
             
-            var token = context.Start;
-            AgregarError($"Error: Operador '!' requiere un booleano, recibió {TipoDato.ObtenerNombreTipo(valor)}.", 
-                token.Line, 
-                token.Column + 1);
+            nodosAST.Add(new NodoAST {
+                Tipo = "Negacion",
+                Valor = "!",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { Tipo = "Identificador", Valor = context.expresion().GetText() }
+                }
+            });
             
-            return false; 
+            return result;
         }
     }
 }
