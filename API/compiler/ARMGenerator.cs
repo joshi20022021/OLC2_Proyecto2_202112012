@@ -11,6 +11,8 @@ namespace API.compiler.ARM64
         private int _labelCounter = 0;
         private Dictionary<string, string> _variables = new Dictionary<string, string>();
         private List<string> _dataSection = new List<string>();
+        private Stack<string> _continueLabels = new Stack<string>();
+        private Stack<string> _breakLabels = new Stack<string>();
 
         private string Sanitize(string s) =>
         s?.Replace("\r", "\\r")
@@ -177,6 +179,47 @@ namespace API.compiler.ARM64
                 {
                     ProcessInstructions(nodo.Hijos, tablaSimbolos);
                 }
+                else if (nodo.Tipo == "ForLoop")
+                {
+                    GenerateForLoop(nodo, tablaSimbolos);
+                }
+                else if (nodo.Tipo == "ForClassicLoop")
+                {
+                    GenerateForClassicLoop(nodo, tablaSimbolos);
+                }
+                else if (nodo.Tipo == "ForRangeLoop")
+                {
+                    GenerateForRangeLoop(nodo, tablaSimbolos);
+                }
+                else if (nodo.Tipo == "break")
+            {
+                string breakLabel = GetBreakLabel();
+                if (!string.IsNullOrEmpty(breakLabel))
+                {
+                    _code.AppendLine($"    // Sentencia break");
+                    _code.AppendLine($"    b {breakLabel}");
+                }
+                else
+                {
+                    _code.AppendLine($"    // ADVERTENCIA: break fuera de un bucle");
+                }
+                continue; // Importante: no procesar nada más después del break
+            }
+            
+            else if (nodo.Tipo == "continue")
+            {
+                string continueLabel = GetContinueLabel();
+                if (!string.IsNullOrEmpty(continueLabel))
+                {
+                    _code.AppendLine($"    // Sentencia continue");
+                    _code.AppendLine($"    b {continueLabel}");
+                }
+                else
+                {
+                    _code.AppendLine($"    // ADVERTENCIA: continue fuera de un bucle");
+                }
+                continue; // No procesar nada más después del continue
+            }
             }
         }
 
@@ -848,6 +891,224 @@ namespace API.compiler.ARM64
             // Etiqueta de fin del if
             _code.AppendLine($"{endLabel}:");
         }
+
+        private void GenerateForLoop(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            _code.AppendLine("\n    // Bucle For");
+            
+            string loopStartLabel = $"loop_start_{_labelCounter}";
+            string loopEndLabel = $"loop_end_{_labelCounter}";
+            string loopContinueLabel = $"loop_cont_{_labelCounter}";
+            _labelCounter++;
+            
+            // Etiqueta para el inicio del bucle
+            _code.AppendLine($"{loopStartLabel}:");
+            
+            // Evaluar condición
+            var condNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Condicion");
+            if (condNodo != null)
+            {
+                _code.AppendLine($"    // Evaluar condición del bucle");
+                GenerateConditionCheck(condNodo, loopEndLabel);
+            }
+            
+            // Generar el cuerpo del bucle
+            var bloqueFor = nodo.Hijos.FirstOrDefault(h => h.Tipo == "BloqueFor");
+            if (bloqueFor?.Hijos != null)
+            {
+                _code.AppendLine("    // Cuerpo del bucle");
+                PushLoopLabels(loopContinueLabel, loopEndLabel);
+                ProcessInstructions(bloqueFor.Hijos, tablaSimbolos);
+                PopLoopLabels();
+            }
+            
+            // Etiqueta para continue
+            _code.AppendLine($"{loopContinueLabel}:");
+            
+            // Volver al inicio del bucle
+            _code.AppendLine($"    b {loopStartLabel}");
+            
+            // Etiqueta para el final del bucle
+            _code.AppendLine($"{loopEndLabel}:");
+        }
+        private void GenerateForClassicLoop(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            _code.AppendLine("\n    // Bucle For Clásico");
+            
+            // Generar etiquetas únicas para los saltos
+            string loopStartLabel = $"loop_start_{_labelCounter}";
+            string loopCondLabel = $"loop_cond_{_labelCounter}";
+            string loopEndLabel = $"loop_end_{_labelCounter}";
+            string loopIncLabel = $"loop_inc_{_labelCounter}";
+            _labelCounter++;
+            
+            // Procesar inicialización (si existe)
+            var inicializacionNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Inicializacion");
+            if (inicializacionNodo != null)
+            {
+                _code.AppendLine("    // Inicialización");
+                ProcessInstructions(new List<NodoAST> { inicializacionNodo }, tablaSimbolos);
+            }
+            
+            // Ir directamente a evaluar la condición primero
+            _code.AppendLine($"    b {loopCondLabel}");
+            
+            // Etiqueta para el inicio del bucle (cuerpo)
+            _code.AppendLine($"{loopStartLabel}:");
+            
+            // Generar el cuerpo del bucle
+            var bloqueFor = nodo.Hijos.FirstOrDefault(h => h.Tipo == "BloqueFor");
+            if (bloqueFor?.Hijos != null)
+            {
+                _code.AppendLine("    // Cuerpo del bucle");
+                // IMPORTANTE: Agregar etiquetas para break y continue
+                PushLoopLabels(loopIncLabel, loopEndLabel);
+                ProcessInstructions(bloqueFor.Hijos, tablaSimbolos);
+                PopLoopLabels();
+            }
+            
+            // Incremento después del cuerpo - etiquetar para continue
+            _code.AppendLine($"{loopIncLabel}:");
+            var incrementoNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Incremento");
+            if (incrementoNodo != null)
+            {
+                _code.AppendLine("    // Incremento/Actualización");
+                ProcessInstructions(new List<NodoAST> { incrementoNodo }, tablaSimbolos);
+            }
+            
+            // Evaluar condición al final del ciclo
+            _code.AppendLine($"{loopCondLabel}:");
+            var condNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Condicion");
+            if (condNodo != null)
+            {
+                _code.AppendLine($"    // Evaluar condición del bucle");
+                GenerateConditionCheck(condNodo, loopEndLabel);
+                
+                // Si la condición se cumple (no saltar a loopEndLabel), volver al inicio del bucle
+                _code.AppendLine($"    b {loopStartLabel}");
+            }
+            
+            // Etiqueta para el final del bucle
+            _code.AppendLine($"{loopEndLabel}:");
+        }
+
+        private void GenerateForRangeLoop(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            _code.AppendLine("\n    // Bucle For Range");
+            
+            // Generar etiquetas únicas para los saltos
+            string loopStartLabel = $"range_start_{_labelCounter}";
+            string loopEndLabel = $"range_end_{_labelCounter}";
+            string loopCondLabel = $"range_cond_{_labelCounter}";
+            string loopIncLabel = $"range_inc_{_labelCounter}";
+            _labelCounter++;
+            
+            // Obtener componentes del for range
+            var iteradorNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Iterador");
+            var variableNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Variable");
+            var coleccionNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Coleccion");
+            var bloqueFor = nodo.Hijos.FirstOrDefault(h => h.Tipo == "BloqueFor");
+            
+            string iteradorNombre = iteradorNodo?.Valor?.ToString();
+            string variableNombre = variableNodo?.Valor?.ToString();
+            
+            if (string.IsNullOrEmpty(iteradorNombre) || string.IsNullOrEmpty(variableNombre) || 
+                coleccionNodo == null || bloqueFor == null)
+            {
+                _code.AppendLine("    // Error: Información incompleta para bucle for range");
+                return;
+            }
+            
+            // 1. Inicializar iterador (índice) a 0
+            if (!_variables.TryGetValue(iteradorNombre, out string iteradorMem))
+            {
+                _code.AppendLine($"    // Advertencia: Variable índice '{iteradorNombre}' no declarada");
+                return;
+            }
+            
+            _code.AppendLine($"    // Inicializar índice {iteradorNombre} a 0");
+            _code.AppendLine($"    mov x0, #0");
+            _code.AppendLine($"    str x0, {iteradorMem}");
+            
+            // 2. Calcular la longitud de la colección y almacenarla
+            string coleccionTemp = $"coleccion_long_{_labelCounter++}";
+            int coleccionOffset = GetVariableOffset(coleccionTemp);
+            string coleccionMem = $"[sp, #{coleccionOffset}]";
+            
+            _code.AppendLine($"    // Obtener longitud de la colección");
+            // Esto supone que la longitud ya está disponible o se puede calcular
+            // En un caso real necesitarías una lógica más compleja según el tipo de colección
+            _code.AppendLine($"    mov x0, #10");  // Suponiendo una longitud fija para este ejemplo
+            _code.AppendLine($"    str x0, {coleccionMem}");
+            
+            // 3. Ir a evaluación de condición
+            _code.AppendLine($"    b {loopCondLabel}");
+            
+            // 4. Etiqueta de inicio de bucle
+            _code.AppendLine($"{loopStartLabel}:");
+            
+            // 5. Cargar el valor del elemento actual basado en el índice
+            // Aquí necesitarías una lógica específica según el tipo de colección
+            _code.AppendLine($"    // Cargar valor para el elemento actual");
+            if (_variables.TryGetValue(variableNombre, out string variableMem))
+            {
+                _code.AppendLine($"    ldr x0, {iteradorMem}");  // Cargar índice actual
+                // Aquí se necesitaría más código para acceder al elemento de la colección
+                // Este es un ejemplo simplificado que usa el índice como valor
+                _code.AppendLine($"    str x0, {variableMem}");  // Guardar valor en variable
+            }
+            
+            // 6. Ejecutar el cuerpo del bucle
+            if (bloqueFor.Hijos != null)
+            {
+                _code.AppendLine("    // Cuerpo del bucle");
+                ProcessInstructions(bloqueFor.Hijos, tablaSimbolos);
+            }
+            
+            // 7. Incrementar índice
+            _code.AppendLine($"{loopIncLabel}:");
+            _code.AppendLine($"    // Incrementar índice");
+            _code.AppendLine($"    ldr x0, {iteradorMem}");
+            _code.AppendLine($"    add x0, x0, #1");
+            _code.AppendLine($"    str x0, {iteradorMem}");
+            
+            // 8. Comprobar condición
+            _code.AppendLine($"{loopCondLabel}:");
+            _code.AppendLine($"    // Comprobar si índice < longitud colección");
+            _code.AppendLine($"    ldr x0, {iteradorMem}");
+            _code.AppendLine($"    ldr x1, {coleccionMem}");
+            _code.AppendLine($"    cmp x0, x1");
+            _code.AppendLine($"    blt {loopStartLabel}");  // Si índice < longitud, continuar bucle
+            
+            // 9. Fin del bucle
+            _code.AppendLine($"{loopEndLabel}:");
+        }
+
+        private void PushLoopLabels(string continueLabel, string breakLabel)
+        {
+            _continueLabels.Push(continueLabel);
+            _breakLabels.Push(breakLabel);
+        }
+
+// Sacar las etiquetas del bucle más reciente
+        private void PopLoopLabels()
+        {
+            if (_continueLabels.Count > 0) _continueLabels.Pop();
+            if (_breakLabels.Count > 0) _breakLabels.Pop();
+        }
+
+        // Obtener la etiqueta para break
+        private string GetBreakLabel()
+        {
+            return _breakLabels.Count > 0 ? _breakLabels.Peek() : null;
+        }
+
+        // Obtener la etiqueta para continue
+        private string GetContinueLabel()
+        {
+            return _continueLabels.Count > 0 ? _continueLabels.Peek() : null;
+        }
+
 
         private void GenerateConditionCheck(NodoAST condNodo, string falseLabel)
         {
@@ -1889,6 +2150,7 @@ namespace API.compiler.ARM64
             }
             return 16 + (index * 8);
         }
+
 
         private string BuildFinalCode()
         {

@@ -151,7 +151,6 @@ namespace API.compiler
             return null;
         }
 
-
         //for con condicion
         public override object VisitForCondicion(LanguageParser.ForCondicionContext ctx)
         {
@@ -159,6 +158,27 @@ namespace API.compiler
             pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>(pilaEntornos.Count > 0 
                 ? pilaEntornos.Peek() 
                 : new Dictionary<string, EntradaSimbolo>()));
+
+            // NUEVO: Crear nodo AST para el bucle For
+            var nodoFor = new NodoAST {
+                Tipo = "ForLoop",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { 
+                        Tipo = "Condicion", 
+                        Valor = ctx.expresion().GetText(),
+                        Hijos = new List<NodoAST> { 
+                            new NodoAST { Tipo = "Expresion", Valor = ctx.expresion().GetText() }
+                        }
+                    }
+                }
+            };
+            
+            // NUEVO: Bloque For
+            var bloqueForNodo = new NodoAST { Tipo = "BloqueFor", Hijos = new List<NodoAST>() };
+            nodoFor.Hijos.Add(bloqueForNodo);
+            
+            // NUEVO: Añadir a la lista de nodos AST
+            nodosAST.Add(nodoFor);
 
             try
             {
@@ -197,53 +217,101 @@ namespace API.compiler
             EnCiclo = true;
             pilaEntornos.Push(new Dictionary<string, EntradaSimbolo>());
 
+            // CREAR AST PARA FOR CLÁSICO
+            var nodoFor = new NodoAST {
+                Tipo = "ForClassicLoop",
+                Hijos = new List<NodoAST>()
+            };
+            
+            // 1. Inicialización
+            var inicNodo = new NodoAST { Tipo = "Inicializacion", Hijos = new List<NodoAST>() };
+            if (ctx.declaracion() != null) {
+                inicNodo.Valor = ctx.declaracion().GetText();
+                // Añadir información adicional si es necesario
+            } else if (ctx.asignacion().Length > 0) {
+                inicNodo.Valor = ctx.asignacion(0).GetText();
+                // Añadir información adicional si es necesario
+            }
+            nodoFor.Hijos.Add(inicNodo);
+            
+            // 2. Condición
+            var condNodo = new NodoAST { 
+                Tipo = "Condicion", 
+                Valor = ctx.expresion().GetText(),
+                Hijos = new List<NodoAST> { 
+                    new NodoAST { Tipo = "Expresion", Valor = ctx.expresion().GetText() }
+                }
+            };
+            nodoFor.Hijos.Add(condNodo);
+            
+            // 3. Incremento
+            var incNodo = new NodoAST { Tipo = "Incremento", Hijos = new List<NodoAST>() };
+            if (ctx.contador() != null) {
+                incNodo.Valor = ctx.contador().GetText();
+                // Añadir información adicional si es necesario
+            } else if (ctx.asignacion().Length > 1) {
+                incNodo.Valor = ctx.asignacion(1).GetText();
+                // Añadir información adicional si es necesario
+            }
+            nodoFor.Hijos.Add(incNodo);
+            
+            // 4. Bloque de código
+            var bloqueForNodo = new NodoAST { Tipo = "BloqueFor", Hijos = new List<NodoAST>() };
+            nodoFor.Hijos.Add(bloqueForNodo);
+            
+            // Añadir a la lista de nodos AST
+            nodosAST.Add(nodoFor);
+            
+            // CÓDIGO DE EJECUCIÓN EXISTENTE
             // Inicialización
             if (ctx.declaracion() != null)
                 Visit(ctx.declaracion());
             else if (ctx.asignacion().Length > 0)
                 Visit(ctx.asignacion(0));
 
-            // Bucle
-            while (true)
-            {
-                // Evaluar condición
-                object cond = Visit(ctx.expresion());
-                if (!(cond is bool bCond) || !bCond)
-                    break;
-
-                // Ejecutar bloque
-                object resultado = Visit(ctx.bloque());
-                
-                // Si hay un break, salir del bucle
-                if (resultado is BreakCommand)
-                    break;
-                
-                // Si hay un continue, saltar la iteración
-                if (resultado is ContinueCommand)
+            try
                 {
-                    // Aplicar incremento si existe
-                    if (ctx.contador() != null)
-                        Visit(ctx.contador());
-                    else if (ctx.asignacion().Length > 1)
-                        Visit(ctx.asignacion(1));
-                    
-                    continue;
+                    // 1. Inicialización
+                    if (ctx.declaracion() != null)
+                        Visit(ctx.declaracion());
+                    else if (ctx.asignacion().Length > 0)
+                        Visit(ctx.asignacion(0));
+
+                    // 2. Bucle principal
+                    while (true)
+                    {
+                        // Evaluar condición
+                        object cond = Visit(ctx.expresion());
+                        if (!(cond is bool bCond) || !bCond)
+                            break; // Salir si la condición es falsa
+                        
+                        // Ejecutar el cuerpo del bucle
+                        object resultado = Visit(ctx.bloque());
+                        
+                        // Manejar break y continue
+                        if (resultado is BreakCommand)
+                            break;
+                            
+                        if (resultado is ContinueCommand)
+                            goto incremento; // Saltar directamente al incremento
+                            
+                        // 3. Incremento
+                        incremento:
+                        if (ctx.contador() != null)
+                            Visit(ctx.contador());
+                        else if (ctx.asignacion().Length > 1)
+                            Visit(ctx.asignacion(1));
+                    }
                 }
-
-                // Aplicar incremento si existe
-                if (ctx.contador() != null)
-                    Visit(ctx.contador());
-                else if (ctx.asignacion().Length > 1)
-                    Visit(ctx.asignacion(1));
-            }
-
-            pilaEntornos.Pop();
-            EnCiclo = false;
-            return null;
+                finally
+                {
+                    pilaEntornos.Pop();
+                    EnCiclo = false;
+                }
+                
+                return null;
         }
 
-
-        //manejo de for range
         public override object VisitForRange(LanguageParser.ForRangeContext context)
         {
             EnCiclo = true;
@@ -253,37 +321,85 @@ namespace API.compiler
             string iterador = context.IDENTIFICADOR(0).GetText();
             string variable = context.IDENTIFICADOR(1).GetText();
             
-            // Obtener la colección a iterar
-            object coleccion = Visit(context.expresion());
+            // Crear nodo AST para el bucle For Range
+            var nodoForRange = new NodoAST {
+                Tipo = "ForRangeLoop",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { 
+                        Tipo = "Iterador", 
+                        Valor = iterador
+                    },
+                    new NodoAST { 
+                        Tipo = "Variable", 
+                        Valor = variable
+                    },
+                    new NodoAST { 
+                        Tipo = "Coleccion", 
+                        Valor = context.expresion().GetText(),
+                        Hijos = new List<NodoAST> { 
+                            new NodoAST { Tipo = "Expresion", Valor = context.expresion().GetText() }
+                        }
+                    }
+                }
+            };
             
-            // Verificar si es una lista (slice)
-            if (!(coleccion is List<object> lista))
+            // Bloque For
+            var bloqueForNodo = new NodoAST { Tipo = "BloqueFor", Hijos = new List<NodoAST>() };
+            nodoForRange.Hijos.Add(bloqueForNodo);
+            
+            // Añadir a la lista de nodos AST
+            nodosAST.Add(nodoForRange);
+            
+            try
             {
-                AgregarError($"Error: range requiere un slice, obtuvo {TipoDato.ObtenerNombreTipo(coleccion)}", 
-                            context.Start.Line, context.Start.Column);
+                // Evaluar la colección
+                object coleccion = Visit(context.expresion());
+                
+                // Verificar si es una lista
+                if (!(coleccion is List<object> lista))
+                {
+                    AgregarError($"Error: range requiere un slice, obtuvo {TipoDato.ObtenerNombreTipo(coleccion)}", 
+                                context.Start.Line, context.Start.Column);
+                    return null;
+                }
+
+                // Iteración con manejo adecuado de break y continue
+                for (int i = 0; i < lista.Count; i++)
+                {
+                    // Asignar valores a las variables del entorno actual
+                    pilaEntornos.Peek()[iterador] = new EntradaSimbolo { 
+                        Nombre = iterador, 
+                        TipoDato = "int", 
+                        Valor = i 
+                    };
+                    
+                    pilaEntornos.Peek()[variable] = new EntradaSimbolo { 
+                        Nombre = variable, 
+                        TipoDato = TipoDato.ObtenerNombreTipo(lista[i]), 
+                        Valor = lista[i] 
+                    };
+
+                    // Ejecutar el bloque
+                    object resultado = Visit(context.bloque());
+                    
+                    // Manejar break y continue
+                    if (resultado is BreakCommand)
+                        break;
+                        
+                    // Si es continue, continuar automáticamente (no se necesita código adicional)
+                }
+            }
+            finally
+            {
                 pilaEntornos.Pop();
                 EnCiclo = false;
-                return null;
             }
-
-            // Iterar sobre la lista
-            for (int i = 0; i < lista.Count; i++)
-            {
-                pilaEntornos.Peek()[iterador] = new EntradaSimbolo { Nombre = iterador, TipoDato = "int", Valor = i };
-                pilaEntornos.Peek()[variable] = new EntradaSimbolo { Nombre = variable, TipoDato = TipoDato.ObtenerNombreTipo(lista[i]), Valor = lista[i] };
-
-                // Ejecutar el bloque y verificar si devuelve un break o continue
-                var resultado = Visit(context.bloque());
-                if (resultado is BreakCommand)
-                    break;
-                if (resultado is ContinueCommand)
-                    continue;
-            }
-
-            pilaEntornos.Pop();
-            EnCiclo = false;
+            
             return null;
         }
+
+        //manejo de for range
+
             public override object VisitBloque(LanguageParser.BloqueContext context)
         {
             // Recorremos
@@ -392,19 +508,17 @@ namespace API.compiler
         //implementacion continue
         public override object VisitContinueStmt(LanguageParser.ContinueStmtContext context)
         {
-            Console.WriteLine("DEBUG: Se encontró un 'continue'");
-
             // Validar si estamos dentro de un bucle
             if (!EnCiclo)
             {
-            AgregarError("Error: 'continue'...", context.Start.Line, context.Start.Column + 1);
+                AgregarError("Error: 'continue' solo puede usarse dentro de un ciclo.", 
+                            context.Start.Line, context.Start.Column + 1);
                 return null;
             }
 
-            // Retornar el objeto ContinueCommand
+            // Es crítico retornar un nuevo objeto ContinueCommand
             return new ContinueCommand();
         }
-
         //implementacion return
         public override object VisitReturnStmt(LanguageParser.ReturnStmtContext context)
         {
