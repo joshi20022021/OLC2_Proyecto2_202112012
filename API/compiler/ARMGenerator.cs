@@ -14,6 +14,18 @@ namespace API.compiler.ARM64
         private Stack<string> _continueLabels = new Stack<string>();
         private Stack<string> _breakLabels = new Stack<string>();
 
+        private Dictionary<string, FunctionInfo> _functions = new Dictionary<string, FunctionInfo>();
+        private string _currentFunction = "";
+
+        private class FunctionInfo
+        {
+            public string Name { get; set; }
+            public string ReturnType { get; set; }
+            public List<(string Type, string Name)> Parameters { get; set; } = new List<(string, string)>();
+            public string Label { get; set; }
+            public int StackSize { get; set; }
+        }
+
         private string Sanitize(string s) =>
         s?.Replace("\r", "\\r")
         .Replace("\n", "\\n");
@@ -218,11 +230,23 @@ namespace API.compiler.ARM64
                 {
                     _code.AppendLine($"    // ADVERTENCIA: continue fuera de un bucle");
                 }
-                continue; // No procesar nada más después del continue
+                continue; // No procuesar nada más después del continue
             }
             else if (nodo.Tipo == "Switch")
             {
                 GenerateSwitch(nodo, tablaSimbolos);
+            }
+            else if (nodo.Tipo == "FuncionDeclaracion")
+            {
+                GenerateFunctionDeclaration(nodo, tablaSimbolos);
+            }
+            else if (nodo.Tipo == "FuncionCall")
+            {
+                GenerateFunctionCall(nodo, tablaSimbolos);
+            }
+            else if (nodo.Tipo == "Return")
+            {
+                GenerateReturn(nodo, tablaSimbolos);
             }
             }
         }
@@ -587,7 +611,10 @@ namespace API.compiler.ARM64
             {
                 int offset = GetVariableOffset(varName);
                 string offsetStr = offset.ToString();
-                string valorStr = simbolo.Valor != null ? simbolo.Valor.ToString() : "0"; // Valor por defecto: 0
+                // SOLUCIÓN: Tratar específicamente el caso "nulo"
+                string valorStr = simbolo.Valor != null ? 
+                                (simbolo.Valor.ToString() == "nulo" ? "0" : simbolo.Valor.ToString()) : 
+                                "0";
 
                 _code.AppendLine($"    mov x9, #{valorStr}");
                 _code.AppendLine($"    str x9, [sp, #{offsetStr}]");
@@ -1197,14 +1224,7 @@ namespace API.compiler.ARM64
             }
             else
             {
-                // Si hay muchos cases consecutivos, considerar usar una tabla de saltos
-                // Aquí iría una implementación más compleja con tablas de salto
-                // Para casos como enteros consecutivos
                 _code.AppendLine("    // Switch con muchos casos - usando comparaciones secuenciales");
-                
-                // Implementación similar a la anterior para este caso
-                // (igual que el bloque anterior pero con mensaje diferente)
-                
                 // Para cada nodo case
                 foreach (var caseNodo in caseNodos)
                 {
@@ -1268,6 +1288,312 @@ namespace API.compiler.ARM64
             _code.AppendLine("    // Fin del switch");
         }
 
+        private void GenerateFunctionDeclaration(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            // Obtener nombre y tipo de retorno
+            string nombreFuncion = nodo.Valor?.ToString();
+            var tipoNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "TipoRetorno");
+            string tipoRetorno = tipoNodo?.Valor?.ToString() ?? "void";
+            
+            _code.AppendLine($"\n// Declaración de función: {nombreFuncion}");
+            
+            // Generar etiqueta única para la función
+            string functionLabel = $"func_{nombreFuncion}";
+            
+            // Registrar función en la tabla
+            var functionInfo = new FunctionInfo
+            {
+                Name = nombreFuncion,
+                ReturnType = tipoRetorno,
+                Label = functionLabel,
+                StackSize = 64 // Espacio inicial para variables locales
+            };
+            
+            // Procesar parámetros
+            var parametrosNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Parametros");
+            if (parametrosNodo?.Hijos != null)
+            {
+                foreach (var paramNodo in parametrosNodo.Hijos)
+                {
+                    string paramName = paramNodo.Valor?.ToString();
+                    string paramType = paramNodo.Hijos.FirstOrDefault(h => h.Tipo == "TipoParametro")?.Valor?.ToString() ?? "int";
+                    functionInfo.Parameters.Add((paramType, paramName));
+                }
+            }
+            
+            _functions[nombreFuncion] = functionInfo;
+            
+            // Saltar la definición durante la ejecución principal
+            _code.AppendLine($"    b skip_func_{_labelCounter}");
+            
+            // Iniciar definición de función
+            _code.AppendLine($"{functionLabel}:");
+            _code.AppendLine($"    // Prólogo de función");
+            _code.AppendLine($"    stp x29, x30, [sp, #-16]!");
+            _code.AppendLine($"    mov x29, sp");
+            _code.AppendLine($"    sub sp, sp, #{functionInfo.StackSize}");
+            
+            // Guardar contexto
+            _currentFunction = nombreFuncion;
+            
+            // Guardar parámetros en el stack
+            int paramOffset = 16;
+            for (int i = 0; i < functionInfo.Parameters.Count && i < 8; i++)
+            {
+                var param = functionInfo.Parameters[i];
+                string paramMem = $"[sp, #{paramOffset}]";
+                
+                // Registrar variable en el entorno de la función
+                _variables[param.Name] = paramMem;
+                
+                if (param.Type == "int" || param.Type == "bool")
+                {
+                    _code.AppendLine($"    str x{i}, {paramMem}");
+                }
+                else if (param.Type == "float64")
+                {
+                    _code.AppendLine($"    str d{i}, {paramMem}");
+                }
+                else
+                {
+                    // String u otros tipos
+                    _code.AppendLine($"    str x{i}, {paramMem}");
+                }
+                
+                paramOffset += 8;
+            }
+            // Cuerpo de la función
+            var bloqueNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "BloqueFuncion");
+            if (bloqueNodo?.Hijos != null)
+            {
+                ProcessInstructions(bloqueNodo.Hijos, tablaSimbolos);
+            }
+            
+            // Epílogo de la función (punto de retorno común)
+            _code.AppendLine($"\nfunc_return_{nombreFuncion}:");
+            
+            // Si la función devuelve un valor y no hay un return explícito, devolver valor por defecto
+            if (tipoRetorno != "void")
+            {
+                _code.AppendLine($"    // Valor de retorno por defecto");
+                if (tipoRetorno == "int" || tipoRetorno == "bool")
+                    _code.AppendLine($"    mov x0, #0");
+                else if (tipoRetorno == "float64")
+                    _code.AppendLine($"    fmov d0, #0.0");
+                else
+                    _code.AppendLine($"    mov x0, #0");
+            }
+            
+            // Restaurar frame pointer y retornar
+            _code.AppendLine($"    mov sp, x29");
+            _code.AppendLine($"    ldp x29, x30, [sp], #16");
+            _code.AppendLine($"    ret");
+            
+            // Etiqueta para saltar la definición de función
+            _code.AppendLine($"skip_func_{_labelCounter++}:");
+            
+            // Restaurar contexto
+            _currentFunction = "";
+        }
+
+        private void GenerateFunctionCall(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            string nombreFuncion = nodo.Valor?.ToString();
+            
+            if (!_functions.TryGetValue(nombreFuncion, out var functionInfo))
+            {
+                _code.AppendLine($"    // Error: Función no encontrada: {nombreFuncion}");
+                return;
+            }
+            
+            _code.AppendLine($"\n    // Llamada a función: {nombreFuncion}");
+            
+            // Preparar argumentos
+            var argumentosNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Argumentos");
+            if (argumentosNodo?.Hijos != null)
+            {
+                for (int i = 0; i < argumentosNodo.Hijos.Count && i < 8; i++)
+                {
+                    var argNodo = argumentosNodo.Hijos[i];
+                    string argVal = argNodo.Valor?.ToString();
+                    
+                    if (_variables.TryGetValue(argVal, out string argMem))
+                    {
+                        // Cargar desde variable
+                        if (i < functionInfo.Parameters.Count)
+                        {
+                            string paramType = functionInfo.Parameters[i].Type;
+                            if (paramType == "int" || paramType == "bool")
+                            {
+                                _code.AppendLine($"    ldr x{i}, {argMem}");
+                            }
+                            else if (paramType == "float64")
+                            {
+                                _code.AppendLine($"    ldr d{i}, {argMem}");
+                            }
+                            else
+                            {
+                                _code.AppendLine($"    ldr x{i}, {argMem}");
+                            }
+                        }
+                    }
+                    else if (int.TryParse(argVal, out int intVal))
+                    {
+                        _code.AppendLine($"    mov x{i}, #{intVal}");
+                    }
+                    else if (double.TryParse(argVal, out double doubleVal))
+                    {
+                        string floatLabel = $"float_{_labelCounter++}";
+                        _dataSection.Add($"{floatLabel}: .double {doubleVal}");
+                        _code.AppendLine($"    adr x9, {floatLabel}");
+                        _code.AppendLine($"    ldr d{i}, [x9]");
+                    }
+                    else if (argVal == "true")
+                    {
+                        _code.AppendLine($"    mov x{i}, #1");
+                    }
+                    else if (argVal == "false")
+                    {
+                        _code.AppendLine($"    mov x{i}, #0");
+                    }
+                    else if (argVal?.StartsWith("\"") == true && argVal?.EndsWith("\"") == true)
+                    {
+                        string cleanStr = argVal.Substring(1, argVal.Length - 2);
+                        string strLabel = $"str_{_labelCounter++}";
+                        _dataSection.Add($"{strLabel}: .asciz \"{cleanStr}\"");
+                        _code.AppendLine($"    adr x{i}, {strLabel}");
+                    }
+                }
+            }
+            
+            // Llamar a la función
+            _code.AppendLine($"    bl {functionInfo.Label}");
+            
+            // El valor de retorno queda en x0 (para int/bool/ptr) o d0 (para float64)
+            _code.AppendLine($"    // Valor de retorno en x0/d0");
+        }
+
+        private void GenerateReturn(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            _code.AppendLine($"    // Instrucción return");
+            
+            // Procesar valor de retorno si existe
+            var exprNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Expresion");
+            if (exprNodo != null)
+            {
+                string exprVal = exprNodo.Valor?.ToString();
+                
+                if (_variables.TryGetValue(exprVal, out string varMem))
+                {
+                    // Es una variable
+                    var variable = tablaSimbolos.FirstOrDefault(s => s.Nombre == exprVal);
+                    string tipo = variable?.TipoDato ?? "int";
+                    
+                    if (tipo == "int" || tipo == "bool")
+                    {
+                        _code.AppendLine($"    ldr x0, {varMem}");
+                    }
+                    else if (tipo == "float64")
+                    {
+                        _code.AppendLine($"    ldr d0, {varMem}");
+                    }
+                    else
+                    {
+                        _code.AppendLine($"    ldr x0, {varMem}");
+                    }
+                }
+                else if (int.TryParse(exprVal, out int intVal))
+                {
+                    _code.AppendLine($"    mov x0, #{intVal}");
+                }
+                else if (double.TryParse(exprVal, out double doubleVal))
+                {
+                    string floatLabel = $"float_{_labelCounter++}";
+                    _dataSection.Add($"{floatLabel}: .double {doubleVal}");
+                    _code.AppendLine($"    adr x9, {floatLabel}");
+                    _code.AppendLine($"    ldr d0, [x9]");
+                }
+                else if (exprVal == "true")
+                {
+                    _code.AppendLine($"    mov x0, #1");
+                }
+                else if (exprVal == "false")
+                {
+                    _code.AppendLine($"    mov x0, #0");
+                }
+                else if (exprVal?.StartsWith("\"") == true && exprVal?.EndsWith("\"") == true)
+                {
+                    string cleanStr = exprVal.Substring(1, exprVal.Length - 2);
+                    string strLabel = $"str_{_labelCounter++}";
+                    _dataSection.Add($"{strLabel}: .asciz \"{cleanStr}\"");
+                    _code.AppendLine($"    adr x0, {strLabel}");
+                }
+            }
+            
+            // Saltar al epílogo de la función
+            if (!string.IsNullOrEmpty(_currentFunction))
+            {
+                _code.AppendLine($"    b func_return_{_currentFunction}");
+            }
+            else
+            {
+                _code.AppendLine($"    // ADVERTENCIA: return fuera de función");
+            }
+        }
+
+        private void GenerateValueToRegister(string value, string registerX, string registerD, string tipo)
+        {
+            // Manejo especial para valores nulos
+            if (value == null || value == "nulo")
+            {
+                _code.AppendLine($"    mov {registerX}, #0");
+                return;
+            }
+            
+            if (_variables.TryGetValue(value, out string valueMem))
+            {
+                // Es una variable
+                if (tipo == "float64")
+                {
+                    _code.AppendLine($"    ldr {registerD}, {valueMem}");
+                }
+                else
+                {
+                    _code.AppendLine($"    ldr {registerX}, {valueMem}");
+                }
+            }
+            else if (int.TryParse(value, out int intVal))
+            {
+                _code.AppendLine($"    mov {registerX}, #{intVal}");
+            }
+            else if (double.TryParse(value, out double doubleVal))
+            {
+                string floatLabel = $"float_{_labelCounter++}";
+                _dataSection.Add($"{floatLabel}: .double {doubleVal}");
+                _code.AppendLine($"    adr x9, {floatLabel}");
+                _code.AppendLine($"    ldr {registerD}, [x9]");
+            }
+            else if (value == "true")
+            {
+                _code.AppendLine($"    mov {registerX}, #1");
+            }
+            else if (value == "false")
+            {
+                _code.AppendLine($"    mov {registerX}, #0");
+            }
+            else if (value?.StartsWith("\"") == true && value?.EndsWith("\"") == true)
+            {
+                string cleanStr = value.Substring(1, value.Length - 2);
+                string strLabel = $"str_{_labelCounter++}";
+                _dataSection.Add($"{strLabel}: .asciz \"{cleanStr}\"");
+                _code.AppendLine($"    adr {registerX}, {strLabel}");
+            }
+            else
+            {
+                // Valor desconocido o no procesable, usar cero como predeterminado
+                _code.AppendLine($"    mov {registerX}, #0");
+            }
+        }
         private void PushLoopLabels(string continueLabel, string breakLabel)
         {
             _continueLabels.Push(continueLabel);

@@ -8,93 +8,116 @@ str_5: .asciz "Hola. mundo!"
 str_6: .asciz "string"
 str_7: .asciz "bool"
 str_8: .asciz "[]int"
-float_9: .double 5
-lit_11: .asciz "\n\=\=\=\= strconv.Atoi \=\=\=\="
-newline_11: .asciz "\n"
-lit_13: .asciz "Conversión de string a int:"
-newline_13: .asciz "\n"
-lit_15: .asciz "\"123\" convertido a int:"
-space_16: .asciz " "
-int_buffer_16: .space 20
-newline_17: .asciz "\n"
-lit_20: .asciz "OK strconv.Atoi: correcto"
+lit_10: .asciz "\=\=\= Archivo de prueba de funciones \=\=\="
+newline_10: .asciz "\n"
+lit_12: .asciz "\=\=\=\= Funciones no recursivas sin parámetros \=\=\=\="
+newline_12: .asciz "\n"
+lit_14: .asciz "Función sin retorno:"
+newline_14: .asciz "\n"
+lit_16: .asciz "\n\n###Validacion Manual"
+newline_16: .asciz "\n"
+lit_18: .asciz "¡Hola. mundo!"
+newline_18: .asciz "\n"
+lit_20: .asciz "\nFunción con retorno:"
 newline_20: .asciz "\n"
-lit_22: .asciz "\n\=\=\=\= strconv.ParseFloat \=\=\=\="
-newline_22: .asciz "\n"
-lit_24: .asciz "Conversión de string a float64:"
+lit_22: .asciz "El número obtenido es:"
+space_23: .asciz " "
+int_buffer_23: .space 20
 newline_24: .asciz "\n"
-lit_26: .asciz "\"123.45\" convertido a float64:"
-space_27: .asciz " "
-float_buffer_27: .space 30
-newline_28: .asciz "\n"
-lit_30: .asciz "\"123\" convertido a float64:"
-space_31: .asciz " "
-float_buffer_31: .space 30
-newline_32: .asciz "\n"
-lit_35: .asciz "OK strconv.ParseFloat: correcto"
+lit_27: .asciz "OK Funciones no recursivas sin parámetros: correcto"
+newline_27: .asciz "\n"
+lit_29: .asciz "\n\=\=\=\= strconv.Atoi \=\=\=\="
+newline_29: .asciz "\n"
+lit_31: .asciz "Conversión de string a int:"
+newline_31: .asciz "\n"
+lit_33: .asciz "\"123\" convertido a int:"
+space_34: .asciz " "
+int_buffer_34: .space 20
 newline_35: .asciz "\n"
-lit_37: .asciz "\n\=\=\=\= reflect.TypeOf \=\=\=\="
-newline_37: .asciz "\n"
-lit_39: .asciz "Obtener tipo de datos:"
-newline_39: .asciz "\n"
-lit_41: .asciz "Tipo de 42:"
-space_42: .asciz " "
-empty_str_42: .asciz ""
-newline_43: .asciz "\n"
-lit_45: .asciz "Tipo de 3.14159:"
-space_46: .asciz " "
-empty_str_46: .asciz ""
-newline_47: .asciz "\n"
-lit_49: .asciz "Tipo de \"Hola. mundo!\":"
-space_50: .asciz " "
-empty_str_50: .asciz ""
-newline_51: .asciz "\n"
-lit_53: .asciz "Tipo de true:"
-space_54: .asciz " "
-empty_str_54: .asciz ""
+lit_38: .asciz "OK strconv.Atoi: correcto"
+newline_38: .asciz "\n"
+lit_40: .asciz "\n\=\=\=\= strconv.ParseFloat \=\=\=\="
+newline_40: .asciz "\n"
+lit_42: .asciz "Conversión de string a float64:"
+newline_42: .asciz "\n"
+lit_44: .asciz "\"123.45\" convertido a float64:"
+space_45: .asciz " "
+float_buffer_45: .space 30
+newline_46: .asciz "\n"
+lit_48: .asciz "\"123\" convertido a float64:"
+space_49: .asciz " "
+float_buffer_49: .space 30
+newline_50: .asciz "\n"
+lit_53: .asciz "OK strconv.ParseFloat: correcto"
+newline_53: .asciz "\n"
+lit_55: .asciz "\n\=\=\=\= reflect.TypeOf \=\=\=\="
 newline_55: .asciz "\n"
-lit_57: .asciz "Tipo de []int{1. 2. 3}:"
-space_58: .asciz " "
-empty_str_58: .asciz ""
-newline_59: .asciz "\n"
-lit_62: .asciz "OK reflect.TypeOf: correcto"
-newline_62: .asciz "\n"
-lit_64: .asciz "\n\=\=\= Tabla de Resultados \=\=\="
-newline_64: .asciz "\n"
-lit_66: .asciz "+----------------------------------+--------+-------+"
-newline_66: .asciz "\n"
-lit_68: .asciz "| Característica                   | Puntos | Total |"
-newline_68: .asciz "\n"
-lit_70: .asciz "+----------------------------------+--------+-------+"
-newline_70: .asciz "\n"
-lit_72: .asciz "| strconv.Atoi                     | "
-space_73: .asciz " "
-int_buffer_73: .space 20
-space_75: .asciz " "
-lit_76: .asciz "    | 2     |"
-newline_76: .asciz "\n"
-lit_78: .asciz "| strconv.ParseFloat               | "
-space_79: .asciz " "
-int_buffer_79: .space 20
-space_81: .asciz " "
-lit_82: .asciz "    | 2     |"
+lit_57: .asciz "Obtener tipo de datos:"
+newline_57: .asciz "\n"
+lit_59: .asciz "Tipo de 42:"
+space_60: .asciz " "
+empty_str_60: .asciz ""
+newline_61: .asciz "\n"
+lit_63: .asciz "Tipo de 3.14159:"
+space_64: .asciz " "
+empty_str_64: .asciz ""
+newline_65: .asciz "\n"
+lit_67: .asciz "Tipo de \"Hola. mundo!\":"
+space_68: .asciz " "
+empty_str_68: .asciz ""
+newline_69: .asciz "\n"
+lit_71: .asciz "Tipo de true:"
+space_72: .asciz " "
+empty_str_72: .asciz ""
+newline_73: .asciz "\n"
+lit_75: .asciz "Tipo de []int{1. 2. 3}:"
+space_76: .asciz " "
+empty_str_76: .asciz ""
+newline_77: .asciz "\n"
+lit_80: .asciz "OK reflect.TypeOf: correcto"
+newline_80: .asciz "\n"
+lit_82: .asciz "\n\=\=\= Tabla de Resultados \=\=\="
 newline_82: .asciz "\n"
-lit_84: .asciz "| reflect.TypeOf                   | "
-space_85: .asciz " "
-int_buffer_85: .space 20
-space_87: .asciz " "
-lit_88: .asciz "    | 1     |"
+lit_84: .asciz "+----------------------------------+--------+-------+"
+newline_84: .asciz "\n"
+lit_86: .asciz "| Característica                   | Puntos | Total |"
+newline_86: .asciz "\n"
+lit_88: .asciz "+----------------------------------+--------+-------+"
 newline_88: .asciz "\n"
-lit_90: .asciz "+----------------------------------+--------+-------+"
-newline_90: .asciz "\n"
-lit_92: .asciz "| TOTAL                            | "
+lit_90: .asciz "| Funciones sin parámetros         | "
+space_91: .asciz " "
+int_buffer_91: .space 20
 space_93: .asciz " "
-float_buffer_93: .space 30
-space_95: .asciz " "
-lit_96: .asciz "   | 25    |"
-newline_96: .asciz "\n"
-lit_98: .asciz "+----------------------------------+--------+-------+"
-newline_98: .asciz "\n"
+lit_94: .asciz "    | 5     |"
+newline_94: .asciz "\n"
+lit_96: .asciz "| strconv.Atoi                     | "
+space_97: .asciz " "
+int_buffer_97: .space 20
+space_99: .asciz " "
+lit_100: .asciz "    | 2     |"
+newline_100: .asciz "\n"
+lit_102: .asciz "| strconv.ParseFloat               | "
+space_103: .asciz " "
+int_buffer_103: .space 20
+space_105: .asciz " "
+lit_106: .asciz "    | 2     |"
+newline_106: .asciz "\n"
+lit_108: .asciz "| reflect.TypeOf                   | "
+space_109: .asciz " "
+int_buffer_109: .space 20
+space_111: .asciz " "
+lit_112: .asciz "    | 1     |"
+newline_112: .asciz "\n"
+lit_114: .asciz "+----------------------------------+--------+-------+"
+newline_114: .asciz "\n"
+lit_116: .asciz "| TOTAL                            | "
+space_117: .asciz " "
+int_buffer_117: .space 20
+space_119: .asciz " "
+lit_120: .asciz "   | 25    |"
+newline_120: .asciz "\n"
+lit_122: .asciz "+----------------------------------+--------+-------+"
+newline_122: .asciz "\n"
 
 // ARM64 Assembly
 .text
@@ -105,209 +128,233 @@ _start:
     sub sp, sp, #512
 
     // Declaraciones de variables
-    // Debug: Símbolos en tabla: 18
-    // Símbolo: '273', Tipo: 'Función', Dato: 'void'
+    // Debug: Símbolos en tabla: 22
+    // Símbolo: '13', Tipo: 'Función', Dato: 'void'
+
+    // Declaración de variable: saludar
+    // Símbolo: '14', Tipo: 'Función', Dato: 'int'
+
+    // Declaración de variable: obtenerNumero
+    mov x9, #0
+    str x9, [sp, #16]
+    // Símbolo: '15', Tipo: 'Función', Dato: 'void'
 
     // Declaración de variable: main
-    // Símbolo: '276', Tipo: 'Variable', Dato: 'int'
+    // Símbolo: '18', Tipo: 'Variable', Dato: 'int'
+
+    // Declaración de variable: puntos
+    mov x9, #0
+    str x9, [sp, #24]
+    // Símbolo: '21', Tipo: 'Variable', Dato: 'int'
+
+    // Declaración de variable: puntosFuncionesSimples
+    mov x9, #0
+    str x9, [sp, #32]
+    // Símbolo: '24', Tipo: 'Variable', Dato: 'int'
+
+    // Declaración de variable: numero
+    mov x9, #42
+    str x9, [sp, #40]
+    // Símbolo: '27', Tipo: 'Variable', Dato: 'int'
 
     // Declaración de variable: puntosAtoi
     mov x9, #0
-    str x9, [sp, #16]
-    // Símbolo: '279', Tipo: 'Variable', Dato: 'int'
+    str x9, [sp, #48]
+    // Símbolo: '30', Tipo: 'Variable', Dato: 'int'
 
     // Declaración de variable: numeroEntero
     mov x9, #123
-    str x9, [sp, #24]
-    // Símbolo: '282', Tipo: 'Variable', Dato: 'int'
+    str x9, [sp, #56]
+    // Símbolo: '33', Tipo: 'Variable', Dato: 'int'
 
     // Declaración de variable: puntosParseFloat
     mov x9, #0
-    str x9, [sp, #32]
-    // Símbolo: '285', Tipo: 'Variable', Dato: 'float64'
+    str x9, [sp, #64]
+    // Símbolo: '36', Tipo: 'Variable', Dato: 'float64'
 
     // Declaración de variable: numeroDecimal1
     adr x9, float_0
     ldr d0, [x9]
-    str d0, [sp, #40]
-    // Símbolo: '288', Tipo: 'Variable', Dato: 'float64'
+    str d0, [sp, #72]
+    // Símbolo: '39', Tipo: 'Variable', Dato: 'float64'
 
     // Declaración de variable: numeroDecimal2
     adr x9, float_1
     ldr d0, [x9]
-    str d0, [sp, #48]
-    // Símbolo: '291', Tipo: 'Variable', Dato: 'int'
+    str d0, [sp, #80]
+    // Símbolo: '42', Tipo: 'Variable', Dato: 'int'
 
     // Declaración de variable: puntosTypeOf
     mov x9, #0
-    str x9, [sp, #56]
-    // Símbolo: '294', Tipo: 'Variable', Dato: 'int'
+    str x9, [sp, #88]
+    // Símbolo: '45', Tipo: 'Variable', Dato: 'int'
 
     // Declaración de variable: entero
     mov x9, #42
-    str x9, [sp, #64]
-    // Símbolo: '297', Tipo: 'Variable', Dato: 'string'
+    str x9, [sp, #96]
+    // Símbolo: '48', Tipo: 'Variable', Dato: 'string'
 
     // Declaración de variable: tipoEntero
     adr x9, str_2
-    str x9, [sp, #72]
-    // Símbolo: '300', Tipo: 'Variable', Dato: 'float64'
+    str x9, [sp, #104]
+    // Símbolo: '51', Tipo: 'Variable', Dato: 'float64'
 
     // Declaración de variable: decimal
     adr x9, float_3
     ldr d0, [x9]
-    str d0, [sp, #80]
-    // Símbolo: '303', Tipo: 'Variable', Dato: 'string'
+    str d0, [sp, #112]
+    // Símbolo: '54', Tipo: 'Variable', Dato: 'string'
 
     // Declaración de variable: tipoDecimal
     adr x9, str_4
-    str x9, [sp, #88]
-    // Símbolo: '306', Tipo: 'Variable', Dato: 'string'
+    str x9, [sp, #120]
+    // Símbolo: '57', Tipo: 'Variable', Dato: 'string'
 
     // Declaración de variable: texto
     adr x9, str_5
-    str x9, [sp, #96]
-    // Símbolo: '309', Tipo: 'Variable', Dato: 'string'
+    str x9, [sp, #128]
+    // Símbolo: '60', Tipo: 'Variable', Dato: 'string'
 
     // Declaración de variable: tipoTexto
     adr x9, str_6
-    str x9, [sp, #104]
-    // Símbolo: '312', Tipo: 'Variable', Dato: 'bool'
+    str x9, [sp, #136]
+    // Símbolo: '63', Tipo: 'Variable', Dato: 'bool'
 
     // Declaración de variable: booleano
     mov x9, #1
-    str x9, [sp, #112]
-    // Símbolo: '315', Tipo: 'Variable', Dato: 'string'
+    str x9, [sp, #144]
+    // Símbolo: '66', Tipo: 'Variable', Dato: 'string'
 
     // Declaración de variable: tipoBooleano
     adr x9, str_7
-    str x9, [sp, #120]
-    // Símbolo: '318', Tipo: 'Variable', Dato: '[]int'
+    str x9, [sp, #152]
+    // Símbolo: '69', Tipo: 'Variable', Dato: '[]int'
 
     // Declaración de variable: slice
-    // Símbolo: '321', Tipo: 'Variable', Dato: 'string'
+    // Símbolo: '72', Tipo: 'Variable', Dato: 'string'
 
     // Declaración de variable: tipoSlice
     adr x9, str_8
-    str x9, [sp, #128]
-    // Símbolo: '323', Tipo: 'Variable', Dato: 'float64'
-
-    // Declaración de variable: puntos
-    adr x9, float_9
-    ldr d0, [x9]
-    str d0, [sp, #136]
+    str x9, [sp, #160]
 
     // Procesando instrucciones
 
+    // Procesando nodo: FuncionDeclaracion  Valor=saludar
+
+    // Procesando nodo: TipoRetorno  Valor=void
+
+    // Procesando nodo: BloqueFuncion  Valor=
+
+    // Procesando nodo: FuncionDeclaracion  Valor=obtenerNumero
+
+    // Procesando nodo: TipoRetorno  Valor=int
+
+    // Procesando nodo: BloqueFuncion  Valor=
+
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: \n\=\=\=\= strconv.Atoi \=\=\=\=
-    adr x0, lit_11
+    // Imprimir literal: \=\=\= Archivo de prueba de funciones \=\=\=
+    adr x0, lit_10
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_11
+    adr x1, lit_10
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_11
+    adr x0, newline_10
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_11
+    adr x1, newline_10
     mov x8, #64
     svc #0
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: Conversión de string a int:
-    adr x0, lit_13
+    // Imprimir literal: \=\=\=\= Funciones no recursivas sin parámetros \=\=\=\=
+    adr x0, lit_12
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_13
+    adr x1, lit_12
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_13
+    adr x0, newline_12
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_13
+    adr x1, newline_12
     mov x8, #64
     svc #0
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: \"123\" convertido a int:
-    adr x0, lit_15
+    // Imprimir literal: Función sin retorno:
+    adr x0, lit_14
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_15
-    mov x8, #64
-    svc #0
-    adr x0, space_16
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_16
-    mov x8, #64
-    svc #0
-    // Imprimir entero: numeroEntero
-    ldr x0, [sp, #24]
-    adr x1, int_buffer_16
-    bl int_to_string
-    mov x2, x0
-    mov x0, #1
-    adr x1, int_buffer_16
+    adr x1, lit_14
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_17
+    adr x0, newline_14
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_17
+    adr x1, newline_14
     mov x8, #64
     svc #0
-
-    // Procesando nodo: IfStatement  Valor=
-
-    // If Statement
-    // Evaluar condición: numeroEntero==123
-    // ADVERTENCIA: No se pudo evaluar condición 'True'
-    mov x0, #0
-    cmp x0, #0
-    beq else_18
-    // Bloque if (then)
-    b endif_18
-else_18:
-    // Bloque else
-endif_18:
-
-    // Procesando nodo: Condicion  Valor=numeroEntero==123
-
-    // Procesando nodo: Expresion  Valor=True
-
-    // Procesando nodo: BloqueIf  Valor=
-
-    // Procesando nodo: BloqueElse  Valor=
-
-    // Procesando nodo: Operacion  Valor=+
-
-    // Procesando nodo: Asignacion  Valor=
-    // Asignando 2 a puntosAtoi (int) en [sp, #16]
-    mov x9, #2
-    str x9, [sp, #16]
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: OK strconv.Atoi: correcto
+    // Imprimir literal: \n\n###Validacion Manual
+    adr x0, lit_16
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_16
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_16
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_16
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: ¡Hola, mundo!
+    adr x0, lit_18
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_18
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_18
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_18
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: \nFunción con retorno:
     adr x0, lit_20
     bl string_length
     mov x2, x0
@@ -327,7 +374,7 @@ endif_18:
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: \n\=\=\=\= strconv.ParseFloat \=\=\=\=
+    // Imprimir literal: El número obtenido es:
     adr x0, lit_22
     bl string_length
     mov x2, x0
@@ -335,24 +382,20 @@ endif_18:
     adr x1, lit_22
     mov x8, #64
     svc #0
-    // Imprimir salto de línea
-    adr x0, newline_22
+    adr x0, space_23
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_22
+    adr x1, space_23
     mov x8, #64
     svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: Conversión de string a float64:
-    adr x0, lit_24
-    bl string_length
+    // Imprimir entero: numero
+    ldr x0, [sp, #40]
+    adr x1, int_buffer_23
+    bl int_to_string
     mov x2, x0
     mov x0, #1
-    adr x1, lit_24
+    adr x1, int_buffer_23
     mov x8, #64
     svc #0
     // Imprimir salto de línea
@@ -364,39 +407,253 @@ endif_18:
     mov x8, #64
     svc #0
 
+    // Procesando nodo: IfStatement  Valor=
+
+    // If Statement
+    // Evaluar condición: numero==42
+    // ADVERTENCIA: No se pudo evaluar condición 'True'
+    mov x0, #0
+    cmp x0, #0
+    beq else_25
+    // Bloque if (then)
+    b endif_25
+else_25:
+    // Bloque else
+endif_25:
+
+    // Procesando nodo: Condicion  Valor=numero==42
+
+    // Procesando nodo: Expresion  Valor=True
+
+    // Procesando nodo: BloqueIf  Valor=
+
+    // Procesando nodo: BloqueElse  Valor=
+
+    // Procesando nodo: Operacion  Valor=+
+
+    // Procesando nodo: Asignacion  Valor=
+    // Asignando 5 a puntosFuncionesSimples (int) en [sp, #32]
+    mov x9, #5
+    str x9, [sp, #32]
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: OK Funciones no recursivas sin parámetros: correcto
+    adr x0, lit_27
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_27
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_27
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_27
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: \n\=\=\=\= strconv.Atoi \=\=\=\=
+    adr x0, lit_29
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_29
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_29
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_29
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Conversión de string a int:
+    adr x0, lit_31
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_31
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_31
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_31
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: \"123\" convertido a int:
+    adr x0, lit_33
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_33
+    mov x8, #64
+    svc #0
+    adr x0, space_34
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_34
+    mov x8, #64
+    svc #0
+    // Imprimir entero: numeroEntero
+    ldr x0, [sp, #56]
+    adr x1, int_buffer_34
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_34
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_35
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_35
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: IfStatement  Valor=
+
+    // If Statement
+    // Evaluar condición: numeroEntero==123
+    // ADVERTENCIA: No se pudo evaluar condición 'True'
+    mov x0, #0
+    cmp x0, #0
+    beq else_36
+    // Bloque if (then)
+    b endif_36
+else_36:
+    // Bloque else
+endif_36:
+
+    // Procesando nodo: Condicion  Valor=numeroEntero==123
+
+    // Procesando nodo: Expresion  Valor=True
+
+    // Procesando nodo: BloqueIf  Valor=
+
+    // Procesando nodo: BloqueElse  Valor=
+
+    // Procesando nodo: Operacion  Valor=+
+
+    // Procesando nodo: Asignacion  Valor=
+    // Asignando 2 a puntosAtoi (int) en [sp, #48]
+    mov x9, #2
+    str x9, [sp, #48]
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: OK strconv.Atoi: correcto
+    adr x0, lit_38
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_38
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_38
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_38
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: \n\=\=\=\= strconv.ParseFloat \=\=\=\=
+    adr x0, lit_40
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_40
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_40
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_40
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Conversión de string a float64:
+    adr x0, lit_42
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_42
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_42
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_42
+    mov x8, #64
+    svc #0
+
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
     // Imprimir literal: \"123.45\" convertido a float64:
-    adr x0, lit_26
+    adr x0, lit_44
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_26
+    adr x1, lit_44
     mov x8, #64
     svc #0
-    adr x0, space_27
+    adr x0, space_45
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, space_27
+    adr x1, space_45
     mov x8, #64
     svc #0
     // Imprimir flotante: numeroDecimal1
-    ldr d0, [sp, #40]
-    adr x0, float_buffer_27
+    ldr d0, [sp, #72]
+    adr x0, float_buffer_45
     bl float_to_string
     mov x2, x0
     mov x0, #1
-    adr x1, float_buffer_27
+    adr x1, float_buffer_45
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_28
+    adr x0, newline_46
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_28
+    adr x1, newline_46
     mov x8, #64
     svc #0
 
@@ -404,35 +661,35 @@ endif_18:
 
     // fmt.Println
     // Imprimir literal: \"123\" convertido a float64:
-    adr x0, lit_30
+    adr x0, lit_48
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_30
+    adr x1, lit_48
     mov x8, #64
     svc #0
-    adr x0, space_31
+    adr x0, space_49
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, space_31
+    adr x1, space_49
     mov x8, #64
     svc #0
     // Imprimir flotante: numeroDecimal2
-    ldr d0, [sp, #48]
-    adr x0, float_buffer_31
+    ldr d0, [sp, #80]
+    adr x0, float_buffer_49
     bl float_to_string
     mov x2, x0
     mov x0, #1
-    adr x1, float_buffer_31
+    adr x1, float_buffer_49
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_32
+    adr x0, newline_50
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_32
+    adr x1, newline_50
     mov x8, #64
     svc #0
 
@@ -443,12 +700,12 @@ endif_18:
     // ADVERTENCIA: No se pudo evaluar condición 'True'
     mov x0, #0
     cmp x0, #0
-    beq else_33
+    beq else_51
     // Bloque if (then)
-    b endif_33
-else_33:
+    b endif_51
+else_51:
     // Bloque else
-endif_33:
+endif_51:
 
     // Procesando nodo: Condicion  Valor=numeroDecimal1==123.45&&numeroDecimal2==123.0
 
@@ -461,215 +718,14 @@ endif_33:
     // Procesando nodo: Operacion  Valor=+
 
     // Procesando nodo: Asignacion  Valor=
-    // Asignando 2 a puntosParseFloat (int) en [sp, #32]
+    // Asignando 2 a puntosParseFloat (int) en [sp, #64]
     mov x9, #2
-    str x9, [sp, #32]
+    str x9, [sp, #64]
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
     // Imprimir literal: OK strconv.ParseFloat: correcto
-    adr x0, lit_35
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_35
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_35
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_35
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: \n\=\=\=\= reflect.TypeOf \=\=\=\=
-    adr x0, lit_37
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_37
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_37
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_37
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: Obtener tipo de datos:
-    adr x0, lit_39
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_39
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_39
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_39
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: Tipo de 42:
-    adr x0, lit_41
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_41
-    mov x8, #64
-    svc #0
-    adr x0, space_42
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_42
-    mov x8, #64
-    svc #0
-    // Imprimir string: tipoEntero
-    ldr x0, [sp, #72]
-    cmp x0, #0
-    beq skip_print_42
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    ldr x1, [sp, #72]
-    mov x8, #64
-    svc #0
-    b end_print_42
-skip_print_42:
-    adr x0, empty_str_42
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, empty_str_42
-    mov x8, #64
-    svc #0
-end_print_42:
-    // Imprimir salto de línea
-    adr x0, newline_43
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_43
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: Tipo de 3.14159:
-    adr x0, lit_45
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_45
-    mov x8, #64
-    svc #0
-    adr x0, space_46
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_46
-    mov x8, #64
-    svc #0
-    // Imprimir string: tipoDecimal
-    ldr x0, [sp, #88]
-    cmp x0, #0
-    beq skip_print_46
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    ldr x1, [sp, #88]
-    mov x8, #64
-    svc #0
-    b end_print_46
-skip_print_46:
-    adr x0, empty_str_46
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, empty_str_46
-    mov x8, #64
-    svc #0
-end_print_46:
-    // Imprimir salto de línea
-    adr x0, newline_47
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_47
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: Tipo de \"Hola, mundo!\":
-    adr x0, lit_49
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_49
-    mov x8, #64
-    svc #0
-    adr x0, space_50
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_50
-    mov x8, #64
-    svc #0
-    // Imprimir string: tipoTexto
-    ldr x0, [sp, #104]
-    cmp x0, #0
-    beq skip_print_50
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    ldr x1, [sp, #104]
-    mov x8, #64
-    svc #0
-    b end_print_50
-skip_print_50:
-    adr x0, empty_str_50
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, empty_str_50
-    mov x8, #64
-    svc #0
-end_print_50:
-    // Imprimir salto de línea
-    adr x0, newline_51
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_51
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: Tipo de true:
     adr x0, lit_53
     bl string_length
     mov x2, x0
@@ -677,33 +733,26 @@ end_print_50:
     adr x1, lit_53
     mov x8, #64
     svc #0
-    adr x0, space_54
+    // Imprimir salto de línea
+    adr x0, newline_53
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, space_54
+    adr x1, newline_53
     mov x8, #64
     svc #0
-    // Imprimir string: tipoBooleano
-    ldr x0, [sp, #120]
-    cmp x0, #0
-    beq skip_print_54
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: \n\=\=\=\= reflect.TypeOf \=\=\=\=
+    adr x0, lit_55
     bl string_length
     mov x2, x0
     mov x0, #1
-    ldr x1, [sp, #120]
+    adr x1, lit_55
     mov x8, #64
     svc #0
-    b end_print_54
-skip_print_54:
-    adr x0, empty_str_54
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, empty_str_54
-    mov x8, #64
-    svc #0
-end_print_54:
     // Imprimir salto de línea
     adr x0, newline_55
     bl string_length
@@ -716,7 +765,7 @@ end_print_54:
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: Tipo de []int{1, 2, 3}:
+    // Imprimir literal: Obtener tipo de datos:
     adr x0, lit_57
     bl string_length
     mov x2, x0
@@ -724,39 +773,247 @@ end_print_54:
     adr x1, lit_57
     mov x8, #64
     svc #0
-    adr x0, space_58
+    // Imprimir salto de línea
+    adr x0, newline_57
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, space_58
+    adr x1, newline_57
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Tipo de 42:
+    adr x0, lit_59
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_59
+    mov x8, #64
+    svc #0
+    adr x0, space_60
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_60
+    mov x8, #64
+    svc #0
+    // Imprimir string: tipoEntero
+    ldr x0, [sp, #104]
+    cmp x0, #0
+    beq skip_print_60
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #104]
+    mov x8, #64
+    svc #0
+    b end_print_60
+skip_print_60:
+    adr x0, empty_str_60
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, empty_str_60
+    mov x8, #64
+    svc #0
+end_print_60:
+    // Imprimir salto de línea
+    adr x0, newline_61
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_61
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Tipo de 3.14159:
+    adr x0, lit_63
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_63
+    mov x8, #64
+    svc #0
+    adr x0, space_64
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_64
+    mov x8, #64
+    svc #0
+    // Imprimir string: tipoDecimal
+    ldr x0, [sp, #120]
+    cmp x0, #0
+    beq skip_print_64
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #120]
+    mov x8, #64
+    svc #0
+    b end_print_64
+skip_print_64:
+    adr x0, empty_str_64
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, empty_str_64
+    mov x8, #64
+    svc #0
+end_print_64:
+    // Imprimir salto de línea
+    adr x0, newline_65
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_65
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Tipo de \"Hola, mundo!\":
+    adr x0, lit_67
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_67
+    mov x8, #64
+    svc #0
+    adr x0, space_68
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_68
+    mov x8, #64
+    svc #0
+    // Imprimir string: tipoTexto
+    ldr x0, [sp, #136]
+    cmp x0, #0
+    beq skip_print_68
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #136]
+    mov x8, #64
+    svc #0
+    b end_print_68
+skip_print_68:
+    adr x0, empty_str_68
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, empty_str_68
+    mov x8, #64
+    svc #0
+end_print_68:
+    // Imprimir salto de línea
+    adr x0, newline_69
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_69
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Tipo de true:
+    adr x0, lit_71
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_71
+    mov x8, #64
+    svc #0
+    adr x0, space_72
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_72
+    mov x8, #64
+    svc #0
+    // Imprimir string: tipoBooleano
+    ldr x0, [sp, #152]
+    cmp x0, #0
+    beq skip_print_72
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    ldr x1, [sp, #152]
+    mov x8, #64
+    svc #0
+    b end_print_72
+skip_print_72:
+    adr x0, empty_str_72
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, empty_str_72
+    mov x8, #64
+    svc #0
+end_print_72:
+    // Imprimir salto de línea
+    adr x0, newline_73
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_73
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: Tipo de []int{1, 2, 3}:
+    adr x0, lit_75
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_75
+    mov x8, #64
+    svc #0
+    adr x0, space_76
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_76
     mov x8, #64
     svc #0
     // Imprimir string: tipoSlice
-    ldr x0, [sp, #128]
+    ldr x0, [sp, #160]
     cmp x0, #0
-    beq skip_print_58
+    beq skip_print_76
     bl string_length
     mov x2, x0
     mov x0, #1
-    ldr x1, [sp, #128]
+    ldr x1, [sp, #160]
     mov x8, #64
     svc #0
-    b end_print_58
-skip_print_58:
-    adr x0, empty_str_58
+    b end_print_76
+skip_print_76:
+    adr x0, empty_str_76
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, empty_str_58
+    adr x1, empty_str_76
     mov x8, #64
     svc #0
-end_print_58:
+end_print_76:
     // Imprimir salto de línea
-    adr x0, newline_59
+    adr x0, newline_77
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_59
+    adr x1, newline_77
     mov x8, #64
     svc #0
 
@@ -767,12 +1024,12 @@ end_print_58:
     // ADVERTENCIA: No se pudo evaluar condición 'True'
     mov x0, #0
     cmp x0, #0
-    beq else_60
+    beq else_78
     // Bloque if (then)
-    b endif_60
-else_60:
+    b endif_78
+else_78:
     // Bloque else
-endif_60:
+endif_78:
 
     // Procesando nodo: Condicion  Valor=tipoEntero=="int"&&tipoDecimal=="float64"&&tipoTexto=="string"&&tipoBooleano=="bool"&&tipoSlice=="[]int"
 
@@ -785,196 +1042,45 @@ endif_60:
     // Procesando nodo: Operacion  Valor=+
 
     // Procesando nodo: Asignacion  Valor=
-    // Asignando 1 a puntosTypeOf (int) en [sp, #56]
+    // Asignando 1 a puntosTypeOf (int) en [sp, #88]
     mov x9, #1
-    str x9, [sp, #56]
+    str x9, [sp, #88]
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
     // Imprimir literal: OK reflect.TypeOf: correcto
-    adr x0, lit_62
+    adr x0, lit_80
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_62
+    adr x1, lit_80
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_62
+    adr x0, newline_80
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_62
+    adr x1, newline_80
     mov x8, #64
     svc #0
 
     // Procesando nodo: Operacion  Valor=+
 
     // Procesando nodo: Operacion  Valor=+
+
+    // Procesando nodo: Operacion  Valor=+
+
+    // Procesando nodo: Asignacion  Valor=
+    // Asignando 10 a puntos (int) en [sp, #24]
+    mov x9, #10
+    str x9, [sp, #24]
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
     // Imprimir literal: \n\=\=\= Tabla de Resultados \=\=\=
-    adr x0, lit_64
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_64
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_64
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_64
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: +----------------------------------+--------+-------+
-    adr x0, lit_66
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_66
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_66
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_66
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: | Característica                   | Puntos | Total |
-    adr x0, lit_68
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_68
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_68
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_68
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: +----------------------------------+--------+-------+
-    adr x0, lit_70
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_70
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_70
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_70
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: | strconv.Atoi                     | 
-    adr x0, lit_72
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_72
-    mov x8, #64
-    svc #0
-    adr x0, space_73
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_73
-    mov x8, #64
-    svc #0
-    // Imprimir entero: puntosAtoi
-    ldr x0, [sp, #16]
-    adr x1, int_buffer_73
-    bl int_to_string
-    mov x2, x0
-    mov x0, #1
-    adr x1, int_buffer_73
-    mov x8, #64
-    svc #0
-    mov x0, #1
-    adr x1, space_75
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    // Imprimir literal:     | 2     |
-    adr x0, lit_76
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_76
-    mov x8, #64
-    svc #0
-    // Imprimir salto de línea
-    adr x0, newline_76
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, newline_76
-    mov x8, #64
-    svc #0
-
-    // Procesando nodo: fmt.Println  Valor=
-
-    // fmt.Println
-    // Imprimir literal: | strconv.ParseFloat               | 
-    adr x0, lit_78
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_78
-    mov x8, #64
-    svc #0
-    adr x0, space_79
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_79
-    mov x8, #64
-    svc #0
-    // Imprimir entero: puntosParseFloat
-    ldr x0, [sp, #32]
-    adr x1, int_buffer_79
-    bl int_to_string
-    mov x2, x0
-    mov x0, #1
-    adr x1, int_buffer_79
-    mov x8, #64
-    svc #0
-    mov x0, #1
-    adr x1, space_81
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    // Imprimir literal:     | 2     |
     adr x0, lit_82
     bl string_length
     mov x2, x0
@@ -994,7 +1100,7 @@ endif_60:
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: | reflect.TypeOf                   | 
+    // Imprimir literal: +----------------------------------+--------+-------+
     adr x0, lit_84
     bl string_length
     mov x2, x0
@@ -1002,28 +1108,39 @@ endif_60:
     adr x1, lit_84
     mov x8, #64
     svc #0
-    adr x0, space_85
+    // Imprimir salto de línea
+    adr x0, newline_84
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, space_85
+    adr x1, newline_84
     mov x8, #64
     svc #0
-    // Imprimir entero: puntosTypeOf
-    ldr x0, [sp, #56]
-    adr x1, int_buffer_85
-    bl int_to_string
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: | Característica                   | Puntos | Total |
+    adr x0, lit_86
+    bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, int_buffer_85
+    adr x1, lit_86
     mov x8, #64
     svc #0
+    // Imprimir salto de línea
+    adr x0, newline_86
+    bl string_length
+    mov x2, x0
     mov x0, #1
-    adr x1, space_87
-    mov x2, #1
+    adr x1, newline_86
     mov x8, #64
     svc #0
-    // Imprimir literal:     | 1     |
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: +----------------------------------+--------+-------+
     adr x0, lit_88
     bl string_length
     mov x2, x0
@@ -1043,7 +1160,7 @@ endif_60:
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: +----------------------------------+--------+-------+
+    // Imprimir literal: | Funciones sin parámetros         | 
     adr x0, lit_90
     bl string_length
     mov x2, x0
@@ -1051,48 +1168,48 @@ endif_60:
     adr x1, lit_90
     mov x8, #64
     svc #0
-    // Imprimir salto de línea
-    adr x0, newline_90
+    adr x0, space_91
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_90
+    adr x1, space_91
+    mov x8, #64
+    svc #0
+    // Imprimir entero: puntosFuncionesSimples
+    ldr x0, [sp, #32]
+    adr x1, int_buffer_91
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_91
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_93
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir literal:     | 5     |
+    adr x0, lit_94
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_94
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_94
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_94
     mov x8, #64
     svc #0
 
     // Procesando nodo: fmt.Println  Valor=
 
     // fmt.Println
-    // Imprimir literal: | TOTAL                            | 
-    adr x0, lit_92
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, lit_92
-    mov x8, #64
-    svc #0
-    adr x0, space_93
-    bl string_length
-    mov x2, x0
-    mov x0, #1
-    adr x1, space_93
-    mov x8, #64
-    svc #0
-    // Imprimir flotante: puntos
-    ldr d0, [sp, #136]
-    adr x0, float_buffer_93
-    bl float_to_string
-    mov x2, x0
-    mov x0, #1
-    adr x1, float_buffer_93
-    mov x8, #64
-    svc #0
-    mov x0, #1
-    adr x1, space_95
-    mov x2, #1
-    mov x8, #64
-    svc #0
-    // Imprimir literal:    | 25    |
+    // Imprimir literal: | strconv.Atoi                     | 
     adr x0, lit_96
     bl string_length
     mov x2, x0
@@ -1100,12 +1217,139 @@ endif_60:
     adr x1, lit_96
     mov x8, #64
     svc #0
-    // Imprimir salto de línea
-    adr x0, newline_96
+    adr x0, space_97
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_96
+    adr x1, space_97
+    mov x8, #64
+    svc #0
+    // Imprimir entero: puntosAtoi
+    ldr x0, [sp, #48]
+    adr x1, int_buffer_97
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_97
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_99
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir literal:     | 2     |
+    adr x0, lit_100
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_100
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_100
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_100
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: | strconv.ParseFloat               | 
+    adr x0, lit_102
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_102
+    mov x8, #64
+    svc #0
+    adr x0, space_103
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_103
+    mov x8, #64
+    svc #0
+    // Imprimir entero: puntosParseFloat
+    ldr x0, [sp, #64]
+    adr x1, int_buffer_103
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_103
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_105
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir literal:     | 2     |
+    adr x0, lit_106
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_106
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_106
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_106
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: | reflect.TypeOf                   | 
+    adr x0, lit_108
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_108
+    mov x8, #64
+    svc #0
+    adr x0, space_109
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_109
+    mov x8, #64
+    svc #0
+    // Imprimir entero: puntosTypeOf
+    ldr x0, [sp, #88]
+    adr x1, int_buffer_109
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_109
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_111
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir literal:     | 1     |
+    adr x0, lit_112
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_112
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_112
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_112
     mov x8, #64
     svc #0
 
@@ -1113,19 +1357,88 @@ endif_60:
 
     // fmt.Println
     // Imprimir literal: +----------------------------------+--------+-------+
-    adr x0, lit_98
+    adr x0, lit_114
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, lit_98
+    adr x1, lit_114
     mov x8, #64
     svc #0
     // Imprimir salto de línea
-    adr x0, newline_98
+    adr x0, newline_114
     bl string_length
     mov x2, x0
     mov x0, #1
-    adr x1, newline_98
+    adr x1, newline_114
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: | TOTAL                            | 
+    adr x0, lit_116
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_116
+    mov x8, #64
+    svc #0
+    adr x0, space_117
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, space_117
+    mov x8, #64
+    svc #0
+    // Imprimir entero: puntos
+    ldr x0, [sp, #24]
+    adr x1, int_buffer_117
+    bl int_to_string
+    mov x2, x0
+    mov x0, #1
+    adr x1, int_buffer_117
+    mov x8, #64
+    svc #0
+    mov x0, #1
+    adr x1, space_119
+    mov x2, #1
+    mov x8, #64
+    svc #0
+    // Imprimir literal:    | 25    |
+    adr x0, lit_120
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_120
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_120
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_120
+    mov x8, #64
+    svc #0
+
+    // Procesando nodo: fmt.Println  Valor=
+
+    // fmt.Println
+    // Imprimir literal: +----------------------------------+--------+-------+
+    adr x0, lit_122
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, lit_122
+    mov x8, #64
+    svc #0
+    // Imprimir salto de línea
+    adr x0, newline_122
+    bl string_length
+    mov x2, x0
+    mov x0, #1
+    adr x1, newline_122
     mov x8, #64
     svc #0
 

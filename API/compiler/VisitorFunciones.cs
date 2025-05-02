@@ -72,7 +72,59 @@ namespace API.compiler
                 Linea = context.Start.Line,
                 Columna = context.Start.Column + 1
             });
-
+            var nodoFuncion = new NodoAST
+            {
+                Tipo = "FuncionDeclaracion",
+                Valor = nombreFuncion,
+                Hijos = new List<NodoAST>()
+            };
+            
+            // Añadir tipo de retorno
+            tipoRetorno = context.tipo()?.GetText() ?? "void";
+            nodoFuncion.Hijos.Add(new NodoAST
+            {
+                Tipo = "TipoRetorno",
+                Valor = tipoRetorno
+            });
+            
+            // Añadir parámetros
+            if (context.parametros() != null)
+            {
+                var parametrosNodo = new NodoAST
+                {
+                    Tipo = "Parametros",
+                    Hijos = new List<NodoAST>()
+                };
+                
+                foreach (var param in context.parametros().parametro())
+                {
+                    parametrosNodo.Hijos.Add(new NodoAST
+                    {
+                        Tipo = "Parametro",
+                        Valor = param.IDENTIFICADOR().GetText(),
+                        Hijos = new List<NodoAST> {
+                            new NodoAST {
+                                Tipo = "TipoParametro",
+                                Valor = param.tipo().GetText()
+                            }
+                        }
+                    });
+                }
+                
+                nodoFuncion.Hijos.Add(parametrosNodo);
+            }
+            
+            // Añadir bloque de código
+            var bloqueNodo = new NodoAST
+            {
+                Tipo = "BloqueFuncion",
+                Hijos = new List<NodoAST>() // Se llenará con las instrucciones
+            };
+            nodoFuncion.Hijos.Add(bloqueNodo);
+            
+            // Añadir al AST global
+            nodosAST.Add(nodoFuncion);
+            
             return null;
         }
         //visitar la llamada a la funcion

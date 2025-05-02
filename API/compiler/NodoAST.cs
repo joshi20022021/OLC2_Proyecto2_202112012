@@ -8,6 +8,8 @@ namespace API.compiler
         public string Tipo { get; set; } = "Desconocido";
         public string? Valor { get; set; }
         public List<NodoAST> Hijos { get; set; } = new List<NodoAST>();
+
+        public NodoAST Padre { get; set; }
     }
 
     public class ASTGraphGenerator
