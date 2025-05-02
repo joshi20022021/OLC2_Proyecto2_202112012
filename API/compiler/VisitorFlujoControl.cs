@@ -87,6 +87,17 @@ namespace API.compiler
         public override object VisitSwitch(LanguageParser.SwitchContext context)
         {
             EnSwitch = true;
+            
+            // Crear el nodo Switch principal
+            var nodoSwitch = new NodoAST {
+                Tipo = "Switch",
+                Hijos = new List<NodoAST> {
+                    new NodoAST { 
+                        Tipo = "Expresion", 
+                        Valor = context.expresion().GetText() 
+                    }
+                }
+            };
             var switchValue = Visit(context.expresion());
 
             // Verificar que switchValue no sea nulo, etc.

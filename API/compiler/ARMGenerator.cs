@@ -220,6 +220,10 @@ namespace API.compiler.ARM64
                 }
                 continue; // No procesar nada más después del continue
             }
+            else if (nodo.Tipo == "Switch")
+            {
+                GenerateSwitch(nodo, tablaSimbolos);
+            }
             }
         }
 
@@ -1082,6 +1086,186 @@ namespace API.compiler.ARM64
             
             // 9. Fin del bucle
             _code.AppendLine($"{loopEndLabel}:");
+        }
+
+        private void GenerateSwitch(NodoAST nodo, List<EntradaSimbolo> tablaSimbolos)
+        {
+            _code.AppendLine("\n    // Switch Statement");
+            
+            // Obtener el nodo de expresión del switch
+            var exprNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Expresion");
+            if (exprNodo == null)
+            {
+                _code.AppendLine("    // Error: Switch sin expresión");
+                return;
+            }
+            
+            string switchExpr = exprNodo.Valor?.ToString() ?? "";
+            _code.AppendLine($"    // Evaluando expresión: {switchExpr}");
+            
+            // Cargar el valor de la expresión switch
+            string switchValue = $"switch_val_{_labelCounter++}";
+            int switchOffset = GetVariableOffset(switchValue);
+            string switchMem = $"[sp, #{switchOffset}]";
+            
+            // Si la expresión es una variable
+            if (_variables.TryGetValue(switchExpr, out string exprMem))
+            {
+                _code.AppendLine($"    ldr x0, {exprMem}");
+                _code.AppendLine($"    str x0, {switchMem}");
+            }
+            else if (int.TryParse(switchExpr, out int exprVal))
+            {
+                // Si la expresión es un literal entero
+                _code.AppendLine($"    mov x0, #{exprVal}");
+                _code.AppendLine($"    str x0, {switchMem}");
+            }
+            else
+            {
+                _code.AppendLine($"    // No se pudo evaluar la expresión del switch");
+                _code.AppendLine($"    mov x0, #0");  // Valor por defecto
+                _code.AppendLine($"    str x0, {switchMem}");
+            }
+            
+            // Generar etiqueta para el final del switch
+            string endSwitchLabel = $"endswitch_{_labelCounter++}";
+            
+            // Obtener los nodos case y default
+            var caseNodos = nodo.Hijos.Where(h => h.Tipo == "Case").ToList();
+            var defaultNodo = nodo.Hijos.FirstOrDefault(h => h.Tipo == "Default");
+            
+            // Si hay pocos cases o están dispersos, usar comparaciones secuenciales
+            if (caseNodos.Count <= 8)
+            {
+                // Para cada nodo case
+                foreach (var caseNodo in caseNodos)
+                {
+                    string caseValue = caseNodo.Valor?.ToString() ?? "";
+                    string caseLabel = $"case_{_labelCounter++}";
+                    string nextCaseLabel = $"next_case_{_labelCounter}";
+                    
+                    _code.AppendLine($"\n    // Case: {caseValue}");
+                    _code.AppendLine($"    ldr x0, {switchMem}");
+                    
+                    // Si el valor del case es un número
+                    if (int.TryParse(caseValue, out int caseVal))
+                    {
+                        _code.AppendLine($"    cmp x0, #{caseVal}");
+                        _code.AppendLine($"    bne {nextCaseLabel}");
+                    }
+                    else if (_variables.TryGetValue(caseValue, out string caseMem))
+                    {
+                        _code.AppendLine($"    ldr x1, {caseMem}");
+                        _code.AppendLine($"    cmp x0, x1");
+                        _code.AppendLine($"    bne {nextCaseLabel}");
+                    }
+                    else
+                    {
+                        // No se pudo determinar el valor, saltar al siguiente case
+                        _code.AppendLine($"    b {nextCaseLabel}");
+                    }
+                    
+                    // Si el case coincide, ejecutar su código
+                    _code.AppendLine($"{caseLabel}:");
+                    
+                    // Procesar instrucciones del case
+                    if (caseNodo.Hijos != null && caseNodo.Hijos.Count > 0)
+                    {
+                        // En switch, los breaks deben saltar al final del switch
+                        PushLoopLabels("", endSwitchLabel);
+                        ProcessInstructions(caseNodo.Hijos, tablaSimbolos);
+                        PopLoopLabels();
+                    }
+                    
+                    // Si no hay break explícito, continuamos con el siguiente case (fall-through)
+                    _code.AppendLine($"{nextCaseLabel}:");
+                }
+                
+                // Bloque default (si existe)
+                if (defaultNodo != null)
+                {
+                    _code.AppendLine($"\n    // Default case");
+                    
+                    // Procesar instrucciones del default
+                    if (defaultNodo.Hijos != null && defaultNodo.Hijos.Count > 0)
+                    {
+                        PushLoopLabels("", endSwitchLabel);
+                        ProcessInstructions(defaultNodo.Hijos, tablaSimbolos);
+                        PopLoopLabels();
+                    }
+                }
+            }
+            else
+            {
+                // Si hay muchos cases consecutivos, considerar usar una tabla de saltos
+                // Aquí iría una implementación más compleja con tablas de salto
+                // Para casos como enteros consecutivos
+                _code.AppendLine("    // Switch con muchos casos - usando comparaciones secuenciales");
+                
+                // Implementación similar a la anterior para este caso
+                // (igual que el bloque anterior pero con mensaje diferente)
+                
+                // Para cada nodo case
+                foreach (var caseNodo in caseNodos)
+                {
+                    string caseValue = caseNodo.Valor?.ToString() ?? "";
+                    string caseLabel = $"case_{_labelCounter++}";
+                    string nextCaseLabel = $"next_case_{_labelCounter}";
+                    
+                    _code.AppendLine($"\n    // Case: {caseValue}");
+                    _code.AppendLine($"    ldr x0, {switchMem}");
+                    
+                    // Si el valor del case es un número
+                    if (int.TryParse(caseValue, out int caseVal))
+                    {
+                        _code.AppendLine($"    cmp x0, #{caseVal}");
+                        _code.AppendLine($"    bne {nextCaseLabel}");
+                    }
+                    else if (_variables.TryGetValue(caseValue, out string caseMem))
+                    {
+                        _code.AppendLine($"    ldr x1, {caseMem}");
+                        _code.AppendLine($"    cmp x0, x1");
+                        _code.AppendLine($"    bne {nextCaseLabel}");
+                    }
+                    else
+                    {
+                        // No se pudo determinar el valor, saltar al siguiente case
+                        _code.AppendLine($"    b {nextCaseLabel}");
+                    }
+                    
+                    // Si el case coincide, ejecutar su código
+                    _code.AppendLine($"{caseLabel}:");
+                    
+                    // Procesar instrucciones del case
+                    if (caseNodo.Hijos != null && caseNodo.Hijos.Count > 0)
+                    {
+                        PushLoopLabels("", endSwitchLabel);
+                        ProcessInstructions(caseNodo.Hijos, tablaSimbolos);
+                        PopLoopLabels();
+                    }
+                    
+                    // Si no hay break explícito, continuamos con el siguiente case (fall-through)
+                    _code.AppendLine($"{nextCaseLabel}:");
+                }
+                
+                // Bloque default (si existe)
+                if (defaultNodo != null)
+                {
+                    _code.AppendLine($"\n    // Default case");
+                    
+                    // Procesar instrucciones del default
+                    if (defaultNodo.Hijos != null && defaultNodo.Hijos.Count > 0)
+                    {
+                        PushLoopLabels("", endSwitchLabel);
+                        ProcessInstructions(defaultNodo.Hijos, tablaSimbolos);
+                        PopLoopLabels();
+                    }
+                }
+            }
+            
+            // Etiqueta de fin del switch
+            _code.AppendLine($"\n{endSwitchLabel}:");
+            _code.AppendLine("    // Fin del switch");
         }
 
         private void PushLoopLabels(string continueLabel, string breakLabel)
@@ -2227,3 +2411,8 @@ namespace API.compiler.ARM64
         }
     }
 }
+//java -jar antlr-4.13.2-complete.jar -Dlanguage=CSharp -visitor -listener Language.g4
+
+//aarch64-linux-gnu-as pruebas.s -o pruebas.o
+//aarch64-linux-gnu-ld pruebas.o -o pruebas
+//qemu-aarch64 ./pruebas
