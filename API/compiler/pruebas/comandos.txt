@@ -1,0 +1,9 @@
+//java -jar antlr-4.13.2-complete.jar -Dlanguage=CSharp -visitor -listener Language.g4
+
+//aarch64-linux-gnu-as pruebas.s -o pruebas.o
+//aarch64-linux-gnu-ld pruebas.o -o pruebas
+//qemu-aarch64 ./pruebas
+
+//dotnet clean
+//dotnet build 
+//dotnet run 

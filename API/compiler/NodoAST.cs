@@ -10,6 +10,8 @@ namespace API.compiler
         public List<NodoAST> Hijos { get; set; } = new List<NodoAST>();
 
         public NodoAST Padre { get; set; }
+
+        public string ResultVariable { get; set; }
     }
 
     public class ASTGraphGenerator
