@@ -177,5 +177,18 @@ simbolos que tiene dicho archivo de entrada, mostrando el tipo de simbolo y la u
 
 ![](img/TABLASIMBOLOS.png)
 
+### Traduccion a ARM
+- Ahora al momento de ejecutar el codigo en el apartado derecho aparece la traduccion del codigo entrante a ARM64
+esto con el objetivo de ejecutar el codigo en QEMU y obtener la misma salida que en consola.
+
+![](img/ARM1.png)
 
 
+### Ejecucion de ARM
+- Al momento de copiar el codigo de ARM64 se puede proceder a utilizar QEMU como emulador y compilador de ARM64,
+para ello se debe crear un archivo .s en donde se ingresara para ejecutar el codigo, ya en QEMU se ejecutan los comandos de la primera imagen para ensamblar y compilar el codigo y posteriormente se mostrara la salida del mismo.
+
+![](img/ARM3.png)
+
+
+![](img/ARM2.png)
